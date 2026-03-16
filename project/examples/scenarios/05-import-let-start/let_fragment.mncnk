@@ -1,0 +1,8 @@
+let header = "Import starts with let"
+page "/" using "layout.tpl" {
+  let title = header
+  content {
+    <h1>{{ title }}</h1>
+    <p>Variable declared in imported fragment</p>
+  }
+}

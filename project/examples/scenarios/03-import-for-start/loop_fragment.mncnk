@@ -1,0 +1,9 @@
+for item in data("items.json") {
+  page "/items/{{item.slug }}.html" using "layout.tpl" {
+    let title = item.title
+    content {
+      <h1>{{ item.title }}</h1>
+      <p>{{ item.body }}</p>
+    }
+  }
+}

@@ -1,0 +1,5 @@
+site "Scenario04" {
+  output "./dist"
+  let enabled = true
+  import "./if_fragment.mncnk"
+}

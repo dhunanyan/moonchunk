@@ -1,0 +1,4 @@
+site "Scenario02" {
+  output "./dist"
+  import "./page_fragment.mncnk"
+}

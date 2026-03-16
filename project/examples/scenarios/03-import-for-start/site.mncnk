@@ -1,0 +1,4 @@
+site "Scenario03" {
+  output "./dist"
+  import "./loop_fragment.mncnk"
+}

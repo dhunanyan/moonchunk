@@ -1,0 +1,4 @@
+site "Scenario06" {
+  output "./dist"
+  import "./fragments/root.mncnk"
+}

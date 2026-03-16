@@ -1,0 +1,9 @@
+if enabled == true {
+  page "/" using "layout.tpl" {
+    let title = "Import starts with if"
+    content {
+      <h1>{{ title }}</h1>
+      <p>Condition evaluated to true</p>
+    }
+  }
+}

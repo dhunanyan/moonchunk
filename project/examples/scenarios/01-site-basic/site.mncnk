@@ -1,0 +1,12 @@
+site "Scenario01" {
+  output "./dist"
+
+  page "/" using "layout.tpl" {
+    let title = "Site Basic"
+    let msg = "Hello from site body"
+    content {
+      <h1>{{ title }}</h1>
+      <p>{{ msg }}</p>
+    }
+  }
+}
