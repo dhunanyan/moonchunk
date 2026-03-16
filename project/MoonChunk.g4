@@ -1,55 +1,53 @@
 grammar MoonChunk;
 
 program
-  : statement* EOF
+  : NEWLINE* siteDecl NEWLINE* EOF
   ;
 
-statement
-  : letStatement
-  | functionDeclaration
-  | ifStatement
-  | whileStatement
+siteDecl
+  : SITE STRING LBRACE NEWLINE* siteStatement* RBRACE
+  ;
+
+siteStatement
+  : importStatement
+  | outputStatement
+  | letStatement
+  | pageStatement
   | forStatement
-  | returnStatement
-  | block
-  | expression ';'
+  | ifStatement
+  ;
+
+importStatement
+  : IMPORT STRING NEWLINE+
+  ;
+
+outputStatement
+  : OUTPUT STRING NEWLINE+
   ;
 
 letStatement
-  : 'let' IDENTIFIER '=' expression ';'
+  : LET IDENTIFIER ASSIGN expression NEWLINE+
   ;
 
-functionDeclaration
-  : 'fn' IDENTIFIER '(' parameterList? ')' block
+pageStatement
+  : PAGE STRING USING STRING LBRACE NEWLINE* pageInnerStatement* RBRACE NEWLINE*
   ;
 
-parameterList
-  : IDENTIFIER (',' IDENTIFIER)*
+pageInnerStatement
+  : letStatement
+  | contentStatement
   ;
 
-ifStatement
-  : 'if' '(' expression ')' statement ('else' statement)?
-  ;
-
-whileStatement
-  : 'while' '(' expression ')' statement
+contentStatement
+  : CONTENT_BLOCK NEWLINE*
   ;
 
 forStatement
-  : 'for' '(' forInit? ';' expression? ';' expression? ')' statement
+  : FOR IDENTIFIER IN expression LBRACE NEWLINE* siteStatement* RBRACE NEWLINE*
   ;
 
-forInit
-  : 'let' IDENTIFIER '=' expression
-  | expression
-  ;
-
-returnStatement
-  : 'return' expression? ';'
-  ;
-
-block
-  : '{' statement* '}'
+ifStatement
+  : IF expression LBRACE NEWLINE* siteStatement* RBRACE NEWLINE*
   ;
 
 expression
@@ -57,58 +55,96 @@ expression
   ;
 
 assignment
-  : orExpr ('=' assignment)?
+  : orExpr
   ;
 
 orExpr
-  : andExpr ('or' andExpr)*
+  : andExpr (OR andExpr)*
   ;
 
 andExpr
-  : equalityExpr ('and' equalityExpr)*
+  : equalityExpr (AND equalityExpr)*
   ;
 
 equalityExpr
-  : comparisonExpr (('==' | '!=') comparisonExpr)*
-  ;
-
-comparisonExpr
-  : additiveExpr (('<' | '>' | '<=' | '>=') additiveExpr)*
+  : additiveExpr ((EQ | NEQ) additiveExpr)*
   ;
 
 additiveExpr
-  : multiplicativeExpr (('+' | '-') multiplicativeExpr)*
-  ;
-
-multiplicativeExpr
-  : unaryExpr (('*' | '/') unaryExpr)*
-  ;
-
-unaryExpr
-  : ('-' | 'not') unaryExpr
-  | callExpr
-  ;
-
-callExpr
-  : primary ('(' argumentList? ')')*
-  ;
-
-argumentList
-  : expression (',' expression)*
+  : primary (PLUS primary)*
   ;
 
 primary
-  : NUMBER
+  : functionCall
+  | identifierPath
   | STRING
-  | 'true'
-  | 'false'
-  | IDENTIFIER
-  | '(' expression ')'
+  | NUMBER
+  | TRUE
+  | FALSE
+  | LPAREN expression RPAREN
   ;
 
-IDENTIFIER : [A-Za-z_] [A-Za-z0-9_]* ;
-NUMBER     : [0-9]+ ('.' [0-9]+)? ;
-STRING     : '"' ( '\\' . | ~["\\\r\n] )* '"' ;
+functionCall
+  : IDENTIFIER LPAREN argumentList? RPAREN
+  ;
 
-WS            : [ \t\r\n]+ -> skip ;
-LINE_COMMENT  : '//' ~[\r\n]* -> skip ;
+argumentList
+  : expression (COMMA expression)*
+  ;
+
+identifierPath
+  : IDENTIFIER (DOT IDENTIFIER)*
+  ;
+
+SITE    : 'site' ;
+IMPORT  : 'import' ;
+OUTPUT  : 'output' ;
+PAGE    : 'page' ;
+USING   : 'using' ;
+LET     : 'let' ;
+FOR     : 'for' ;
+IN      : 'in' ;
+IF      : 'if' ;
+OR      : 'or' ;
+AND     : 'and' ;
+TRUE    : 'true' ;
+FALSE   : 'false' ;
+
+EQ      : '==' ;
+NEQ     : '!=' ;
+ASSIGN  : '=' ;
+PLUS    : '+' ;
+DOT     : '.' ;
+COMMA   : ',' ;
+LPAREN  : '(' ;
+RPAREN  : ')' ;
+LBRACE  : '{' ;
+RBRACE  : '}' ;
+
+STRING
+  : '"' ( '\\' . | ~["\\\r\n] )* '"'
+  ;
+
+NUMBER
+  : [0-9]+ ('.' [0-9]+)?
+  ;
+
+IDENTIFIER
+  : [A-Za-z_] [A-Za-z0-9_]*
+  ;
+
+CONTENT_BLOCK
+  : 'content' [ \t]* '{' .*? '\r'? '\n' [ \t]* '}'
+  ;
+
+LINE_COMMENT
+  : '//' ~[\r\n]* -> skip
+  ;
+
+WS
+  : [ \t]+ -> skip
+  ;
+
+NEWLINE
+  : ('\r'? '\n')+
+  ;

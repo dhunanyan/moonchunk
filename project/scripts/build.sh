@@ -1,2 +1,2 @@
-antlr4ts -o .antlr ./MoonChunk.g4
+antlr4ts -visitor -o .antlr ./MoonChunk.g4
 tsc -p tsconfig.json

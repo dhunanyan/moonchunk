@@ -2,7 +2,6 @@
   "name": "moonchunk",
   "version": "1.0.0",
   "description": "MoonChunk language core package",
-  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "MIT",
@@ -14,7 +13,7 @@
   ],
   "scripts": {
     "build": "sh scripts/build.sh",
-    "check": "npm run build && node --input-type=module -e \"import { executeMoonChunk } from './dist/index.js'; const r = executeMoonChunk('print(\\\"ok\\\");'); if (!r.ok) { throw new Error('self-check failed'); } console.log('self-check ok');\"",
+    "check": "npm run build && node -e \"const { executeMoonChunk } = require('./dist/index.js'); const r = executeMoonChunk('site \\\"Check\\\" {\\n  output \\\"./dist\\\"\\n}'); if (!r.ok) { throw new Error('self-check failed'); } console.log('self-check ok');\"",
     "start": "bash ./scripts/start.sh",
     "prebuild": "rm -rf dist",
     "postbuild": "rm -rf .antlr"
@@ -29,7 +28,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "require": "./dist/index.js"
     }
   },
   "devDependencies": {
