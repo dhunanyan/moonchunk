@@ -1,0 +1,1 @@
+node --input-type=module -e "import { executeMoonChunkFile } from './dist/index.js'; const r = executeMoonChunkFile('$1'); console.log(JSON.stringify(r,null,2));"

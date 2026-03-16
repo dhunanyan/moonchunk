@@ -1,19 +1,64 @@
-# Projekt
+# MoonChunk (npm package)
 
-## Uwagi ogólne
+MoonChunk to pakiet npm z util funkcjami do wykonywania DSL static-site generatora.
 
-- projektowany język powinien być bezkontekstowy (ale nie regularny)
+## Rozszerzenie plików
 
-## Elementy, które powinien posiadać projektowany język:
+- źródła MoonChunk: `*.mnchnk`
 
-- odpowiednik zmiennych (w tym zasięgi (scope) obowiązywania zmiennych)
-- operacje arytmetyczne za zmiennych (odpowiednik dodawania, odejmowania, mnożenia, itd., nawiasowanie)
-- Typ logiczny („true”/”false”) i co najmniej podstawowe operacje logiczne (and, or, not, nawiasowanie) na zmiennych logicznych i stałych oraz porównywanie zmiennych typu numerycznego (<, > , ==, !=) co w wyniku powinno dawać typ logiczny
-- rodzaj instrukcji warunkowej (odpowiednik if)
-- rodzaj pętli/iteracji (odpowiednik for/while) - dowolnie zagnieżdżonych
-- odpowiednik procedur/funkcji (w tym możliwość wywoływania rekurencyjnego) z z argumentami (powinna być co najmniej możliwość przekazywania argumentów przez wartość)
-- 'przyjazne' dla użytkownika komunikaty o błędach. Informacja o numerze linii (i ewentualnie kolumny), w której wystąpił błąd.
+## Co wspiera DSL
 
-## Elementy nadobowiązkowe:
+- `site "Name" { ... }`
+- `output "./dist"`
+- `page "/path" using "layout.tpl" { ... }`
+- `let variable = expression`
+- `for item in expression { ... }`
+- `if expression { ... }`
+- `content { ... }` z template tags:
+  - `{{ expr }}`
+  - `{% if cond %}...{% endif %}`
+  - `{% for x in list %}...{% endfor %}`
+- `data("file.json")`
 
-- translacja kodu do kodu pewnej maszyny wirtualnej. Wykonywanie kodu przez VM
+## Instalacja
+
+```bash
+cd /Users/dhunanyan/studies/kompilatory/project
+yarn install
+```
+
+## Build flow (ANTLR TS + kompilacja TS)
+
+```bash
+yarn antlr:generate:ts
+yarn build
+```
+
+## API
+
+Eksporty:
+
+- `executeMoonChunk(code, options?)`
+- `executeMoonChunkFile(filePath, options?)` (wymaga rozszerzenia `.mnchnk`)
+
+Opcje:
+
+- `cwd?: string` (bazowy katalog do `data(...)`, layoutów i outputu)
+- `writeFiles?: boolean` (domyślnie `true`)
+
+## Przykład uruchomienia pliku
+
+```ts
+import { executeMoonChunkFile } from 'moonchunk';
+
+const result = executeMoonChunkFile('/Users/dhunanyan/studies/kompilatory/project/examples/miniblog.mnchnk');
+console.log(result.ok);
+console.log(result.generatedFiles);
+console.log(result.diagnostics);
+```
+
+## Demo input
+
+- `/Users/dhunanyan/studies/kompilatory/project/examples/miniblog.mnchnk`
+- `/Users/dhunanyan/studies/kompilatory/project/examples/layout.tpl`
+- `/Users/dhunanyan/studies/kompilatory/project/examples/posts.json`

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.antlr/
+*.log
+
+# ANTLR generated metadata
+*.tokens
+*.interp
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

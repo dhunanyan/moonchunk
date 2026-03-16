@@ -1,0 +1,42 @@
+{
+  "name": "moonchunk",
+  "version": "1.0.0",
+  "description": "MoonChunk language core package",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "keywords": [
+    "dsl",
+    "interpreter",
+    "antlr",
+    "moonchunk"
+  ],
+  "scripts": {
+    "build": "sh scripts/build.sh",
+    "check": "npm run build && node --input-type=module -e \"import { executeMoonChunk } from './dist/index.js'; const r = executeMoonChunk('print(\\\"ok\\\");'); if (!r.ok) { throw new Error('self-check failed'); } console.log('self-check ok');\"",
+    "start": "bash ./scripts/start.sh",
+    "prebuild": "rm -rf dist",
+    "postbuild": "rm -rf .antlr"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "devDependencies": {
+    "antlr4ts-cli": "^0.5.0-alpha.4",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "antlr4ts": "0.5.0-alpha.4"
+  }
+}

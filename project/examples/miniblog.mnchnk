@@ -1,0 +1,53 @@
+site "MiniBlog" {
+  output "./dist"
+
+  page "/" using "layout.tpl" {
+    let title = "Strona główna"
+    let posts = data("posts.json")
+
+    content {
+      <h1>{{ title }}</h1>
+      <ul>
+      {% for p in posts %}
+        {% if p.published == true %}
+          <li>
+            <a href="/posts/{{ p.slug }}.html">{{ p.title }}</a>
+            <span>({{ p.views }} views)</span>
+          </li>
+        {% endif %}
+      {% endfor %}
+      </ul>
+    }
+  }
+
+    page "/lol" using "layout.tpl" {
+    let title = "Strona główna"
+    let posts = data("posts.json")
+
+    content {
+      <h1>{{ title }} XD</h1>
+      <ul>
+      {% for p in posts %}
+        {% if p.published == true %}
+          <li>
+            <a href="/posts/{{ p.slug }}.html">{{ p.title }}</a>
+            <span>({{ p.views }} views)</span>
+          </li>
+        {% endif %}
+      {% endfor %}
+      </ul>
+    }
+  }
+
+  for post in data("posts.json") {
+    if post.published == true {
+      page "/posts/{{ post.slug }}.html" using "layout.tpl" {
+        let title = post.title
+        content {
+          <h1>{{ post.title }}</h1>
+          <p>{{ post.body }}</p>
+        }
+      }
+    }
+  }
+}
