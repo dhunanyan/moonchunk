@@ -26,7 +26,15 @@ outputStatement
   ;
 
 letStatement
-  : LET IDENTIFIER ASSIGN expression NEWLINE+
+  : LET IDENTIFIER (COLON typeName)? ASSIGN expression NEWLINE+
+  ;
+
+typeName
+  : TYPE_INT
+  | TYPE_FLOAT
+  | TYPE_DOUBLE
+  | TYPE_BOOL
+  | TYPE_STRING
   ;
 
 pageStatement
@@ -67,11 +75,24 @@ andExpr
   ;
 
 equalityExpr
-  : additiveExpr ((EQ | NEQ) additiveExpr)*
+  : comparisonExpr ((EQ | NEQ) comparisonExpr)*
+  ;
+
+comparisonExpr
+  : additiveExpr ((LT | GT | LTE | GTE) additiveExpr)*
   ;
 
 additiveExpr
-  : primary (PLUS primary)*
+  : multiplicativeExpr ((PLUS | MINUS) multiplicativeExpr)*
+  ;
+
+multiplicativeExpr
+  : unaryExpr ((STAR | SLASH) unaryExpr)*
+  ;
+
+unaryExpr
+  : (NOT | MINUS) unaryExpr
+  | primary
   ;
 
 primary
@@ -107,15 +128,29 @@ IN      : 'in' ;
 IF      : 'if' ;
 OR      : 'or' ;
 AND     : 'and' ;
+NOT     : 'not' ;
 TRUE    : 'true' ;
 FALSE   : 'false' ;
+TYPE_INT    : 'int' ;
+TYPE_FLOAT  : 'float' ;
+TYPE_DOUBLE : 'double' ;
+TYPE_BOOL   : 'bool' ;
+TYPE_STRING : 'string' ;
 
 EQ      : '==' ;
 NEQ     : '!=' ;
 ASSIGN  : '=' ;
 PLUS    : '+' ;
+MINUS   : '-' ;
+STAR    : '*' ;
+SLASH   : '/' ;
+LT      : '<' ;
+GT      : '>' ;
+LTE     : '<=' ;
+GTE     : '>=' ;
 DOT     : '.' ;
 COMMA   : ',' ;
+COLON   : ':' ;
 LPAREN  : '(' ;
 RPAREN  : ')' ;
 LBRACE  : '{' ;
@@ -126,7 +161,7 @@ STRING
   ;
 
 NUMBER
-  : [0-9]+ ('.' [0-9]+)?
+  : [0-9]+ ('.' [0-9]+)? [fFdD]?
   ;
 
 IDENTIFIER

@@ -1,0 +1,30 @@
+#!/usr/bin/env moonchunk
+
+/**
+ * TODO: verify stream output integrity
+ */
+@benchmark
+module DataFlow {
+  const MAX_RETRIES = 3;
+  let retry_count = 0;
+
+  fn normalize(input: string) -> string {
+    let cleaned = "value=${input}";
+    let pattern = /[A-Z_][A-Z0-9_]*/gi;
+
+    if (input == "") {
+      return "";
+    } else {
+      return cleaned;
+    }
+  }
+
+  chunk ParseChunk {
+    emit normalize("HELLO_WORLD");
+  }
+
+  for item in [1, 2, 3, 4] {
+    spawn item;
+    merge item;
+  }
+}

@@ -1,0 +1,330 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "MoonChunk",
+  "scopeName": "source.moonchunk",
+  "fileTypes": [
+    "mncnk"
+  ],
+  "patterns": [
+    { "include": "#shebang" },
+    { "include": "#comments" },
+    { "include": "#annotations" },
+    { "include": "#imports" },
+    { "include": "#declarations" },
+    { "include": "#functions" },
+    { "include": "#strings" },
+    { "include": "#regex" },
+    { "include": "#numbers" },
+    { "include": "#constants" },
+    { "include": "#keywords" },
+    { "include": "#types" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "shebang": {
+      "patterns": [
+        {
+          "name": "comment.line.shebang.moonchunk",
+          "match": "^#!.*$"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.documentation.moonchunk",
+          "begin": "/\\*\\*",
+          "end": "\\*/",
+          "patterns": [
+            {
+              "name": "keyword.other.documentation.todo.moonchunk",
+              "match": "\\b(?:TODO|FIXME|NOTE|HACK|BUG)\\b"
+            }
+          ]
+        },
+        {
+          "name": "comment.block.moonchunk",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.line.number-sign.moonchunk",
+          "match": "#.*$"
+        },
+        {
+          "name": "comment.line.double-slash.moonchunk",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "annotations": {
+      "patterns": [
+        {
+          "name": "storage.modifier.annotation.moonchunk",
+          "match": "@[A-Za-z_][A-Za-z0-9_]*"
+        }
+      ]
+    },
+    "imports": {
+      "patterns": [
+        {
+          "name": "meta.import.moonchunk",
+          "begin": "\\b(use|import|include)\\b",
+          "beginCaptures": {
+            "1": { "name": "keyword.control.import.moonchunk" }
+          },
+          "end": "(?=;|$)",
+          "patterns": [
+            {
+              "name": "string.quoted.double.moonchunk",
+              "match": "\"[^\"]*\""
+            },
+            {
+              "name": "string.quoted.single.moonchunk",
+              "match": "'[^']*'"
+            },
+            {
+              "name": "entity.name.namespace.moonchunk",
+              "match": "[A-Za-z_][A-Za-z0-9_]*(?:::[A-Za-z_][A-Za-z0-9_]*)*"
+            }
+          ]
+        }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "name": "meta.declaration.chunk.moonchunk",
+          "match": "\\b(chunk|stream|module)\\b\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "storage.type.declaration.moonchunk" },
+            "2": { "name": "entity.name.type.moonchunk" }
+          }
+        },
+        {
+          "name": "meta.declaration.variable.moonchunk",
+          "match": "\\b(let|var|const)\\b\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "storage.modifier.moonchunk" },
+            "2": { "name": "variable.other.definition.moonchunk" }
+          }
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "name": "meta.function.definition.moonchunk",
+          "match": "\\b(fn|function)\\b\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "storage.type.function.moonchunk" },
+            "2": { "name": "entity.name.function.moonchunk" }
+          }
+        },
+        {
+          "name": "meta.function.call.moonchunk",
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(?=\\()",
+          "captures": {
+            "1": { "name": "support.function.moonchunk" }
+          }
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.triple.double.moonchunk",
+          "begin": "\"\"\"",
+          "end": "\"\"\"",
+          "patterns": [
+            { "include": "#interpolation" },
+            {
+              "name": "constant.character.escape.moonchunk",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.triple.single.moonchunk",
+          "begin": "'''",
+          "end": "'''",
+          "patterns": [
+            { "include": "#interpolation" },
+            {
+              "name": "constant.character.escape.moonchunk",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.double.moonchunk",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            { "include": "#interpolation" },
+            {
+              "name": "constant.character.escape.moonchunk",
+              "match": "\\\\(?:[nrt0'\"\\\\]|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\\{[0-9A-Fa-f]+\\})"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.moonchunk",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.moonchunk",
+              "match": "\\\\(?:[nrt0'\"\\\\]|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|u\\{[0-9A-Fa-f]+\\})"
+            }
+          ]
+        }
+      ]
+    },
+    "interpolation": {
+      "patterns": [
+        {
+          "name": "meta.interpolation.moonchunk",
+          "begin": "\\$\\{",
+          "beginCaptures": {
+            "0": { "name": "punctuation.section.interpolation.begin.moonchunk" }
+          },
+          "end": "\\}",
+          "endCaptures": {
+            "0": { "name": "punctuation.section.interpolation.end.moonchunk" }
+          },
+          "patterns": [
+            { "include": "#comments" },
+            { "include": "#strings" },
+            { "include": "#numbers" },
+            { "include": "#constants" },
+            { "include": "#keywords" },
+            { "include": "#operators" }
+          ]
+        }
+      ]
+    },
+    "regex": {
+      "patterns": [
+        {
+          "name": "string.regexp.moonchunk",
+          "begin": "(?<=\\s|^|[=:(,\\[])/(?![/*])",
+          "end": "/[gimsuy]*",
+          "patterns": [
+            {
+              "name": "constant.character.escape.moonchunk",
+              "match": "\\\\."
+            },
+            {
+              "name": "constant.other.character-class.moonchunk",
+              "begin": "\\[",
+              "end": "\\]",
+              "patterns": [
+                {
+                  "name": "constant.character.escape.moonchunk",
+                  "match": "\\\\."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.moonchunk",
+          "match": "\\b(?:0b[01](?:_?[01])*|0o[0-7](?:_?[0-7])*|0x[0-9A-Fa-f](?:_?[0-9A-Fa-f])*|(?:\\d(?:_?\\d)*)?(?:\\.(?:\\d(?:_?\\d)*)?)?(?:[eE][+-]?\\d(?:_?\\d)*)|\\d(?:_?\\d)*)\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.moonchunk",
+          "match": "\\b(?:true|false|null|undefined)\\b"
+        },
+        {
+          "name": "constant.language.special.moonchunk",
+          "match": "\\b(?:self|super|this)\\b"
+        },
+        {
+          "name": "constant.other.moonchunk",
+          "match": "\\b[A-Z][A-Z0-9_]*\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.moonchunk",
+          "match": "\\b(?:if|else|match|when|switch|case|default|for|in|while|loop|break|continue|return|yield|await|async|try|catch|finally|throw)\\b"
+        },
+        {
+          "name": "keyword.operator.word.moonchunk",
+          "match": "\\b(?:and|or|not|is|as|from|to|by|with|without)\\b"
+        },
+        {
+          "name": "keyword.other.pipeline.moonchunk",
+          "match": "\\b(?:chunk|spawn|merge|emit|pipe|consume|produce|schedule|sync)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "storage.type.builtin.moonchunk",
+          "match": "\\b(?:int|i8|i16|i32|i64|uint|u8|u16|u32|u64|float|f32|f64|decimal|bool|string|char|bytes|list|map|set|tuple|any|void|never|result|option)\\b"
+        },
+        {
+          "name": "entity.name.type.user.moonchunk",
+          "match": "\\b[A-Z][A-Za-z0-9_]*\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.assignment.moonchunk",
+          "match": "(?:=|:=|\\+=|-=|\\*=|/=|%=|&&=|\\|\\|=|<<=|>>=|\\?\\?=)"
+        },
+        {
+          "name": "keyword.operator.comparison.moonchunk",
+          "match": "(?:==|!=|<=|>=|<=>|<|>)"
+        },
+        {
+          "name": "keyword.operator.logical.moonchunk",
+          "match": "(?:&&|\\|\\||!)"
+        },
+        {
+          "name": "keyword.operator.arithmetic.moonchunk",
+          "match": "(?:\\+\\+|--|\\+|-|\\*|/|%|\\*\\*)"
+        },
+        {
+          "name": "keyword.operator.bitwise.moonchunk",
+          "match": "(?:&|\\||\\^|~|<<|>>|>>>)"
+        },
+        {
+          "name": "keyword.operator.nullish.moonchunk",
+          "match": "(?:\\?\\?|\\?\\.)"
+        },
+        {
+          "name": "keyword.operator.arrow.moonchunk",
+          "match": "(?:=>|->|<-)"
+        },
+        {
+          "name": "punctuation.separator.moonchunk",
+          "match": "[,;:]"
+        },
+        {
+          "name": "punctuation.section.braces.begin.moonchunk",
+          "match": "[\\{\\(\\[]"
+        },
+        {
+          "name": "punctuation.section.braces.end.moonchunk",
+          "match": "[\\}\\)\\]]"
+        }
+      ]
+    }
+  }
+}

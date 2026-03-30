@@ -1,0 +1,45 @@
+site "Scenario07BasicCalculations" {
+  output "./dist"
+
+  page "/" using "layout.tpl" {
+    let title: string = "07 - Basic Calculations"
+
+    let int_div: int = 1 / 2
+    let double_div: double = 1 / 2.0
+    let float_div: float = 1f / 2
+
+    let int_mul: int = 3 * 4
+    let double_mul: double = 3 * 4.0
+    let float_add: float = 2f + 3
+    let double_sub: double = 10.5 - 2
+
+    let cmp_int: bool = (1 / 2) == 0
+    let cmp_double: bool = (1 / 2.0) == 0.5
+    let logic_mix: bool = cmp_int and cmp_double
+
+    content {
+      <h1>{{ title }}</h1>
+      <h2>Division</h2>
+      <ul>
+        <li>int_div (int): {{ int_div }}</li>
+        <li>double_div (double): {{ double_div }}</li>
+        <li>float_div (float): {{ float_div }}</li>
+      </ul>
+
+      <h2>Mixed Arithmetic</h2>
+      <ul>
+        <li>int_mul (int): {{ int_mul }}</li>
+        <li>double_mul (double): {{ double_mul }}</li>
+        <li>float_add (float): {{ float_add }}</li>
+        <li>double_sub (double): {{ double_sub }}</li>
+      </ul>
+
+      <h2>Comparisons and Logic</h2>
+      <ul>
+        <li>cmp_int: {{ cmp_int }}</li>
+        <li>cmp_double: {{ cmp_double }}</li>
+        <li>logic_mix: {{ logic_mix }}</li>
+      </ul>
+    }
+  }
+}

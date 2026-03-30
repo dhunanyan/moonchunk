@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="{{CSP}}" />
+    <title>MoonChunk Home</title>
+    {{STYLE}}
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="nav">
+        <div class="brand">
+          <img src="{{LOGO_URI}}" alt="MoonChunk logo" />
+          <h1>MoonChunk Home</h1>
+        </div>
+        <p class="sub">Language Control Center</p>
+        <div class="menu">
+          <button class="tab active" data-tab="welcome">Welcome</button>
+          <button class="tab" data-tab="language">Language</button>
+          <button class="tab" data-tab="docs">Docs</button>
+          <button class="tab" data-tab="resources">Resources</button>
+        </div>
+        <div class="quick">
+          <a class="link" href="#" data-command="openDashboard">Open Walkthrough</a>
+          <a class="link" href="#" data-command="openDocsIndex">Open Docs Index</a>
+          <a class="link" href="#" data-command="showSnippets">Insert Snippet</a>
+          <a class="link" href="#" data-command="openSettings">Open Settings</a>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="section active" data-section="welcome">
+          <div class="hero">
+            <div>
+              <h2>MoonChunk</h2>
+              <p>
+                Production-ready language support for <code>.mncnk</code> with
+                rich TextMate grammar, snippets, and onboarding designed for fast
+                local development.
+              </p>
+              <div class="actions">
+                <button class="btn" data-command="openDashboard">Open Walkthrough</button>
+                <button class="btn secondary" data-command="openDocsIndex">Open Docs</button>
+                <button class="btn secondary" data-command="openSettings">Settings</button>
+              </div>
+            </div>
+            <img src="{{LOGO_URI}}" alt="MoonChunk logo preview" />
+          </div>
+
+          <div class="grid">
+            <article class="card">
+              <h3>What You Get</h3>
+              <ul class="list">
+                <li>Comprehensive syntax highlighting rules</li>
+                <li>Language auto-detection for .mncnk and Moonfile</li>
+                <li>Snippets for common control-flow and declarations</li>
+                <li>Walkthrough + dashboard onboarding surfaces</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h3>Quick Test</h3>
+              <p>Open the bundled examples and inspect tokens/scopes.</p>
+              <div class="actions">
+                <button class="btn secondary" data-command="openDocsIndex">Testing Guide</button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" data-section="language">
+          <div class="card">
+            <h3>Language Workflow</h3>
+            <p>Use these paths while evolving grammar and snippets.</p>
+            <div class="actions">
+              <button class="btn secondary" data-command="showSnippets">Insert Snippet</button>
+              <button class="btn secondary" data-command="openSettings">Open MoonChunk Settings</button>
+              <button class="btn secondary" data-command="openDashboard">Walkthrough</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" data-section="docs">
+          <div class="card">
+            <h3>Documentation</h3>
+            <p>Open the local docs index, or browse source docs online.</p>
+            <div class="actions">
+              <button class="btn secondary" data-command="openDocsIndex">Docs Index</button>
+              <button class="btn secondary" data-url="{{LINK_DOCS}}">Online Docs</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" data-section="resources">
+          <div class="card">
+            <h3>Resources</h3>
+            <div class="actions">
+              <button class="btn secondary" data-url="{{LINK_HOMEPAGE}}">Homepage</button>
+              <button class="btn secondary" data-url="{{LINK_MARKETPLACE}}">Marketplace</button>
+              <button class="btn secondary" data-url="{{LINK_ISSUES}}">Issues</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    {{SCRIPT}}
+  </body>
+</html>

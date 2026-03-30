@@ -1,0 +1,30 @@
+#region Literals
+let b = 0b1010_0110;
+let o = 0o755;
+let h = 0xDEAD_BEEF;
+let d = 12_345_678;
+let f = 3.1415;
+let e = 1.2e+10;
+let n = null;
+let t = true;
+let u = undefined;
+#endregion
+
+#region Strings
+let s1 = "double with escape \\n and quote \"";
+let s2 = 'single with unicode \\u03BB';
+let s3 = """
+multiline ${interpolation}
+""";
+let s4 = '''
+raw style block
+''';
+#endregion
+
+#region Operators
+value ||= default_value;
+value ??= 42;
+if (a <= b && b >= c || !done) {
+  output <- input -> sink;
+}
+#endregion

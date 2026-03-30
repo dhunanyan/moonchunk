@@ -1,0 +1,227 @@
+{
+  "name": "moonchunk-highlight",
+  "displayName": "MoonChunk Language Support",
+  "description": "Production-ready syntax highlighting, snippets, onboarding dashboard, and editor behavior for MoonChunk (.mncnk) files.",
+  "version": "1.0.0",
+  "publisher": "dhunanyan",
+  "license": "MIT",
+  "author": {
+    "name": "Davit Hunanyan"
+  },
+  "preview": false,
+  "qna": "https://github.com/dhunanyan/moonchunk-highlight-vscode-extension/discussions",
+  "homepage": "https://github.com/dhunanyan/moonchunk-highlight-vscode-extension#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dhunanyan/moonchunk-highlight-vscode-extension.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dhunanyan/moonchunk-highlight-vscode-extension/issues"
+  },
+  "icon": "images/logo.png",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "keywords": [
+    "moonchunk",
+    "mncnk",
+    "syntax",
+    "highlighting",
+    "language",
+    "grammar",
+    "textmate",
+    "snippets",
+    "walkthrough",
+    "dashboard",
+    "onboarding",
+    "developer-experience"
+  ],
+  "galleryBanner": {
+    "color": "#0f172a",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onLanguage:moonchunk",
+    "onCommand:moonchunk.openHome",
+    "onCommand:moonchunk.openDashboard",
+    "onCommand:moonchunk.openDocsIndex"
+  ],
+  "main": "./dist/extension.js",
+  "files": [
+    "dist",
+    "syntaxes",
+    "snippets",
+    "ui",
+    "docs",
+    "images",
+    "language-configuration.json",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run build",
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "lint": "eslint src --ext .ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.10",
+    "@types/vscode": "^1.74.0",
+    "@vscode/vsce": "^3.2.1",
+    "eslint": "^9.16.0",
+    "typescript": "^5.6.3"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "moonchunk",
+        "aliases": [
+          "MoonChunk",
+          "moonchunk"
+        ],
+        "extensions": [
+          ".mncnk"
+        ],
+        "filenames": [
+          "Moonfile"
+        ],
+        "firstLine": "^#!/.*\\bmoonchunk\\b",
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "moonchunk",
+        "scopeName": "source.moonchunk",
+        "path": "./syntaxes/moonchunk.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "moonchunk",
+        "path": "./snippets/moonchunk.json"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "moonchunk.getting-started",
+        "title": "MoonChunk Dashboard",
+        "description": "In-editor onboarding for language setup, syntax tools, snippets, and troubleshooting.",
+        "steps": [
+          {
+            "id": "moonchunk.overview",
+            "title": "Overview",
+            "description": "Start with [`docs/OVERVIEW.md`](https://github.com/dhunanyan/moonchunk-highlight-vscode-extension/blob/main/docs/OVERVIEW.md).",
+            "media": {
+              "image": "images/logo.png",
+              "altText": "MoonChunk overview"
+            }
+          },
+          {
+            "id": "moonchunk.installation",
+            "title": "Installation & Local Test",
+            "description": "Follow [`docs/INSTALLATION.md`](https://github.com/dhunanyan/moonchunk-highlight-vscode-extension/blob/main/docs/INSTALLATION.md).",
+            "media": {
+              "image": "images/logo.png",
+              "altText": "MoonChunk installation guide"
+            }
+          },
+          {
+            "id": "moonchunk.grammar",
+            "title": "Grammar & Snippets",
+            "description": "Explore [`docs/GRAMMAR.md`](https://github.com/dhunanyan/moonchunk-highlight-vscode-extension/blob/main/docs/GRAMMAR.md) and [`docs/SNIPPETS.md`](https://github.com/dhunanyan/moonchunk-highlight-vscode-extension/blob/main/docs/SNIPPETS.md).",
+            "media": {
+              "image": "images/logo.png",
+              "altText": "MoonChunk grammar and snippets"
+            }
+          },
+          {
+            "id": "moonchunk.troubleshooting",
+            "title": "Troubleshooting",
+            "description": "Common issues are documented in [`docs/TROUBLESHOOTING.md`](https://github.com/dhunanyan/moonchunk-highlight-vscode-extension/blob/main/docs/TROUBLESHOOTING.md).",
+            "media": {
+              "image": "images/logo.png",
+              "altText": "MoonChunk troubleshooting"
+            }
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "command": "moonchunk.openHome",
+        "title": "MoonChunk: Open Home Dashboard",
+        "category": "MoonChunk"
+      },
+      {
+        "command": "moonchunk.openDashboard",
+        "title": "MoonChunk: Open Getting Started Walkthrough",
+        "category": "MoonChunk"
+      },
+      {
+        "command": "moonchunk.openDocsIndex",
+        "title": "MoonChunk: Open Documentation Index",
+        "category": "MoonChunk"
+      },
+      {
+        "command": "moonchunk.openMarketplacePage",
+        "title": "MoonChunk: Open Marketplace/Homepage",
+        "category": "MoonChunk"
+      },
+      {
+        "command": "moonchunk.openSettings",
+        "title": "MoonChunk: Open Extension Settings",
+        "category": "MoonChunk"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "moonchunk.openHome",
+          "when": "editorLangId == moonchunk"
+        },
+        {
+          "command": "moonchunk.openDashboard"
+        },
+        {
+          "command": "moonchunk.openDocsIndex"
+        },
+        {
+          "command": "moonchunk.openSettings"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "MoonChunk Language Support",
+      "properties": {
+        "moonchunk.showWalkthroughOnInstallOrUpdate": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open MoonChunk onboarding on first install/update."
+        },
+        "moonchunk.postInstallExperience": {
+          "type": "string",
+          "default": "home",
+          "enum": [
+            "home",
+            "walkthrough",
+            "none"
+          ],
+          "markdownDescription": "Post-install surface: `home` opens webview dashboard, `walkthrough` opens VS Code walkthrough, `none` disables auto-open."
+        },
+        "moonchunk.openDocsInEditor": {
+          "type": "boolean",
+          "default": true,
+          "description": "Open docs index in editor tab instead of homepage."
+        }
+      }
+    }
+  }
+}

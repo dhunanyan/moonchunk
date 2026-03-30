@@ -68,6 +68,15 @@ class SyntaxCollector implements ANTLRErrorListener<Token> {
 }
 
 class AstBuilder extends AbstractParseTreeVisitor<unknown> implements MoonChunkVisitor<unknown> {
+  private tokens: CommonTokenStream;
+  private sourceCode: string;
+
+  constructor(tokens: CommonTokenStream, sourceCode: string) {
+    super();
+    this.tokens = tokens;
+    this.sourceCode = sourceCode;
+  }
+
   protected defaultResult(): unknown {
     return null;
   }
@@ -80,7 +89,9 @@ class AstBuilder extends AbstractParseTreeVisitor<unknown> implements MoonChunkV
   }
 
   private toExpr(ctx: ExpressionContext): string {
-    return ctx.text;
+    const start = ctx.start.startIndex;
+    const stop = ctx.stop ? ctx.stop.stopIndex : start;
+    return this.sourceCode.slice(start, stop + 1).trim();
   }
 
   visitProgram(ctx: ProgramContext): unknown {
@@ -120,9 +131,11 @@ class AstBuilder extends AbstractParseTreeVisitor<unknown> implements MoonChunkV
   }
 
   visitLetStatement(ctx: LetStatementContext): unknown {
+    const declaredType = ctx.typeName() ? ctx.typeName()!.text : null;
     return {
       type: 'Let',
       name: ctx.IDENTIFIER().text,
+      declaredType,
       expr: this.toExpr(ctx.expression()),
       line: ctx.start.line
     };
@@ -204,40 +217,9 @@ function parseProgramWithAntlr(code: string): { ast: any; diagnostics: Array<{ m
     return { ast: null, diagnostics: syntax.diagnostics };
   }
 
-  const builder = new AstBuilder();
+  const builder = new AstBuilder(tokens, code);
   const ast = builder.visit(tree);
   return { ast, diagnostics: [] };
-}
-
-function splitTopLevel(expr: string, operator: string): string[] | null {
-  let depth = 0;
-  let inString = false;
-  const parts: string[] = [];
-  let start = 0;
-
-  for (let i = 0; i < expr.length; i += 1) {
-    const ch = expr[i];
-    const prev = i > 0 ? expr[i - 1] : '';
-
-    if (ch === '"' && prev !== '\\') {
-      inString = !inString;
-      continue;
-    }
-
-    if (inString) continue;
-    if (ch === '(') depth += 1;
-    if (ch === ')') depth -= 1;
-
-    if (depth === 0 && expr.startsWith(operator, i)) {
-      parts.push(expr.slice(start, i).trim());
-      start = i + operator.length;
-      i += operator.length - 1;
-    }
-  }
-
-  if (parts.length === 0) return null;
-  parts.push(expr.slice(start).trim());
-  return parts;
 }
 
 function resolvePathValue(target: unknown, chain: string[]): unknown {
@@ -254,13 +236,35 @@ function resolvePathValue(target: unknown, chain: string[]): unknown {
 class Scope {
   parent: Scope | null;
   values: Map<string, unknown>;
+  declaredTypes: Map<string, string>;
 
   constructor(parent: Scope | null = null) {
     this.parent = parent;
     this.values = new Map();
+    this.declaredTypes = new Map();
   }
 
   set(name: string, value: unknown): void {
+    this.values.set(name, value);
+  }
+
+  declare(name: string, value: unknown, declaredType: string | null, line: number): void {
+    if (this.values.has(name)) {
+      throw new MoonChunkError(`Variable redeclaration in the same scope: ${name}`, line, 1);
+    }
+
+    if (declaredType) {
+      const actual = inferType(value);
+      if (!isAssignable(declaredType, actual)) {
+        throw new MoonChunkError(
+          `Type mismatch for ${name}: declared ${declaredType}, got ${actual}.`,
+          line,
+          1
+        );
+      }
+      this.declaredTypes.set(name, declaredType);
+    }
+
     this.values.set(name, value);
   }
 
@@ -275,61 +279,397 @@ class Scope {
   }
 }
 
+type NumericType = 'int' | 'float' | 'double';
+type RuntimeType = NumericType | 'bool' | 'string' | 'unknown';
+type NumericValue = { __kind: 'numeric'; numType: NumericType; value: number };
+
+function isNumericValue(value: unknown): value is NumericValue {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    (value as { __kind?: string }).__kind === 'numeric'
+  );
+}
+
+function makeNumeric(value: number, numType: NumericType): NumericValue {
+  if (numType === 'int') {
+    return { __kind: 'numeric', numType, value: Math.trunc(value) };
+  }
+  return { __kind: 'numeric', numType, value };
+}
+
+function numericRank(numType: NumericType): number {
+  if (numType === 'int') return 1;
+  if (numType === 'float') return 2;
+  return 3;
+}
+
+function promoteNumericType(a: NumericType, b: NumericType): NumericType {
+  return numericRank(a) >= numericRank(b) ? a : b;
+}
+
+function coerceToNumeric(value: unknown, line: number): NumericValue {
+  if (isNumericValue(value)) return value;
+  if (typeof value === 'number') {
+    return makeNumeric(value, Number.isInteger(value) ? 'int' : 'double');
+  }
+  throw new MoonChunkError(`Expected numeric value, got ${inferType(value)}.`, line, 1);
+}
+
+function stringifyValue(value: unknown): string {
+  if (isNumericValue(value)) {
+    if (value.numType === 'int') return String(Math.trunc(value.value));
+    if (Number.isInteger(value.value)) return value.value.toFixed(1);
+    return String(value.value);
+  }
+  if (value === null || value === undefined) return '';
+  return String(value);
+}
+
+function normalizeJsonNumbers(value: unknown): unknown {
+  if (typeof value === 'number') {
+    return makeNumeric(value, Number.isInteger(value) ? 'int' : 'double');
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeJsonNumbers(item));
+  }
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = normalizeJsonNumbers(v);
+    }
+    return out;
+  }
+  return value;
+}
+
+function inferType(value: unknown): RuntimeType {
+  if (isNumericValue(value)) return value.numType;
+  if (typeof value === 'number') return Number.isInteger(value) ? 'int' : 'double';
+  if (typeof value === 'boolean') return 'bool';
+  if (typeof value === 'string') return 'string';
+  return 'unknown';
+}
+
+function isAssignable(declaredType: string, inferredType: string): boolean {
+  if (declaredType === inferredType) return true;
+  if (declaredType === 'double' && (inferredType === 'int' || inferredType === 'float')) return true;
+  if (declaredType === 'float' && inferredType === 'int') return true;
+  return false;
+}
+
 function evalExpr(rawExpr: string, scope: Scope, cwd: string, line = 1): unknown {
+  type TokenType =
+    | 'number'
+    | 'string'
+    | 'identifier'
+    | 'true'
+    | 'false'
+    | 'and'
+    | 'or'
+    | 'not'
+    | '+'
+    | '-'
+    | '*'
+    | '/'
+    | '('
+    | ')'
+    | ','
+    | '.'
+    | '=='
+    | '!='
+    | '<'
+    | '>'
+    | '<='
+    | '>='
+    | 'eof';
+
+  type ExprToken = { type: TokenType; text: string };
+
   const expr = rawExpr.trim();
   if (!expr) return null;
 
-  const eq = splitTopLevel(expr, '==');
-  if (eq && eq.length === 2) return evalExpr(eq[0], scope, cwd, line) === evalExpr(eq[1], scope, cwd, line);
+  const tokens: ExprToken[] = [];
+  let i = 0;
 
-  const neq = splitTopLevel(expr, '!=');
-  if (neq && neq.length === 2) return evalExpr(neq[0], scope, cwd, line) !== evalExpr(neq[1], scope, cwd, line);
+  while (i < expr.length) {
+    const ch = expr[i];
 
-  const plus = splitTopLevel(expr, '+');
-  if (plus && plus.length > 1) {
-    return plus
-      .map((part) => evalExpr(part, scope, cwd, line))
-      .reduce((acc, val) => {
-        if (typeof acc === 'number' && typeof val === 'number') return acc + val;
-        return `${String(acc)}${String(val)}`;
-      });
-  }
-
-  if (expr.startsWith('data(') && expr.endsWith(')')) {
-    const arg = expr.slice(5, -1).trim();
-    const filePath = evalExpr(arg, scope, cwd, line);
-    if (typeof filePath !== 'string') {
-      throw new MoonChunkError('data(...) expects a string path.', line, 1);
+    if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') {
+      i += 1;
+      continue;
     }
-    const abs = path.resolve(cwd, filePath);
-    if (!fs.existsSync(abs)) {
-      throw new MoonChunkError(`Data file does not exist: ${filePath}`, line, 1);
+
+    const two = expr.slice(i, i + 2);
+    if (two === '==' || two === '!=' || two === '<=' || two === '>=') {
+      tokens.push({ type: two as TokenType, text: two });
+      i += 2;
+      continue;
     }
-    return JSON.parse(fs.readFileSync(abs, 'utf8'));
-  }
 
-  if (expr === 'true') return true;
-  if (expr === 'false') return false;
-  if (/^-?\d+(\.\d+)?$/.test(expr)) return Number(expr);
-
-  if (expr.startsWith('"') && expr.endsWith('"')) {
-    return expr.slice(1, -1);
-  }
-
-  if (expr.startsWith('(') && expr.endsWith(')')) {
-    return evalExpr(expr.slice(1, -1), scope, cwd, line);
-  }
-
-  if (/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/.test(expr)) {
-    const [root, ...rest] = expr.split('.');
-    const rootValue = scope.get(root);
-    if (rootValue === undefined) {
-      throw new MoonChunkError(`Unknown variable: ${root}`, line, 1);
+    if ('+-*/(),.<>'.includes(ch)) {
+      tokens.push({ type: ch as TokenType, text: ch });
+      i += 1;
+      continue;
     }
-    return rest.length === 0 ? rootValue : resolvePathValue(rootValue, rest);
+
+    if (ch === '"') {
+      let j = i + 1;
+      let str = '';
+      while (j < expr.length) {
+        const c = expr[j];
+        if (c === '\\' && j + 1 < expr.length) {
+          str += expr[j + 1];
+          j += 2;
+          continue;
+        }
+        if (c === '"') break;
+        str += c;
+        j += 1;
+      }
+      if (j >= expr.length || expr[j] !== '"') {
+        throw new MoonChunkError('Unterminated string literal in expression.', line, 1);
+      }
+      tokens.push({ type: 'string', text: str });
+      i = j + 1;
+      continue;
+    }
+
+    if (/[0-9]/.test(ch)) {
+      let j = i;
+      while (j < expr.length && /[0-9]/.test(expr[j])) j += 1;
+      if (expr[j] === '.') {
+        j += 1;
+        while (j < expr.length && /[0-9]/.test(expr[j])) j += 1;
+      }
+      if (/[fFdD]/.test(expr[j] || '')) j += 1;
+      tokens.push({ type: 'number', text: expr.slice(i, j) });
+      i = j;
+      continue;
+    }
+
+    if (/[A-Za-z_]/.test(ch)) {
+      let j = i;
+      while (j < expr.length && /[A-Za-z0-9_]/.test(expr[j])) j += 1;
+      const ident = expr.slice(i, j);
+      if (ident === 'true' || ident === 'false' || ident === 'and' || ident === 'or' || ident === 'not') {
+        tokens.push({ type: ident as TokenType, text: ident });
+      } else {
+        tokens.push({ type: 'identifier', text: ident });
+      }
+      i = j;
+      continue;
+    }
+
+    throw new MoonChunkError(`Unsupported character in expression: ${ch}`, line, 1);
   }
 
-  throw new MoonChunkError(`Unsupported expression: ${expr}`, line, 1);
+  tokens.push({ type: 'eof', text: '' });
+
+  let pos = 0;
+  const at = (): ExprToken => tokens[pos];
+  const consume = (type?: TokenType): ExprToken => {
+    const t = at();
+    if (type && t.type !== type) {
+      throw new MoonChunkError(`Expected token ${type}, got ${t.type}.`, line, 1);
+    }
+    pos += 1;
+    return t;
+  };
+  const match = (...types: TokenType[]): boolean => {
+    if (types.includes(at().type)) {
+      pos += 1;
+      return true;
+    }
+    return false;
+  };
+
+  const evalNumberLiteral = (text: string): NumericValue => {
+    if (/[fF]$/.test(text)) return makeNumeric(Number(text.slice(0, -1)), 'float');
+    if (/[dD]$/.test(text)) return makeNumeric(Number(text.slice(0, -1)), 'double');
+    if (text.includes('.')) return makeNumeric(Number(text), 'double');
+    return makeNumeric(Number(text), 'int');
+  };
+
+  const parsePrimary = (): unknown => {
+    const t = at();
+
+    if (match('number')) return evalNumberLiteral(t.text);
+    if (match('string')) return t.text;
+    if (match('true')) return true;
+    if (match('false')) return false;
+
+    if (match('(')) {
+      const v = parseOr();
+      consume(')');
+      return v;
+    }
+
+    if (match('identifier')) {
+      const ident = t.text;
+
+      if (match('(')) {
+        const args: unknown[] = [];
+        if (at().type !== ')') {
+          args.push(parseOr());
+          while (match(',')) args.push(parseOr());
+        }
+        consume(')');
+
+        if (ident === 'data') {
+          if (args.length !== 1) {
+            throw new MoonChunkError('data(...) expects exactly one argument.', line, 1);
+          }
+          if (typeof args[0] !== 'string') {
+            throw new MoonChunkError('data(...) expects a string path.', line, 1);
+          }
+          const abs = path.resolve(cwd, args[0]);
+          if (!fs.existsSync(abs)) {
+            throw new MoonChunkError(`Data file does not exist: ${args[0]}`, line, 1);
+          }
+          return normalizeJsonNumbers(JSON.parse(fs.readFileSync(abs, 'utf8')));
+        }
+
+        throw new MoonChunkError(`Unsupported function call: ${ident}(...)`, line, 1);
+      }
+
+      let value = scope.get(ident);
+      if (value === undefined) {
+        throw new MoonChunkError(`Unknown variable: ${ident}`, line, 1);
+      }
+      while (match('.')) {
+        const seg = consume('identifier').text;
+        value = resolvePathValue(value, [seg]);
+      }
+      return value;
+    }
+
+    throw new MoonChunkError(`Unexpected token in expression: ${t.type}`, line, 1);
+  };
+
+  const parseUnary = (): unknown => {
+    if (match('not')) {
+      const v = parseUnary();
+      if (typeof v !== 'boolean') {
+        throw new MoonChunkError(`Operator not expects bool, got ${inferType(v)}.`, line, 1);
+      }
+      return !v;
+    }
+    if (match('-')) {
+      const v = coerceToNumeric(parseUnary(), line);
+      return makeNumeric(-v.value, v.numType);
+    }
+    return parsePrimary();
+  };
+
+  const parseMul = (): unknown => {
+    let left = parseUnary();
+    while (at().type === '*' || at().type === '/') {
+      const op = consume().type;
+      const a = coerceToNumeric(left, line);
+      const b = coerceToNumeric(parseUnary(), line);
+
+      if (op === '*') {
+        left = makeNumeric(a.value * b.value, promoteNumericType(a.numType, b.numType));
+      } else {
+        if (a.numType === 'int' && b.numType === 'int') {
+          left = makeNumeric(Math.trunc(a.value / b.value), 'int');
+        } else {
+          left = makeNumeric(a.value / b.value, promoteNumericType(a.numType, b.numType));
+        }
+      }
+    }
+    return left;
+  };
+
+  const parseAdd = (): unknown => {
+    let left = parseMul();
+    while (at().type === '+' || at().type === '-') {
+      const op = consume().type;
+      const right = parseMul();
+
+      if (op === '+') {
+        if (isNumericValue(left) || isNumericValue(right) || typeof left === 'number' || typeof right === 'number') {
+          if ((typeof left === 'string') || (typeof right === 'string')) {
+            left = `${stringifyValue(left)}${stringifyValue(right)}`;
+            continue;
+          }
+          const a = coerceToNumeric(left, line);
+          const b = coerceToNumeric(right, line);
+          left = makeNumeric(a.value + b.value, promoteNumericType(a.numType, b.numType));
+          continue;
+        }
+        left = `${stringifyValue(left)}${stringifyValue(right)}`;
+      } else {
+        const a = coerceToNumeric(left, line);
+        const b = coerceToNumeric(right, line);
+        left = makeNumeric(a.value - b.value, promoteNumericType(a.numType, b.numType));
+      }
+    }
+    return left;
+  };
+
+  const parseCmp = (): unknown => {
+    let left = parseAdd();
+    while (['<', '>', '<=', '>='].includes(at().type)) {
+      const op = consume().type;
+      const a = coerceToNumeric(left, line);
+      const b = coerceToNumeric(parseAdd(), line);
+      if (op === '<') left = a.value < b.value;
+      if (op === '>') left = a.value > b.value;
+      if (op === '<=') left = a.value <= b.value;
+      if (op === '>=') left = a.value >= b.value;
+    }
+    return left;
+  };
+
+  const parseEq = (): unknown => {
+    let left = parseCmp();
+    while (at().type === '==' || at().type === '!=') {
+      const op = consume().type;
+      const right = parseCmp();
+      let eq = false;
+      if ((isNumericValue(left) || typeof left === 'number') && (isNumericValue(right) || typeof right === 'number')) {
+        const a = coerceToNumeric(left, line);
+        const b = coerceToNumeric(right, line);
+        eq = a.value === b.value;
+      } else {
+        eq = left === right;
+      }
+      left = op === '==' ? eq : !eq;
+    }
+    return left;
+  };
+
+  const parseAnd = (): unknown => {
+    let left = parseEq();
+    while (match('and')) {
+      const right = parseEq();
+      if (typeof left !== 'boolean' || typeof right !== 'boolean') {
+        throw new MoonChunkError('and expects bool operands.', line, 1);
+      }
+      left = left && right;
+    }
+    return left;
+  };
+
+  const parseOr = (): unknown => {
+    let left = parseAnd();
+    while (match('or')) {
+      const right = parseAnd();
+      if (typeof left !== 'boolean' || typeof right !== 'boolean') {
+        throw new MoonChunkError('or expects bool operands.', line, 1);
+      }
+      left = left || right;
+    }
+    return left;
+  };
+
+  const result = parseOr();
+  if (at().type !== 'eof') {
+    throw new MoonChunkError(`Unexpected trailing token: ${at().type}`, line, 1);
+  }
+  return result;
 }
 
 function renderTemplate(template: string, scope: Scope, cwd: string): string {
@@ -413,7 +753,7 @@ function renderTemplate(template: string, scope: Scope, cwd: string): string {
       if (node.type === 'Text') out += node.value;
       if (node.type === 'Expr') {
         const value = evalExpr(node.expr, localScope, cwd, 1);
-        out += value === null || value === undefined ? '' : String(value);
+        out += stringifyValue(value);
       }
       if (node.type === 'If') {
         const cond = evalExpr(node.condition, localScope, cwd, 1);
@@ -439,7 +779,7 @@ function renderTemplate(template: string, scope: Scope, cwd: string): string {
 function renderStringWithInterpolations(value: string, scope: Scope, cwd: string): string {
   return value.replace(/\{\{\s*([^}]+)\s*\}\}/g, (_all, expr) => {
     const resolved = evalExpr(expr, scope, cwd, 1);
-    return resolved === null || resolved === undefined ? '' : String(resolved);
+    return stringifyValue(resolved);
   });
 }
 
@@ -490,7 +830,8 @@ function runAst(ast: any, options: ExecOptions): { output: string[]; result: unk
 
     for (const statement of node.body) {
       if (statement.type === 'Let') {
-        pageScope.set(statement.name, evalExpr(statement.expr, pageScope, currentDir, statement.line));
+        const value = evalExpr(statement.expr, pageScope, currentDir, statement.line);
+        pageScope.declare(statement.name, value, statement.declaredType ?? null, statement.line);
       } else if (statement.type === 'Content') {
         contentHtml = renderTemplate(statement.template, pageScope, currentDir);
       }
@@ -550,7 +891,8 @@ function runAst(ast: any, options: ExecOptions): { output: string[]; result: unk
       return;
     }
     if (node.type === 'Let') {
-      scope.set(node.name, evalExpr(node.expr, scope, currentDir, node.line));
+      const value = evalExpr(node.expr, scope, currentDir, node.line);
+      scope.declare(node.name, value, node.declaredType ?? null, node.line);
       return;
     }
     if (node.type === 'If') {

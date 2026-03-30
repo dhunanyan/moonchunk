@@ -1,0 +1,50 @@
+{
+  "MoonChunk Function": {
+    "prefix": "mfn",
+    "body": [
+      "fn ${1:name}(${2:input}: ${3:type}) -> ${4:void} {",
+      "  ${5:// TODO}",
+      "}"
+    ],
+    "description": "Create a MoonChunk function"
+  },
+  "MoonChunk Chunk Declaration": {
+    "prefix": "mchunk",
+    "body": [
+      "chunk ${1:PipelineName} {",
+      "  emit ${2:output};",
+      "}"
+    ],
+    "description": "Create a chunk declaration"
+  },
+  "MoonChunk If/Else": {
+    "prefix": "mif",
+    "body": [
+      "if (${1:condition}) {",
+      "  ${2:// body}",
+      "} else {",
+      "  ${3:// fallback}",
+      "}"
+    ],
+    "description": "Create an if/else statement"
+  },
+  "MoonChunk For In": {
+    "prefix": "mfor",
+    "body": [
+      "for ${1:item} in ${2:items} {",
+      "  ${3:// body}",
+      "}"
+    ],
+    "description": "Create a for-in loop"
+  },
+  "MoonChunk Match": {
+    "prefix": "mmatch",
+    "body": [
+      "match ${1:value} {",
+      "  ${2:PatternA} => ${3:resultA},",
+      "  _ => ${4:defaultResult}",
+      "}"
+    ],
+    "description": "Create a pattern matching block"
+  }
+}
