@@ -10,6 +10,15 @@
     "skipLibCheck": true,
     "noEmitOnError": true
   },
-  "include": ["index.ts", "moonchunk.ts", ".antlr/**/*.ts"],
-  "exclude": ["node_modules", "dist", "examples"]
+  "include": [
+    "index.ts",
+    "moonchunk/**/*.ts",
+    ".antlr/**/*.ts",
+    "types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "examples"
+  ]
 }
