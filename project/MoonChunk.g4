@@ -11,7 +11,12 @@ siteDecl
 siteStatement
   : importStatement
   | outputStatement
-  | letStatement
+  | envBlock
+  | runtimeSiteStatement
+  ;
+
+runtimeSiteStatement
+  : letStatement
   | pageStatement
   | forStatement
   | ifStatement
@@ -23,6 +28,14 @@ importStatement
 
 outputStatement
   : OUTPUT STRING NEWLINE+
+  ;
+
+envBlock
+  : ENV LBRACE NEWLINE* globalStatement* RBRACE NEWLINE*
+  ;
+
+globalStatement
+  : GLOBAL IDENTIFIER (COLON typeName)? ASSIGN expression NEWLINE+
   ;
 
 letStatement
@@ -51,11 +64,11 @@ contentStatement
   ;
 
 forStatement
-  : FOR IDENTIFIER IN expression LBRACE NEWLINE* siteStatement* RBRACE NEWLINE*
+  : FOR IDENTIFIER IN expression LBRACE NEWLINE* runtimeSiteStatement* RBRACE NEWLINE*
   ;
 
 ifStatement
-  : IF expression LBRACE NEWLINE* siteStatement* RBRACE NEWLINE*
+  : IF expression LBRACE NEWLINE* runtimeSiteStatement* RBRACE NEWLINE*
   ;
 
 expression
@@ -120,6 +133,8 @@ identifierPath
 SITE    : 'site' ;
 IMPORT  : 'import' ;
 OUTPUT  : 'output' ;
+ENV     : 'env' ;
+GLOBAL  : 'global' ;
 PAGE    : 'page' ;
 USING   : 'using' ;
 LET     : 'let' ;

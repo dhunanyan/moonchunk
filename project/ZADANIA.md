@@ -3,8 +3,6 @@
 ## Zadania na 26.03 ✅
 
 ```
-Szanowni Państwo,
-
 Na ćwiczenia w dniu 26.03 należy przygotować wersję „Hello world” Państwa języka.
 
 W ramach tej wersji należy:
@@ -20,7 +18,7 @@ zaimplementować prostą obsługę błędów syntaktycznych – jeśli program n
 przygotować proste programy typu „hello world” i przetestować czy Państwa interpreter/translator/kompilator działa poprawnie dla tych programów.
 ```
 
-## Zadania na 16.04 ⚠️
+## Zadania na 16.04 ✅
 
 ```
 Należy rozszerzyć implementację swojego języka o następujące elementy:

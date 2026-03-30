@@ -14,8 +14,11 @@ import {
   ProgramContext,
   SiteDeclContext,
   SiteStatementContext,
+  RuntimeSiteStatementContext,
   ImportStatementContext,
   OutputStatementContext,
+  EnvBlockContext,
+  GlobalStatementContext,
   LetStatementContext,
   PageStatementContext,
   PageInnerStatementContext,
@@ -107,6 +110,12 @@ class AstBuilder extends AbstractParseTreeVisitor<unknown> implements MoonChunkV
   visitSiteStatement(ctx: SiteStatementContext): unknown {
     if (ctx.importStatement()) return this.visit(ctx.importStatement()!);
     if (ctx.outputStatement()) return this.visit(ctx.outputStatement()!);
+    if (ctx.envBlock()) return this.visit(ctx.envBlock()!);
+    if (ctx.runtimeSiteStatement()) return this.visit(ctx.runtimeSiteStatement()!);
+    return null;
+  }
+
+  visitRuntimeSiteStatement(ctx: RuntimeSiteStatementContext): unknown {
     if (ctx.letStatement()) return this.visit(ctx.letStatement()!);
     if (ctx.pageStatement()) return this.visit(ctx.pageStatement()!);
     if (ctx.forStatement()) return this.visit(ctx.forStatement()!);
@@ -126,6 +135,25 @@ class AstBuilder extends AbstractParseTreeVisitor<unknown> implements MoonChunkV
     return {
       type: 'Output',
       value: this.unquote(ctx.STRING().text),
+      line: ctx.start.line
+    };
+  }
+
+  visitEnvBlock(ctx: EnvBlockContext): unknown {
+    return {
+      type: 'Env',
+      body: ctx.globalStatement().map((g) => this.visit(g)),
+      line: ctx.start.line
+    };
+  }
+
+  visitGlobalStatement(ctx: GlobalStatementContext): unknown {
+    const declaredType = ctx.typeName() ? ctx.typeName()!.text : null;
+    return {
+      type: 'Global',
+      name: ctx.IDENTIFIER().text,
+      declaredType,
+      expr: this.toExpr(ctx.expression()),
       line: ctx.start.line
     };
   }
@@ -178,7 +206,7 @@ class AstBuilder extends AbstractParseTreeVisitor<unknown> implements MoonChunkV
   }
 
   visitForStatement(ctx: ForStatementContext): unknown {
-    const body = ctx.siteStatement().map((stmt) => this.visit(stmt));
+    const body = ctx.runtimeSiteStatement().map((stmt) => this.visit(stmt));
     return {
       type: 'For',
       item: ctx.IDENTIFIER().text,
@@ -189,7 +217,7 @@ class AstBuilder extends AbstractParseTreeVisitor<unknown> implements MoonChunkV
   }
 
   visitIfStatement(ctx: IfStatementContext): unknown {
-    const body = ctx.siteStatement().map((stmt) => this.visit(stmt));
+    const body = ctx.runtimeSiteStatement().map((stmt) => this.visit(stmt));
     return {
       type: 'If',
       condition: this.toExpr(ctx.expression()),
@@ -358,7 +386,15 @@ function isAssignable(declaredType: string, inferredType: string): boolean {
   return false;
 }
 
-function evalExpr(rawExpr: string, scope: Scope, cwd: string, line = 1): unknown {
+function evalExpr(
+  rawExpr: string,
+  scope: Scope,
+  cwd: string,
+  line = 1,
+  helpers: { getGlobal: (name: string, line: number) => unknown } = {
+    getGlobal: () => undefined
+  }
+): unknown {
   type TokenType =
     | 'number'
     | 'string'
@@ -534,9 +570,8 @@ function evalExpr(rawExpr: string, scope: Scope, cwd: string, line = 1): unknown
       }
 
       let value = scope.get(ident);
-      if (value === undefined) {
-        throw new MoonChunkError(`Unknown variable: ${ident}`, line, 1);
-      }
+      if (value === undefined) value = helpers.getGlobal(ident, line);
+      if (value === undefined) throw new MoonChunkError(`Unknown variable: ${ident}`, line, 1);
       while (match('.')) {
         const seg = consume('identifier').text;
         value = resolvePathValue(value, [seg]);
@@ -672,7 +707,14 @@ function evalExpr(rawExpr: string, scope: Scope, cwd: string, line = 1): unknown
   return result;
 }
 
-function renderTemplate(template: string, scope: Scope, cwd: string): string {
+function renderTemplate(
+  template: string,
+  scope: Scope,
+  cwd: string,
+  helpers: { getGlobal: (name: string, line: number) => unknown } = {
+    getGlobal: () => undefined
+  }
+): string {
   type TemplateNode =
     | { type: 'Text'; value: string }
     | { type: 'Expr'; expr: string }
@@ -752,15 +794,15 @@ function renderTemplate(template: string, scope: Scope, cwd: string): string {
     for (const node of nodes) {
       if (node.type === 'Text') out += node.value;
       if (node.type === 'Expr') {
-        const value = evalExpr(node.expr, localScope, cwd, 1);
+        const value = evalExpr(node.expr, localScope, cwd, 1, helpers);
         out += stringifyValue(value);
       }
       if (node.type === 'If') {
-        const cond = evalExpr(node.condition, localScope, cwd, 1);
+        const cond = evalExpr(node.condition, localScope, cwd, 1, helpers);
         if (Boolean(cond)) out += renderNodes(node.body, localScope);
       }
       if (node.type === 'For') {
-        const source = evalExpr(node.sourceExpr, localScope, cwd, 1);
+        const source = evalExpr(node.sourceExpr, localScope, cwd, 1, helpers);
         if (!Array.isArray(source)) throw new MoonChunkError('Template for-loop requires array value.', 1, 1);
         for (const item of source) {
           const child = localScope.derive();
@@ -776,9 +818,16 @@ function renderTemplate(template: string, scope: Scope, cwd: string): string {
   return renderNodes(parsed.nodes, scope);
 }
 
-function renderStringWithInterpolations(value: string, scope: Scope, cwd: string): string {
+function renderStringWithInterpolations(
+  value: string,
+  scope: Scope,
+  cwd: string,
+  helpers: { getGlobal: (name: string, line: number) => unknown } = {
+    getGlobal: () => undefined
+  }
+): string {
   return value.replace(/\{\{\s*([^}]+)\s*\}\}/g, (_all, expr) => {
-    const resolved = evalExpr(expr, scope, cwd, 1);
+    const resolved = evalExpr(expr, scope, cwd, 1, helpers);
     return stringifyValue(resolved);
   });
 }
@@ -819,6 +868,40 @@ function runAst(ast: any, options: ExecOptions): { output: string[]; result: unk
   const globalScope = new Scope();
   let outputDir = path.resolve(cwd, 'dist');
   const importStack = new Set<string>();
+  const globalSymbols = new Map<string, { declaredType: string | null; expr: string; line: number; dir: string }>();
+  const globalValues = new Map<string, unknown>();
+  const resolvingGlobals = new Set<string>();
+
+  const getGlobal = (name: string, line: number): unknown => {
+    if (globalValues.has(name)) return globalValues.get(name);
+    if (!globalSymbols.has(name)) return undefined;
+    return evaluateGlobal(name, line);
+  };
+
+  function evaluateGlobal(name: string, line: number): unknown {
+    if (globalValues.has(name)) return globalValues.get(name);
+    const symbol = globalSymbols.get(name);
+    if (!symbol) {
+      throw new MoonChunkError(`Unknown variable: ${name}`, line, 1);
+    }
+    if (resolvingGlobals.has(name)) {
+      throw new MoonChunkError(`Circular global dependency for variable: ${name}`, symbol.line, 1);
+    }
+
+    resolvingGlobals.add(name);
+    const value = evalExpr(symbol.expr, new Scope(), symbol.dir, symbol.line, { getGlobal });
+    const actual = inferType(value);
+    if (symbol.declaredType && !isAssignable(symbol.declaredType, actual)) {
+      throw new MoonChunkError(
+        `Type mismatch for ${name}: declared ${symbol.declaredType}, got ${actual}.`,
+        symbol.line,
+        1
+      );
+    }
+    globalValues.set(name, value);
+    resolvingGlobals.delete(name);
+    return value;
+  }
 
   function execList(nodes: unknown[], scope: Scope, currentDir: string): void {
     for (const node of nodes as any[]) execNode(node, scope, currentDir);
@@ -830,23 +913,23 @@ function runAst(ast: any, options: ExecOptions): { output: string[]; result: unk
 
     for (const statement of node.body) {
       if (statement.type === 'Let') {
-        const value = evalExpr(statement.expr, pageScope, currentDir, statement.line);
+        const value = evalExpr(statement.expr, pageScope, currentDir, statement.line, { getGlobal });
         pageScope.declare(statement.name, value, statement.declaredType ?? null, statement.line);
       } else if (statement.type === 'Content') {
-        contentHtml = renderTemplate(statement.template, pageScope, currentDir);
+        contentHtml = renderTemplate(statement.template, pageScope, currentDir, { getGlobal });
       }
     }
 
     pageScope.set('content', contentHtml);
 
-    const route = renderStringWithInterpolations(node.route, pageScope, currentDir);
+    const route = renderStringWithInterpolations(node.route, pageScope, currentDir, { getGlobal });
     const layoutPath = path.resolve(currentDir, node.layout);
     if (!fs.existsSync(layoutPath)) {
       throw new MoonChunkError(`Layout file does not exist: ${node.layout}`, node.line, 1);
     }
 
     const layout = fs.readFileSync(layoutPath, 'utf8');
-    const html = renderTemplate(layout, pageScope, currentDir);
+    const html = renderTemplate(layout, pageScope, currentDir, { getGlobal });
 
     const relativeOut = routeToOutputFile(route);
     const absOut = path.resolve(outputDir, relativeOut);
@@ -881,6 +964,50 @@ function runAst(ast: any, options: ExecOptions): { output: string[]; result: unk
     importStack.delete(absPath);
   }
 
+  function registerGlobals(nodes: unknown[], currentDir: string): void {
+    for (const node of nodes as any[]) {
+      if (node.type === 'Import') {
+        if (!node.value.endsWith('.mncnk')) {
+          throw new MoonChunkError('Imported file must use .mncnk extension.', node.line, 1);
+        }
+        const absPath = path.resolve(currentDir, node.value);
+        if (!fs.existsSync(absPath)) {
+          throw new MoonChunkError(`Imported file does not exist: ${node.value}`, node.line, 1);
+        }
+        if (importStack.has(absPath)) {
+          throw new MoonChunkError(`Circular import detected: ${absPath}`, node.line, 1);
+        }
+        importStack.add(absPath);
+        const importedAst = parseSiteOrFragment(fs.readFileSync(absPath, 'utf8'));
+        registerGlobals(importedAst.body, path.dirname(absPath));
+        importStack.delete(absPath);
+        continue;
+      }
+
+      if (node.type === 'Env') {
+        for (const decl of node.body as any[]) {
+          if (decl.type !== 'Global') {
+            throw new MoonChunkError('Only global declarations are allowed inside env block.', decl.line || node.line, 1);
+          }
+          if (globalSymbols.has(decl.name)) {
+            throw new MoonChunkError(`Global variable redeclaration: ${decl.name}`, decl.line, 1);
+          }
+          globalSymbols.set(decl.name, {
+            declaredType: decl.declaredType ?? null,
+            expr: decl.expr,
+            line: decl.line,
+            dir: currentDir
+          });
+        }
+        continue;
+      }
+
+      if (node.type === 'Global') {
+        throw new MoonChunkError('Global declaration must be inside env block.', node.line, 1);
+      }
+    }
+  }
+
   function execNode(node: any, scope: Scope, currentDir: string): void {
     if (node.type === 'Import') {
       execImportedFile(node.value, scope, currentDir, node.line);
@@ -890,18 +1017,24 @@ function runAst(ast: any, options: ExecOptions): { output: string[]; result: unk
       outputDir = path.resolve(cwd, node.value);
       return;
     }
+    if (node.type === 'Env') {
+      return;
+    }
+    if (node.type === 'Global') {
+      return;
+    }
     if (node.type === 'Let') {
-      const value = evalExpr(node.expr, scope, currentDir, node.line);
+      const value = evalExpr(node.expr, scope, currentDir, node.line, { getGlobal });
       scope.declare(node.name, value, node.declaredType ?? null, node.line);
       return;
     }
     if (node.type === 'If') {
-      const cond = evalExpr(node.condition, scope, currentDir, node.line);
+      const cond = evalExpr(node.condition, scope, currentDir, node.line, { getGlobal });
       if (Boolean(cond)) execList(node.body, scope.derive(), currentDir);
       return;
     }
     if (node.type === 'For') {
-      const data = evalExpr(node.sourceExpr, scope, currentDir, node.line);
+      const data = evalExpr(node.sourceExpr, scope, currentDir, node.line, { getGlobal });
       if (!Array.isArray(data)) throw new MoonChunkError('For source must be an array.', node.line, 1);
       for (const item of data) {
         const child = scope.derive();
@@ -915,6 +1048,11 @@ function runAst(ast: any, options: ExecOptions): { output: string[]; result: unk
       return;
     }
     throw new MoonChunkError(`Unsupported node type: ${node.type}`, 1, 1);
+  }
+
+  registerGlobals(ast.body, cwd);
+  for (const [name, _decl] of globalSymbols) {
+    evaluateGlobal(name, 1);
   }
 
   execList(ast.body, globalScope, cwd);
