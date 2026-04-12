@@ -1,0 +1,4 @@
+chunk "main" {
+  const result = ((x: int): int => x + 1)(41);
+  const msg = (function(name: string): string { return "hi " + name; })("Davit");
+};

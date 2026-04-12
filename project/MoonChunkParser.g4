@@ -7,15 +7,11 @@ program
   ;
 
 fragmentProgram
-  : chunkStatement* EOF
+  : chunkDecl+ EOF
   ;
 
 chunkDecl
-  : CHUNK chunkNameLiteral LBRACE chunkStatement* RBRACE SEMI
-  ;
-
-chunkNameLiteral
-  : STRING
+  : CHUNK STRING LBRACE chunkStatement* RBRACE SEMI
   ;
 
 chunkStatement
@@ -117,7 +113,6 @@ contentNode
   : htmlElement
   | htmlSelfClosingElement
   | dynamicMustache
-  | dynamicInline
   | textNode
   ;
 
@@ -137,10 +132,6 @@ attribute
 
 dynamicMustache
   : LBRACE expression RBRACE
-  ;
-
-dynamicInline
-  : expression
   ;
 
 textNode
@@ -198,21 +189,43 @@ multiplicativeExpr
 
 unaryExpr
   : (NOT | MINUS) unaryExpr
-  | primary
+  | callExpr
   ;
 
-primary
-  : functionCall
+callExpr
+  : callablePrimary (LPAREN argumentList? RPAREN)*
+  | nonCallablePrimary
+  ;
+
+callablePrimary
+  : arrowFunctionExpr
+  | functionExpr
   | identifierPath
-  | STRING
+  | LPAREN arrowFunctionExpr RPAREN
+  | LPAREN functionExpr RPAREN
+  | LPAREN identifierPath RPAREN
+  ;
+
+nonCallablePrimary
+  : STRING
   | NUMBER
   | TRUE
   | FALSE
   | LPAREN expression RPAREN
   ;
 
-functionCall
-  : IDENTIFIER LPAREN argumentList? RPAREN
+functionExpr
+  : FUNCTION LPAREN parameterList? RPAREN (COLON typeName)? LBRACE functionBodyStatement* RBRACE
+  ;
+
+arrowFunctionExpr
+  : LPAREN parameterList? RPAREN (COLON typeName)? ARROW arrowFunctionBody
+  | IDENTIFIER ARROW arrowFunctionBody
+  ;
+
+arrowFunctionBody
+  : expression
+  | LBRACE functionBodyStatement* RBRACE
   ;
 
 argumentList

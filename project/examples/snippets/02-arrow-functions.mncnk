@@ -1,0 +1,4 @@
+chunk "main" {
+  const add = (a: int, b: int): int => a + b;
+  const greet = name => "hi " + name;
+};

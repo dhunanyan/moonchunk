@@ -1,0 +1,7 @@
+chunk "main" {
+  page "/" using "./layout.tpl" {
+    content {
+      <div>{((name) => "Hello " + name)("MoonChunk")}</div>;
+    };
+  };
+};

@@ -28,6 +28,7 @@ TYPE_DOUBLE : 'double' ;
 TYPE_BOOL   : 'bool' ;
 TYPE_STRING : 'string' ;
 
+ARROW   : '=>' ;
 EQ      : '==' ;
 NEQ     : '!=' ;
 ASSIGN  : '=' ;
@@ -78,6 +79,7 @@ CONTENT_END
   : '}' [ \t\r\n\f]* ';' -> popMode
   ;
 
+C_ARROW   : '=>' -> type(ARROW) ;
 C_EQ      : '==' -> type(EQ) ;
 C_NEQ     : '!=' -> type(NEQ) ;
 C_LTE     : '<=' -> type(LTE) ;
