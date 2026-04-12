@@ -66,6 +66,13 @@ export function runAst(ast: AstProgramNode, options: ExecOptions): { output: str
 
     const selectedChunks: AstChunkNode[] = [];
     for (const item of importNode.clause.items) {
+      if (item.alias && item.alias !== item.name) {
+        throw new MoonChunkError(
+          `Aliased named imports are not supported yet: ${item.name} as ${item.alias}.`,
+          importNode.line,
+          1
+        );
+      }
       const chunk = program.chunks.find((candidate) => candidate.name === item.name);
       if (!chunk) {
         throw new MoonChunkError(`Imported chunk "${item.name}" not found in ${importNode.source}.`, importNode.line, 1);
@@ -270,7 +277,8 @@ export function runAst(ast: AstProgramNode, options: ExecOptions): { output: str
     }
 
     if (node.type === 'Page') {
-      throw new MoonChunkError('Page statements are not allowed in function runtime blocks.', node.line, 1);
+      execPage(node, scope, currentDir);
+      return;
     }
   }
 

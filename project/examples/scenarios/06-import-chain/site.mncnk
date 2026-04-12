@@ -1,4 +1,4 @@
-site "Scenario06" {
-  output "./dist"
-  import "./fragments/root.mncnk"
-}
+chunk "Scenario06" {
+  output "./dist";
+  import * as RootChunks from "./fragments/root.mncnk";
+};

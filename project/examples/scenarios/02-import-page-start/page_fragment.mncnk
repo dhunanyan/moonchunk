@@ -1,8 +1,10 @@
-page "/" using "layout.tpl" {
-  let title = "Import starts with page"
-  let msg = "Fragment first token: page"
-  content {
-    <h1>{{ title }}</h1>
-    <p>{{ msg }}</p>
-  }
-}
+chunk "PageFragment" {
+  page "/" using "layout.tpl" {
+    let title = "Import starts with page";
+    let msg = "Fragment first token: page";
+    content {
+      <h1>{title}</h1>
+      <p>{msg}</p>
+    };
+  };
+};

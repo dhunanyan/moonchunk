@@ -1,2 +1,4 @@
-import "./shared.mncnk"
-import "./pages.mncnk"
+chunk "Root" {
+  import * as SharedChunks from "./shared.mncnk";
+  import * as PageChunks from "./pages.mncnk";
+};

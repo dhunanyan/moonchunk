@@ -1,4 +1,4 @@
-site "Scenario05" {
-  output "./dist"
-  import "./let_fragment.mncnk"
-}
+chunk "Scenario05" {
+  output "./dist";
+  import * as Fragments from "./let_fragment.mncnk";
+};

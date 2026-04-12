@@ -1,47 +1,47 @@
-site "Scenario07BasicCalculations" {
-  output "./dist"
+chunk "Scenario07BasicCalculations" {
+  output "./dist";
 
   env {
-    global title: string = "07 - Basic Calculations"
+    global title: string = "07 - Basic Calculations";
 
-    global int_div: int = 1 / 2
-    global double_div: double = 1 / 2.0
-    global float_div: float = 1f / 2
+    global int_div: int = 1 / 2;
+    global double_div: double = 1 / 2.0;
+    global float_div: float = 1f / 2;
 
-    global int_mul: int = 3 * 4
-    global double_mul: double = 3 * 4.0
-    global float_add: float = 2f + 3
-    global double_sub: double = 10.5 - 2
+    global int_mul: int = 3 * 4;
+    global double_mul: double = 3 * 4.0;
+    global float_add: float = 2f + 3;
+    global double_sub: double = 10.5 - 2;
 
-    global cmp_int: bool = (1 / 2) == 0
-    global cmp_double: bool = (1 / 2.0) == 0.5
-    global logic_mix: bool = cmp_int and cmp_double
-  }
+    global cmp_int: bool = (1 / 2) == 0;
+    global cmp_double: bool = (1 / 2.0) == 0.5;
+    global logic_mix: bool = cmp_int and cmp_double;
+  };
 
   page "/" using "layout.tpl" {
     content {
-      <h1>{{ title }}</h1>
+      <h1>{title}</h1>
       <h2>Division</h2>
       <ul>
-        <li>int_div (int): {{ int_div }}</li>
-        <li>double_div (double): {{ double_div }}</li>
-        <li>float_div (float): {{ float_div }}</li>
+        <li>int_div (int): {int_div}</li>
+        <li>double_div (double): {double_div}</li>
+        <li>float_div (float): {float_div}</li>
       </ul>
 
       <h2>Mixed Arithmetic</h2>
       <ul>
-        <li>int_mul (int): {{ int_mul }}</li>
-        <li>double_mul (double): {{ double_mul }}</li>
-        <li>float_add (float): {{ float_add }}</li>
-        <li>double_sub (double): {{ double_sub }}</li>
+        <li>int_mul (int): {int_mul}</li>
+        <li>double_mul (double): {double_mul}</li>
+        <li>float_add (float): {float_add}</li>
+        <li>double_sub (double): {double_sub}</li>
       </ul>
 
       <h2>Comparisons and Logic</h2>
       <ul>
-        <li>cmp_int: {{ cmp_int }}</li>
-        <li>cmp_double: {{ cmp_double }}</li>
-        <li>logic_mix: {{ logic_mix }}</li>
+        <li>cmp_int: {cmp_int}</li>
+        <li>cmp_double: {cmp_double}</li>
+        <li>logic_mix: {logic_mix}</li>
       </ul>
-    }
-  }
-}
+    };
+  };
+};

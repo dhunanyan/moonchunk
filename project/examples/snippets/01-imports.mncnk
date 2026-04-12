@@ -1,4 +1,4 @@
 chunk "main" {
   import { header, footer } from "shared.mncnk";
-  import * as Chunks from "shared.mncnk";
+  import * as Chunks from "shared_ns.mncnk";
 };

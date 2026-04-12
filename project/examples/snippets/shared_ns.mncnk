@@ -1,0 +1,7 @@
+chunk "header_ns" {
+  let nsHeaderTitle = "Shared NS Header";
+};
+
+chunk "footer_ns" {
+  let nsFooterTitle = "Shared NS Footer";
+};

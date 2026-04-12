@@ -1,1 +1,3 @@
-let siteName = "Nested imports"
+chunk "Shared" {
+  let siteName = "Nested imports";
+};

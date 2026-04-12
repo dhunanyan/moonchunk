@@ -1,0 +1,7 @@
+chunk "header" {
+  let headerTitle = "Shared Header";
+};
+
+chunk "footer" {
+  let footerTitle = "Shared Footer";
+};

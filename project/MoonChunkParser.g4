@@ -150,29 +150,7 @@ attribute
   ;
 
 dynamicMustache
-  : LBRACE dynamicRenderExpr RBRACE
-  ;
-
-dynamicRenderExpr
-  : renderTernaryExpr
-  ;
-
-renderTernaryExpr
-  : orExpr QUESTION dynamicRenderExpr COLON dynamicRenderExpr
-  | renderAtom
-  ;
-
-renderAtom
-  : invokedCallable
-  | STRING
-  | NUMBER
-  | TRUE
-  | FALSE
-  | LPAREN dynamicRenderExpr RPAREN
-  ;
-
-invokedCallable
-  : callablePrimary LPAREN argumentList? RPAREN (LPAREN argumentList? RPAREN)*
+  : LBRACE readExpression RBRACE
   ;
 
 textNode

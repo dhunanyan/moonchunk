@@ -14,7 +14,7 @@
 - Silnik z walidacją i komunikatami błędów
 
 ## Slajd 3: Najważniejsze elementy DSL (na bazie scenariuszy)
-- `site "..." { ... }` + `output "./dist"`
+- `chunk "..." { ... };` + `output "./dist";`
 - `page "..." using "layout.tpl" { ... }`
 - `let` (zmienne lokalne)
 - `import` (podział na moduły)
@@ -23,22 +23,19 @@
 - `env { global ... }` (globalna przestrzeń nazw)
 - Typy: `int`, `float`, `double`, `bool`, `string`
 
-## Slajd 4: Scenariusz 01 - Minimalny działający site
+## Slajd 4: Scenariusz 01 - Minimalny działający scenariusz
 **examples/scenarios/01-site-basic**
-- Najprostszy przepływ: `site -> page -> content`
+- Najprostszy przepływ: `chunk -> page -> content`
 - Zmienne lokalne `let title`, `let msg`
 - Render przez `layout.tpl`
 - Efekt: `dist/index.html`
 
 ## Slajd 5: Scenariusze 02-06 - Modularność i importy
-**examples/scenarios/02...06** pokazują, że importowany plik może zaczynać się od:
-- `page` (02)
-- `for` (03)
-- `if` (04)
-- `let` (05)
-- oraz importów zagnieżdżonych (06: `root -> shared/pages`)
-
-**Wniosek:** projekt wspiera składanie aplikacji z wielu plików `.mncnk`.
+**examples/scenarios/02...06** pokazują modularność i importy `from`.
+- Każdy plik `.mncnk` ma `chunk`.
+- Import główny: `import * as X from "./fragment.mncnk";`
+- Importy zagnieżdżone (06: `root -> shared/pages`)
+**Wniosek:** projekt wspiera składanie aplikacji z wielu plików `.mncnk` i selekcję chunków.
 
 ## Slajd 6: Scenariusz 03 - Generowanie wielu stron z pętli
 **examples/scenarios/03-import-for-start**

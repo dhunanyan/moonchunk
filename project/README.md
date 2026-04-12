@@ -8,20 +8,25 @@ MoonChunk to pakiet npm z util funkcjami do wykonywania DSL static-site generato
 
 ## Co wspiera DSL
 
-- `site "Name" { ... }`
-- `output "./dist"`
-- `env { global name: type = expr }` (globalna przestrzeń nazw)
-- `import "./part/file.mncnk"` (wiele plików, także importy zagnieżdżone)
-- `page "/path" using "layout.tpl" { ... }`
-- `let variable = expression`
-- `for item in expression { ... }`
-- `if expression { ... }`
+- `chunk "Name" { ... };`
+- `output "./dist";`
+- `env { global name: type = expr; ... };` (globalna przestrzeń nazw)
+- `import { A, B } from "./part/file.mncnk";`
+- `import * as AnyName from "./part/file.mncnk";` (ładuje wszystkie chunki z pliku)
+- `page "/path" using "layout.tpl" { ... };`
+- `let variable = expression;`
+- `const variable = expression;`
+- `for item in expression { ... };`
+- `if (expression) { ... };`
 - typy: `int`, `float`, `double`, `bool`, `string`
-- `content { ... }` z template tags:
-  - `{{ expr }}`
-  - `{% if cond %}...{% endif %}`
-  - `{% for x in list %}...{% endfor %}`
+- `content { ... };` z dynamicznymi wyrażeniami:
+  - `<div>{expr}</div>`
+  - `<div>{condition ? "A" : "B"}</div>`
+  - `<div>{myFunc()}</div>`
 - `data("file.json")`
+
+Uwaga:
+- aliasy w named import (`A as B`) nie są jeszcze wspierane runtime i zgłaszają błąd.
 
 ## Instalacja
 
@@ -37,7 +42,7 @@ yarn build
 ```
 
 `yarn build` automatycznie:
-1. generuje parser/lexer/visitor z `MoonChunk.g4` do `.antlr/`,
+1. generuje parser/lexer/visitor z `MoonChunkLexer.g4` i `MoonChunkParser.g4` do `.antlr/`,
 2. kompiluje TS do `dist/`.
 
 ## API

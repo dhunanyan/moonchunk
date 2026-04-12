@@ -1,7 +1,9 @@
-page "/" using "../layout.tpl" {
-  let title = siteName
-  content {
-    <h1>{{ title }}</h1>
-    <p>Loaded through import chain</p>
-  }
-}
+chunk "Pages" {
+  page "/" using "../layout.tpl" {
+    let title = siteName;
+    content {
+      <h1>{title}</h1>
+      <p>Loaded through import chain</p>
+    };
+  };
+};
