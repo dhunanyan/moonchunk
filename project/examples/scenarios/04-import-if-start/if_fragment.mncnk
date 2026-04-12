@@ -1,4 +1,4 @@
-if enabled == true {
+if (enabled == true) {
   page "/" using "layout.tpl" {
     let title = "Import starts with if"
     content {
