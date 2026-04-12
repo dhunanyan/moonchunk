@@ -1,7 +1,6 @@
 lexer grammar MoonChunkLexer;
 
 CHUNK       : 'chunk' ;
-ALL         : 'all' ;
 AS          : 'as' ;
 FROM        : 'from' ;
 IMPORT      : 'import' ;
@@ -43,6 +42,7 @@ GTE     : '>=' ;
 DOT     : '.' ;
 COMMA   : ',' ;
 COLON   : ':' ;
+QUESTION: '?' ;
 LPAREN  : '(' ;
 RPAREN  : ')' ;
 LBRACE  : '{' ;
@@ -79,53 +79,112 @@ CONTENT_END
   : '}' [ \t\r\n\f]* ';' -> popMode
   ;
 
-C_ARROW   : '=>' -> type(ARROW) ;
-C_EQ      : '==' -> type(EQ) ;
-C_NEQ     : '!=' -> type(NEQ) ;
-C_LTE     : '<=' -> type(LTE) ;
-C_GTE     : '>=' -> type(GTE) ;
-C_ASSIGN  : '=' -> type(ASSIGN) ;
-C_PLUS    : '+' -> type(PLUS) ;
-C_MINUS   : '-' -> type(MINUS) ;
-C_STAR    : '*' -> type(STAR) ;
-C_SLASH   : '/' -> type(SLASH) ;
-C_LT      : '<' -> type(LT) ;
-C_GT      : '>' -> type(GT) ;
-C_DOT     : '.' -> type(DOT) ;
-C_COMMA   : ',' -> type(COMMA) ;
-C_COLON   : ':' -> type(COLON) ;
-C_LPAREN  : '(' -> type(LPAREN) ;
-C_RPAREN  : ')' -> type(RPAREN) ;
-C_LBRACE  : '{' -> type(LBRACE) ;
-C_RBRACE  : '}' -> type(RBRACE) ;
-
-C_CHUNK    : 'chunk' -> type(CHUNK) ;
-C_ALL      : 'all' -> type(ALL) ;
-C_AS       : 'as' -> type(AS) ;
-C_FROM     : 'from' -> type(FROM) ;
-C_FOR      : 'for' -> type(FOR) ;
-C_IN       : 'in' -> type(IN) ;
-C_IF       : 'if' -> type(IF) ;
-C_OR       : 'or' -> type(OR) ;
-C_AND      : 'and' -> type(AND) ;
-C_NOT      : 'not' -> type(NOT) ;
-C_TRUE     : 'true' -> type(TRUE) ;
-C_FALSE    : 'false' -> type(FALSE) ;
-C_FUNCTION : 'function' -> type(FUNCTION) ;
-C_RETURN   : 'return' -> type(RETURN) ;
-
-C_STRING
-  : '"' ( '\\' . | ~["\\\r\n] )* '"' -> type(STRING)
+CONTENT_LT
+  : '<' -> type(LT), pushMode(CONTENT_TAG_MODE)
   ;
 
-C_NUMBER
-  : [0-9]+ ('.' [0-9]+)? [fFdD]? -> type(NUMBER)
-  ;
-
-C_IDENTIFIER
-  : [A-Za-z_] [A-Za-z0-9_]* -> type(IDENTIFIER)
+CONTENT_LBRACE
+  : '{' -> type(LBRACE), pushMode(CONTENT_EXPR_MODE)
   ;
 
 CONTENT_TEXT
-  : ~[<{}]+ 
+  : ~[<{]+ 
+  ;
+
+mode CONTENT_TAG_MODE;
+
+TAG_GT
+  : '>' -> type(GT), popMode
+  ;
+
+TAG_SLASH
+  : '/' -> type(SLASH)
+  ;
+
+TAG_ASSIGN
+  : '=' -> type(ASSIGN)
+  ;
+
+TAG_IDENTIFIER
+  : [A-Za-z_] [A-Za-z0-9_:-]* -> type(IDENTIFIER)
+  ;
+
+TAG_STRING
+  : '"' ( '\\' . | ~["\\\r\n] )* '"' -> type(STRING)
+  ;
+
+TAG_LBRACE
+  : '{' -> type(LBRACE), pushMode(CONTENT_EXPR_MODE)
+  ;
+
+TAG_WS
+  : [ \t\r\n\f]+ -> skip
+  ;
+
+mode CONTENT_EXPR_MODE;
+
+EXPR_RBRACE
+  : '}' -> type(RBRACE), popMode
+  ;
+
+EXPR_LBRACE
+  : '{' -> type(LBRACE), pushMode(CONTENT_EXPR_MODE)
+  ;
+
+EXPR_ARROW   : '=>' -> type(ARROW) ;
+EXPR_EQ      : '==' -> type(EQ) ;
+EXPR_NEQ     : '!=' -> type(NEQ) ;
+EXPR_LTE     : '<=' -> type(LTE) ;
+EXPR_GTE     : '>=' -> type(GTE) ;
+EXPR_ASSIGN  : '=' -> type(ASSIGN) ;
+EXPR_PLUS    : '+' -> type(PLUS) ;
+EXPR_MINUS   : '-' -> type(MINUS) ;
+EXPR_STAR    : '*' -> type(STAR) ;
+EXPR_SLASH   : '/' -> type(SLASH) ;
+EXPR_LT      : '<' -> type(LT) ;
+EXPR_GT      : '>' -> type(GT) ;
+EXPR_DOT     : '.' -> type(DOT) ;
+EXPR_COMMA   : ',' -> type(COMMA) ;
+EXPR_COLON   : ':' -> type(COLON) ;
+EXPR_QUESTION: '?' -> type(QUESTION) ;
+EXPR_LPAREN  : '(' -> type(LPAREN) ;
+EXPR_RPAREN  : ')' -> type(RPAREN) ;
+EXPR_SEMI    : ';' -> type(SEMI) ;
+
+EXPR_CONST       : 'const' -> type(CONST) ;
+EXPR_LET         : 'let' -> type(LET) ;
+EXPR_FUNCTION    : 'function' -> type(FUNCTION) ;
+EXPR_RETURN      : 'return' -> type(RETURN) ;
+EXPR_FOR         : 'for' -> type(FOR) ;
+EXPR_IN          : 'in' -> type(IN) ;
+EXPR_IF          : 'if' -> type(IF) ;
+EXPR_OR          : 'or' -> type(OR) ;
+EXPR_AND         : 'and' -> type(AND) ;
+EXPR_NOT         : 'not' -> type(NOT) ;
+EXPR_TRUE        : 'true' -> type(TRUE) ;
+EXPR_FALSE       : 'false' -> type(FALSE) ;
+EXPR_TYPE_INT    : 'int' -> type(TYPE_INT) ;
+EXPR_TYPE_FLOAT  : 'float' -> type(TYPE_FLOAT) ;
+EXPR_TYPE_DOUBLE : 'double' -> type(TYPE_DOUBLE) ;
+EXPR_TYPE_BOOL   : 'bool' -> type(TYPE_BOOL) ;
+EXPR_TYPE_STRING : 'string' -> type(TYPE_STRING) ;
+
+EXPR_STRING
+  : '"' ( '\\' . | ~["\\\r\n] )* '"' -> type(STRING)
+  ;
+
+EXPR_NUMBER
+  : [0-9]+ ('.' [0-9]+)? [fFdD]? -> type(NUMBER)
+  ;
+
+EXPR_IDENTIFIER
+  : [A-Za-z_] [A-Za-z0-9_]* -> type(IDENTIFIER)
+  ;
+
+EXPR_LINE_COMMENT
+  : '//' ~[\r\n]* -> skip
+  ;
+
+EXPR_WS
+  : [ \t\r\n\f]+ -> skip
   ;

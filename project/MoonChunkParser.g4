@@ -10,8 +10,16 @@ fragmentProgram
   : chunkDecl+ EOF
   ;
 
+expressionFragment
+  : expression EOF
+  ;
+
 chunkDecl
-  : CHUNK STRING LBRACE chunkStatement* RBRACE SEMI
+  : CHUNK chunkNameLiteral LBRACE chunkStatement* RBRACE SEMI
+  ;
+
+chunkNameLiteral
+  : STRING
   ;
 
 chunkStatement
@@ -23,6 +31,7 @@ chunkStatement
 
 runtimeChunkStatement
   : functionDeclaration
+  | arrowFunctionDeclaration
   | constStatement
   | letStatement
   | pageStatement
@@ -40,11 +49,11 @@ importClause
   ;
 
 namedImportClause
-  : LBRACE importItem (COMMA importItem)* RBRACE
+  : LBRACE importItem (COMMA importItem)* COMMA? RBRACE
   ;
 
 importItem
-  : IDENTIFIER
+  : IDENTIFIER (AS IDENTIFIER)?
   ;
 
 namespaceImportClause
@@ -71,8 +80,16 @@ constStatement
   : CONST IDENTIFIER (COLON typeName)? ASSIGN expression SEMI
   ;
 
+expressionStatement
+  : expression SEMI
+  ;
+
 functionDeclaration
   : FUNCTION IDENTIFIER LPAREN parameterList? RPAREN (COLON typeName)? LBRACE functionBodyStatement* RBRACE
+  ;
+
+arrowFunctionDeclaration
+  : IDENTIFIER LPAREN parameterList? RPAREN (COLON typeName)? ARROW arrowFunctionBody SEMI
   ;
 
 parameterList
@@ -85,10 +102,12 @@ parameter
 
 functionBodyStatement
   : constStatement
+  | arrowFunctionDeclaration
   | letStatement
   | ifStatement
   | forStatement
   | returnStatement
+  | expressionStatement
   ;
 
 returnStatement
@@ -127,11 +146,33 @@ htmlSelfClosingElement
 attribute
   : IDENTIFIER
   | IDENTIFIER ASSIGN STRING
-  | IDENTIFIER ASSIGN LBRACE expression RBRACE
+  | IDENTIFIER ASSIGN LBRACE readExpression RBRACE
   ;
 
 dynamicMustache
-  : LBRACE expression RBRACE
+  : LBRACE dynamicRenderExpr RBRACE
+  ;
+
+dynamicRenderExpr
+  : renderTernaryExpr
+  ;
+
+renderTernaryExpr
+  : orExpr QUESTION dynamicRenderExpr COLON dynamicRenderExpr
+  | renderAtom
+  ;
+
+renderAtom
+  : invokedCallable
+  | STRING
+  | NUMBER
+  | TRUE
+  | FALSE
+  | LPAREN dynamicRenderExpr RPAREN
+  ;
+
+invokedCallable
+  : callablePrimary LPAREN argumentList? RPAREN (LPAREN argumentList? RPAREN)*
   ;
 
 textNode
@@ -158,9 +199,17 @@ expression
   : assignment
   ;
 
+readExpression
+  : conditionalExpr
+  ;
+
 assignment
   : identifierPath ASSIGN assignment
-  | orExpr
+  | conditionalExpr
+  ;
+
+conditionalExpr
+  : orExpr (QUESTION expression COLON conditionalExpr)?
   ;
 
 orExpr
@@ -220,7 +269,7 @@ functionExpr
 
 arrowFunctionExpr
   : LPAREN parameterList? RPAREN (COLON typeName)? ARROW arrowFunctionBody
-  | IDENTIFIER ARROW arrowFunctionBody
+  | IDENTIFIER (COLON typeName)? ARROW arrowFunctionBody
   ;
 
 arrowFunctionBody
