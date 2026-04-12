@@ -76,7 +76,7 @@ WS
 mode CONTENT_MODE;
 
 CONTENT_END
-  : '}' [ \t\r\n\f]* ';' -> popMode
+  : [ \t\r\n\f]* '}' [ \t\r\n\f]* ';' -> popMode
   ;
 
 CONTENT_LT
@@ -88,7 +88,7 @@ CONTENT_LBRACE
   ;
 
 CONTENT_TEXT
-  : ~[<{]+ 
+  : ~[<{}]+ 
   ;
 
 mode CONTENT_TAG_MODE;

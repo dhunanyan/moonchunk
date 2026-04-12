@@ -31,9 +31,19 @@ export type RuntimeHelpers = {
   getGlobal: (name: string, line: number) => unknown;
 };
 
+export type AstImportNamedItem = {
+  name: string;
+  alias: string | null;
+};
+
+export type AstImportClause =
+  | { type: 'NamedImport'; items: AstImportNamedItem[] }
+  | { type: 'NamespaceImport'; alias: string };
+
 export type AstImportNode = {
   type: 'Import';
-  value: string;
+  clause: AstImportClause;
+  source: string;
   line: number;
 };
 
@@ -65,6 +75,14 @@ export type AstLetNode = {
   line: number;
 };
 
+export type AstConstNode = {
+  type: 'Const';
+  name: string;
+  declaredType: string | null;
+  expr: string;
+  line: number;
+};
+
 export type AstContentNode = {
   type: 'Content';
   template: string;
@@ -75,7 +93,7 @@ export type AstPageNode = {
   type: 'Page';
   route: string;
   layout: string;
-  body: Array<AstLetNode | AstContentNode | null>;
+  body: Array<AstLetNode | AstConstNode | AstContentNode | null>;
   line: number;
 };
 
@@ -94,15 +112,74 @@ export type AstIfNode = {
   line: number;
 };
 
-export type AstRuntimeNode = AstLetNode | AstPageNode | AstForNode | AstIfNode;
-
-export type AstSiteNode = {
-  type: 'Site';
+export type AstParameter = {
   name: string;
-  body: Array<AstNode | null>;
+  declaredType: string | null;
 };
 
-export type AstNode = AstImportNode | AstOutputNode | AstEnvNode | AstGlobalNode | AstRuntimeNode;
+export type AstExpressionStatementNode = {
+  type: 'ExpressionStatement';
+  expr: string;
+  line: number;
+};
+
+export type AstReturnNode = {
+  type: 'Return';
+  expr: string;
+  line: number;
+};
+
+export type AstFunctionBodyNode =
+  | AstConstNode
+  | AstLetNode
+  | AstIfNode
+  | AstForNode
+  | AstReturnNode
+  | AstExpressionStatementNode
+  | AstArrowFunctionDeclarationNode;
+
+export type AstFunctionDeclarationNode = {
+  type: 'FunctionDeclaration';
+  name: string;
+  params: AstParameter[];
+  returnType: string | null;
+  body: AstFunctionBodyNode[];
+  line: number;
+};
+
+export type AstArrowFunctionDeclarationNode = {
+  type: 'ArrowFunctionDeclaration';
+  name: string;
+  params: AstParameter[];
+  returnType: string | null;
+  bodyExpr: string;
+  line: number;
+};
+
+export type AstRuntimeNode =
+  | AstLetNode
+  | AstConstNode
+  | AstPageNode
+  | AstForNode
+  | AstIfNode
+  | AstFunctionDeclarationNode
+  | AstArrowFunctionDeclarationNode;
+
+export type AstChunkStatement = AstImportNode | AstOutputNode | AstEnvNode | AstRuntimeNode;
+
+export type AstChunkNode = {
+  type: 'Chunk';
+  name: string;
+  body: Array<AstChunkStatement | null>;
+  line: number;
+};
+
+export type AstProgramNode = {
+  type: 'Program';
+  chunks: AstChunkNode[];
+};
+
+export type AstNode = AstChunkStatement;
 
 export type GlobalSymbol = {
   declaredType: string | null;

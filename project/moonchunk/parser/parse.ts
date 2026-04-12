@@ -3,9 +3,9 @@ import { MoonChunkLexer } from '../../.antlr/MoonChunkLexer';
 import { MoonChunkParser } from '../../.antlr/MoonChunkParser';
 import { AstBuilder } from './ast-builder';
 import { SyntaxCollector } from './syntax-collector';
-import { Diagnostic } from '../types';
+import { AstProgramNode, Diagnostic } from '../types';
 
-export function parseProgramWithAntlr(code: string): { ast: unknown; diagnostics: Diagnostic[] } {
+export function parseProgramWithAntlr(code: string): { ast: AstProgramNode | null; diagnostics: Diagnostic[] } {
   const input = CharStreams.fromString(code);
   const lexer = new MoonChunkLexer(input);
   const tokens = new CommonTokenStream(lexer);
@@ -23,7 +23,7 @@ export function parseProgramWithAntlr(code: string): { ast: unknown; diagnostics
     return { ast: null, diagnostics: syntax.diagnostics };
   }
 
-  const builder = new AstBuilder(tokens, code);
-  const ast = builder.visit(tree);
+  const builder = new AstBuilder(code);
+  const ast = builder.visit(tree) as AstProgramNode;
   return { ast, diagnostics: [] };
 }

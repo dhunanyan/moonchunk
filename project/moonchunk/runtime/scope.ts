@@ -42,6 +42,18 @@ export class Scope {
     return undefined;
   }
 
+  assign(name: string, value: unknown, line: number): void {
+    if (this.values.has(name)) {
+      this.values.set(name, value);
+      return;
+    }
+    if (this.parent) {
+      this.parent.assign(name, value, line);
+      return;
+    }
+    throw new MoonChunkError(`Unknown variable: ${name}`, line, 1);
+  }
+
   derive(): Scope {
     return new Scope(this);
   }

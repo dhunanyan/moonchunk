@@ -3,16 +3,16 @@ import * as path from 'node:path';
 import { MoonChunkError } from './errors';
 import { parseProgramWithAntlr } from './parser/parse';
 import { runAst } from './runtime/executor';
-import { AstSiteNode, ExecOptions, ExecResult } from './types';
+import { AstProgramNode, ExecOptions, ExecResult } from './types';
 
 export function executeMoonChunk(code: string, options: ExecOptions = {}): ExecResult {
   try {
     const parsed = parseProgramWithAntlr(code);
-    if (parsed.diagnostics.length > 0) {
+    if (parsed.diagnostics.length > 0 || !parsed.ast) {
       return { ok: false, output: [], result: null, diagnostics: parsed.diagnostics };
     }
 
-    const runtime = runAst(parsed.ast as AstSiteNode, options);
+    const runtime = runAst(parsed.ast as AstProgramNode, options);
     return {
       ok: true,
       output: runtime.output,

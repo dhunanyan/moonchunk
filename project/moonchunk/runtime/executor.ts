@@ -1,23 +1,35 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { parseSiteOrFragment } from '../ast/site-loader';
+import { parseProgramOrFragment } from '../ast/site-loader';
 import { MoonChunkError } from '../errors';
 import {
+  AstArrowFunctionDeclarationNode,
+  AstChunkNode,
   AstEnvNode,
+  AstForNode,
+  AstFunctionBodyNode,
+  AstFunctionDeclarationNode,
   AstGlobalNode,
+  AstIfNode,
+  AstImportNode,
   AstNode,
   AstPageNode,
-  AstSiteNode,
+  AstProgramNode,
+  AstRuntimeNode,
   ExecOptions,
   GlobalSymbol
 } from '../types';
 import { Scope } from './scope';
-import { evalExpr } from './expression';
+import { evalExpr, isCallable, makeCallable } from './expression';
 import { routeToOutputFile } from './route';
-import { renderStringWithInterpolations, renderTemplate } from './template';
+import { renderContentTemplate, renderLayoutTemplate, renderStringWithInterpolations } from './template';
 import { inferType, isAssignable } from './values';
 
-export function runAst(ast: AstSiteNode, options: ExecOptions): { output: string[]; result: unknown; generatedFiles: string[] } {
+class FunctionReturn {
+  constructor(public readonly value: unknown) {}
+}
+
+export function runAst(ast: AstProgramNode, options: ExecOptions): { output: string[]; result: unknown; generatedFiles: string[] } {
   const cwd = options.cwd || process.cwd();
   const writeFiles = options.writeFiles !== false;
 
@@ -36,6 +48,37 @@ export function runAst(ast: AstSiteNode, options: ExecOptions): { output: string
     if (!globalSymbols.has(name)) return undefined;
     return evaluateGlobal(name, line);
   };
+
+  function flattenProgram(program: AstProgramNode): Array<AstNode | null> {
+    const statements: Array<AstNode | null> = [];
+    for (const chunk of program.chunks) {
+      for (const statement of chunk.body) {
+        statements.push(statement as AstNode | null);
+      }
+    }
+    return statements;
+  }
+
+  function selectImportStatements(program: AstProgramNode, importNode: AstImportNode): Array<AstNode | null> {
+    if (importNode.clause.type === 'NamespaceImport') {
+      return flattenProgram(program);
+    }
+
+    const selectedChunks: AstChunkNode[] = [];
+    for (const item of importNode.clause.items) {
+      const chunk = program.chunks.find((candidate) => candidate.name === item.name);
+      if (!chunk) {
+        throw new MoonChunkError(`Imported chunk "${item.name}" not found in ${importNode.source}.`, importNode.line, 1);
+      }
+      selectedChunks.push(chunk);
+    }
+
+    const statements: Array<AstNode | null> = [];
+    for (const chunk of selectedChunks) {
+      for (const statement of chunk.body) statements.push(statement as AstNode | null);
+    }
+    return statements;
+  }
 
   function evaluateGlobal(name: string, line: number): unknown {
     if (globalValues.has(name)) return globalValues.get(name);
@@ -72,6 +115,165 @@ export function runAst(ast: AstSiteNode, options: ExecOptions): { output: string
     }
   }
 
+  function bindParams(
+    fnScope: Scope,
+    params: Array<{ name: string; declaredType: string | null }>,
+    args: unknown[],
+    line: number
+  ): void {
+    for (let i = 0; i < params.length; i += 1) {
+      const param = params[i];
+      const value = i < args.length ? args[i] : null;
+      fnScope.declare(param.name, value, param.declaredType, line);
+    }
+  }
+
+  function ensureReturnType(declaredType: string | null, value: unknown, line: number): void {
+    if (!declaredType) return;
+    const actual = inferType(value);
+    if (!isAssignable(declaredType, actual)) {
+      throw new MoonChunkError(`Type mismatch: declared ${declaredType}, got ${actual}.`, line, 1);
+    }
+  }
+
+  function callArrowDeclaration(
+    node: AstArrowFunctionDeclarationNode,
+    scope: Scope,
+    currentDir: string
+  ): unknown {
+    const paramsText = node.params
+      .map((param) => (param.declaredType ? `${param.name}: ${param.declaredType}` : param.name))
+      .join(', ');
+    const source = `(${paramsText}) => ${node.bodyExpr}`;
+    return evalExpr(source, scope, currentDir, node.line, { getGlobal });
+  }
+
+  function createFunctionDeclarationCallable(
+    node: AstFunctionDeclarationNode,
+    scope: Scope,
+    currentDir: string
+  ): unknown {
+    return makeCallable(
+      node.params,
+      node.returnType,
+      (args: unknown[], line: number) => {
+        const fnScope = scope.derive();
+        bindParams(fnScope, node.params, args, line);
+        let result: unknown = null;
+        try {
+          executeFunctionBody(node.body, fnScope, currentDir);
+        } catch (error) {
+          if (error instanceof FunctionReturn) result = error.value;
+          else throw error;
+        }
+        ensureReturnType(node.returnType, result, line);
+        return result;
+      },
+      node.name
+    );
+  }
+
+  function executeFunctionBody(body: AstFunctionBodyNode[], fnScope: Scope, currentDir: string): void {
+    for (const statement of body) {
+      if (statement.type === 'Let' || statement.type === 'Const') {
+        const value = evalExpr(statement.expr, fnScope, currentDir, statement.line, { getGlobal });
+        fnScope.declare(statement.name, value, statement.declaredType ?? null, statement.line);
+        continue;
+      }
+
+      if (statement.type === 'ExpressionStatement') {
+        evalExpr(statement.expr, fnScope, currentDir, statement.line, { getGlobal });
+        continue;
+      }
+
+      if (statement.type === 'Return') {
+        throw new FunctionReturn(evalExpr(statement.expr, fnScope, currentDir, statement.line, { getGlobal }));
+      }
+
+      if (statement.type === 'ArrowFunctionDeclaration') {
+        const callable = callArrowDeclaration(statement, fnScope, currentDir);
+        if (!isCallable(callable)) {
+          throw new MoonChunkError(`Invalid function declaration: ${statement.name}`, statement.line, 1);
+        }
+        fnScope.declare(statement.name, callable, null, statement.line);
+        continue;
+      }
+
+      if (statement.type === 'If') {
+        execIfRuntime(statement, fnScope, currentDir);
+        continue;
+      }
+
+      if (statement.type === 'For') {
+        execForRuntime(statement, fnScope, currentDir);
+        continue;
+      }
+    }
+  }
+
+  function execIfRuntime(node: AstIfNode, scope: Scope, currentDir: string): void {
+    const cond = evalExpr(node.condition, scope, currentDir, node.line, { getGlobal });
+    if (!Boolean(cond)) return;
+    const child = scope.derive();
+    for (const nested of node.body) {
+      if (!nested) continue;
+      execRuntimeStatement(nested, child, currentDir);
+    }
+  }
+
+  function execForRuntime(node: AstForNode, scope: Scope, currentDir: string): void {
+    const data = evalExpr(node.sourceExpr, scope, currentDir, node.line, { getGlobal });
+    if (!Array.isArray(data)) throw new MoonChunkError('For source must be an array.', node.line, 1);
+    for (const item of data) {
+      const child = scope.derive();
+      child.set(node.item, item);
+      for (const nested of node.body) {
+        if (!nested) continue;
+        execRuntimeStatement(nested, child, currentDir);
+      }
+    }
+  }
+
+  function execRuntimeStatement(node: AstRuntimeNode, scope: Scope, currentDir: string): void {
+    if (node.type === 'Let' || node.type === 'Const') {
+      const value = evalExpr(node.expr, scope, currentDir, node.line, { getGlobal });
+      scope.declare(node.name, value, node.declaredType ?? null, node.line);
+      return;
+    }
+
+    if (node.type === 'FunctionDeclaration') {
+      const callable = createFunctionDeclarationCallable(node, scope, currentDir);
+      if (!isCallable(callable)) {
+        throw new MoonChunkError(`Invalid function declaration: ${node.name}`, node.line, 1);
+      }
+      scope.declare(node.name, callable, null, node.line);
+      return;
+    }
+
+    if (node.type === 'ArrowFunctionDeclaration') {
+      const callable = callArrowDeclaration(node, scope, currentDir);
+      if (!isCallable(callable)) {
+        throw new MoonChunkError(`Invalid function declaration: ${node.name}`, node.line, 1);
+      }
+      scope.declare(node.name, callable, null, node.line);
+      return;
+    }
+
+    if (node.type === 'If') {
+      execIfRuntime(node, scope, currentDir);
+      return;
+    }
+
+    if (node.type === 'For') {
+      execForRuntime(node, scope, currentDir);
+      return;
+    }
+
+    if (node.type === 'Page') {
+      throw new MoonChunkError('Page statements are not allowed in function runtime blocks.', node.line, 1);
+    }
+  }
+
   function execPage(node: AstPageNode, scope: Scope, currentDir: string): void {
     const pageScope = scope.derive();
     let contentHtml = '';
@@ -79,11 +281,11 @@ export function runAst(ast: AstSiteNode, options: ExecOptions): { output: string
     for (const statement of node.body) {
       if (!statement) continue;
 
-      if (statement.type === 'Let') {
+      if (statement.type === 'Let' || statement.type === 'Const') {
         const value = evalExpr(statement.expr, pageScope, currentDir, statement.line, { getGlobal });
         pageScope.declare(statement.name, value, statement.declaredType ?? null, statement.line);
       } else if (statement.type === 'Content') {
-        contentHtml = renderTemplate(statement.template, pageScope, currentDir, { getGlobal });
+        contentHtml = renderContentTemplate(statement.template, pageScope, currentDir, { getGlobal });
       }
     }
 
@@ -96,7 +298,7 @@ export function runAst(ast: AstSiteNode, options: ExecOptions): { output: string
     }
 
     const layout = fs.readFileSync(layoutPath, 'utf8');
-    const html = renderTemplate(layout, pageScope, currentDir, { getGlobal });
+    const html = renderLayoutTemplate(layout, pageScope, currentDir, { getGlobal });
 
     const relativeOut = routeToOutputFile(route);
     const absOut = path.resolve(outputDir, relativeOut);
@@ -110,25 +312,26 @@ export function runAst(ast: AstSiteNode, options: ExecOptions): { output: string
     outputLogs.push(`Generated: ${absOut}`);
   }
 
-  function execImportedFile(importPath: string, scope: Scope, currentDir: string, line: number): void {
-    if (!importPath.endsWith('.mncnk')) {
-      throw new MoonChunkError('Imported file must use .mncnk extension.', line, 1);
+  function loadImportedProgram(importNode: AstImportNode, currentDir: string): AstProgramNode {
+    if (!importNode.source.endsWith('.mncnk')) {
+      throw new MoonChunkError('Imported file must use .mncnk extension.', importNode.line, 1);
     }
 
-    const absPath = path.resolve(currentDir, importPath);
+    const absPath = path.resolve(currentDir, importNode.source);
     if (!fs.existsSync(absPath)) {
-      throw new MoonChunkError(`Imported file does not exist: ${importPath}`, line, 1);
+      throw new MoonChunkError(`Imported file does not exist: ${importNode.source}`, importNode.line, 1);
     }
 
     if (importStack.has(absPath)) {
-      throw new MoonChunkError(`Circular import detected: ${absPath}`, line, 1);
+      throw new MoonChunkError(`Circular import detected: ${absPath}`, importNode.line, 1);
     }
 
     importStack.add(absPath);
-    const code = fs.readFileSync(absPath, 'utf8');
-    const importedAst = parseSiteOrFragment(code) as AstSiteNode;
-    execList(importedAst.body, scope, path.dirname(absPath));
-    importStack.delete(absPath);
+    try {
+      return parseProgramOrFragment(fs.readFileSync(absPath, 'utf8'));
+    } finally {
+      importStack.delete(absPath);
+    }
   }
 
   function registerGlobals(nodes: Array<AstNode | null>, currentDir: string): void {
@@ -136,23 +339,8 @@ export function runAst(ast: AstSiteNode, options: ExecOptions): { output: string
       if (!node) continue;
 
       if (node.type === 'Import') {
-        if (!node.value.endsWith('.mncnk')) {
-          throw new MoonChunkError('Imported file must use .mncnk extension.', node.line, 1);
-        }
-
-        const absPath = path.resolve(currentDir, node.value);
-        if (!fs.existsSync(absPath)) {
-          throw new MoonChunkError(`Imported file does not exist: ${node.value}`, node.line, 1);
-        }
-
-        if (importStack.has(absPath)) {
-          throw new MoonChunkError(`Circular import detected: ${absPath}`, node.line, 1);
-        }
-
-        importStack.add(absPath);
-        const importedAst = parseSiteOrFragment(fs.readFileSync(absPath, 'utf8')) as AstSiteNode;
-        registerGlobals(importedAst.body, path.dirname(absPath));
-        importStack.delete(absPath);
+        const importedAst = loadImportedProgram(node, currentDir);
+        registerGlobals(selectImportStatements(importedAst, node), path.resolve(currentDir, path.dirname(node.source)));
         continue;
       }
 
@@ -174,18 +362,15 @@ export function runAst(ast: AstSiteNode, options: ExecOptions): { output: string
             dir: currentDir
           });
         }
-        continue;
-      }
-
-      if (node.type === 'Global') {
-        throw new MoonChunkError('Global declaration must be inside env block.', node.line, 1);
       }
     }
   }
 
   function execNode(node: AstNode, scope: Scope, currentDir: string): void {
     if (node.type === 'Import') {
-      execImportedFile(node.value, scope, currentDir, node.line);
+      const importedAst = loadImportedProgram(node, currentDir);
+      const importedDir = path.resolve(currentDir, path.dirname(node.source));
+      execList(selectImportStatements(importedAst, node), scope, importedDir);
       return;
     }
 
@@ -194,30 +379,41 @@ export function runAst(ast: AstSiteNode, options: ExecOptions): { output: string
       return;
     }
 
-    if (node.type === 'Env' || node.type === 'Global') {
+    if (node.type === 'Env') {
       return;
     }
 
-    if (node.type === 'Let') {
+    if (node.type === 'Let' || node.type === 'Const') {
       const value = evalExpr(node.expr, scope, currentDir, node.line, { getGlobal });
       scope.declare(node.name, value, node.declaredType ?? null, node.line);
       return;
     }
 
+    if (node.type === 'FunctionDeclaration') {
+      const callable = createFunctionDeclarationCallable(node, scope, currentDir);
+      if (!isCallable(callable)) {
+        throw new MoonChunkError(`Invalid function declaration: ${node.name}`, node.line, 1);
+      }
+      scope.declare(node.name, callable, null, node.line);
+      return;
+    }
+
+    if (node.type === 'ArrowFunctionDeclaration') {
+      const callable = callArrowDeclaration(node, scope, currentDir);
+      if (!isCallable(callable)) {
+        throw new MoonChunkError(`Invalid function declaration: ${node.name}`, node.line, 1);
+      }
+      scope.declare(node.name, callable, null, node.line);
+      return;
+    }
+
     if (node.type === 'If') {
-      const cond = evalExpr(node.condition, scope, currentDir, node.line, { getGlobal });
-      if (Boolean(cond)) execList(node.body, scope.derive(), currentDir);
+      execIfRuntime(node, scope, currentDir);
       return;
     }
 
     if (node.type === 'For') {
-      const data = evalExpr(node.sourceExpr, scope, currentDir, node.line, { getGlobal });
-      if (!Array.isArray(data)) throw new MoonChunkError('For source must be an array.', node.line, 1);
-      for (const item of data) {
-        const child = scope.derive();
-        child.set(node.item, item);
-        execList(node.body, child, currentDir);
-      }
+      execForRuntime(node, scope, currentDir);
       return;
     }
 
@@ -226,14 +422,20 @@ export function runAst(ast: AstSiteNode, options: ExecOptions): { output: string
       return;
     }
 
-    throw new MoonChunkError(`Unsupported node type: ${(node as AstNode).type}`, 1, 1);
+    const unknownNode = node as { type?: string; line?: number };
+    throw new MoonChunkError(`Unsupported node type: ${unknownNode.type || 'unknown'}`, unknownNode.line || 1, 1);
   }
 
-  registerGlobals(ast.body, cwd);
+  const rootStatements = flattenProgram(ast);
+  registerGlobals(rootStatements, cwd);
   for (const [name] of globalSymbols) {
     evaluateGlobal(name, 1);
   }
 
-  execList(ast.body, globalScope, cwd);
-  return { output: outputLogs, result: { site: ast.name, outputDir }, generatedFiles };
+  execList(rootStatements, globalScope, cwd);
+  return {
+    output: outputLogs,
+    result: { chunks: ast.chunks.map((chunk: AstChunkNode) => chunk.name), outputDir },
+    generatedFiles
+  };
 }
