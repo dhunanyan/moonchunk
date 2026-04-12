@@ -1,6 +1,9 @@
 lexer grammar MoonChunkLexer;
 
-SITE        : 'site' ;
+CHUNK       : 'chunk' ;
+ALL         : 'all' ;
+AS          : 'as' ;
+FROM        : 'from' ;
 IMPORT      : 'import' ;
 OUTPUT      : 'output' ;
 ENV         : 'env' ;
@@ -9,6 +12,8 @@ PAGE        : 'page' ;
 USING       : 'using' ;
 CONST       : 'const' ;
 LET         : 'let' ;
+FUNCTION    : 'function' ;
+RETURN      : 'return' ;
 FOR         : 'for' ;
 IN          : 'in' ;
 IF          : 'if' ;
@@ -92,11 +97,20 @@ C_RPAREN  : ')' -> type(RPAREN) ;
 C_LBRACE  : '{' -> type(LBRACE) ;
 C_RBRACE  : '}' -> type(RBRACE) ;
 
-C_OR      : 'or' -> type(OR) ;
-C_AND     : 'and' -> type(AND) ;
-C_NOT     : 'not' -> type(NOT) ;
-C_TRUE    : 'true' -> type(TRUE) ;
-C_FALSE   : 'false' -> type(FALSE) ;
+C_CHUNK    : 'chunk' -> type(CHUNK) ;
+C_ALL      : 'all' -> type(ALL) ;
+C_AS       : 'as' -> type(AS) ;
+C_FROM     : 'from' -> type(FROM) ;
+C_FOR      : 'for' -> type(FOR) ;
+C_IN       : 'in' -> type(IN) ;
+C_IF       : 'if' -> type(IF) ;
+C_OR       : 'or' -> type(OR) ;
+C_AND      : 'and' -> type(AND) ;
+C_NOT      : 'not' -> type(NOT) ;
+C_TRUE     : 'true' -> type(TRUE) ;
+C_FALSE    : 'false' -> type(FALSE) ;
+C_FUNCTION : 'function' -> type(FUNCTION) ;
+C_RETURN   : 'return' -> type(RETURN) ;
 
 C_STRING
   : '"' ( '\\' . | ~["\\\r\n] )* '"' -> type(STRING)
@@ -111,9 +125,5 @@ C_IDENTIFIER
   ;
 
 CONTENT_TEXT
-  : ~[<>{}\r\n\t ]+
-  ;
-
-CONTENT_WS
-  : [ \t\r\n\f]+ -> skip
+  : ~[<{}]+ 
   ;

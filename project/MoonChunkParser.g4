@@ -3,22 +3,31 @@ parser grammar MoonChunkParser;
 options { tokenVocab=MoonChunkLexer; }
 
 program
-  : siteDecl EOF
+  : chunkDecl+ EOF
   ;
 
-siteDecl
-  : SITE STRING LBRACE siteStatement* RBRACE SEMI
+fragmentProgram
+  : chunkStatement* EOF
   ;
 
-siteStatement
+chunkDecl
+  : CHUNK chunkNameLiteral LBRACE chunkStatement* RBRACE SEMI
+  ;
+
+chunkNameLiteral
+  : STRING
+  ;
+
+chunkStatement
   : importStatement
   | outputStatement
   | envBlock
-  | runtimeSiteStatement
+  | runtimeChunkStatement
   ;
 
-runtimeSiteStatement
-  : constStatement
+runtimeChunkStatement
+  : functionDeclaration
+  | constStatement
   | letStatement
   | pageStatement
   | forStatement
@@ -26,7 +35,24 @@ runtimeSiteStatement
   ;
 
 importStatement
-  : IMPORT STRING SEMI
+  : IMPORT importClause FROM STRING SEMI
+  ;
+
+importClause
+  : namedImportClause
+  | namespaceImportClause
+  ;
+
+namedImportClause
+  : LBRACE importItem (COMMA importItem)* RBRACE
+  ;
+
+importItem
+  : IDENTIFIER
+  ;
+
+namespaceImportClause
+  : STAR AS IDENTIFIER
   ;
 
 outputStatement
@@ -47,6 +73,40 @@ letStatement
 
 constStatement
   : CONST IDENTIFIER (COLON typeName)? ASSIGN expression SEMI
+  ;
+
+functionDeclaration
+  : FUNCTION IDENTIFIER LPAREN parameterList? RPAREN (COLON typeName)? LBRACE functionBodyStatement* RBRACE
+  ;
+
+parameterList
+  : parameter (COMMA parameter)*
+  ;
+
+parameter
+  : IDENTIFIER (COLON typeName)?
+  ;
+
+functionBodyStatement
+  : constStatement
+  | letStatement
+  | ifStatement
+  | forStatement
+  | returnStatement
+  ;
+
+returnStatement
+  : RETURN expression SEMI
+  ;
+
+pageStatement
+  : PAGE STRING USING STRING LBRACE pageInnerStatement* RBRACE SEMI
+  ;
+
+pageInnerStatement
+  : letStatement
+  | constStatement
+  | contentStatement
   ;
 
 contentStatement
@@ -80,13 +140,19 @@ dynamicMustache
   ;
 
 dynamicInline
-  : identifierPath
-  | functionCall
+  : expression
   ;
 
 textNode
   : CONTENT_TEXT
-  | (IDENTIFIER | STRING | NUMBER | DOT | COMMA | COLON | PLUS | MINUS | STAR | SLASH)+
+  ;
+
+forStatement
+  : FOR IDENTIFIER IN expression LBRACE runtimeChunkStatement* RBRACE SEMI
+  ;
+
+ifStatement
+  : IF LPAREN expression RPAREN LBRACE runtimeChunkStatement* RBRACE SEMI
   ;
 
 typeName
@@ -97,30 +163,13 @@ typeName
   | TYPE_STRING
   ;
 
-pageStatement
-  : PAGE STRING USING STRING LBRACE pageInnerStatement* RBRACE SEMI
-  ;
-
-pageInnerStatement
-  : letStatement
-  | constStatement
-  | contentStatement
-  ;
-
-forStatement
-  : FOR IDENTIFIER IN expression LBRACE runtimeSiteStatement* RBRACE SEMI
-  ;
-
-ifStatement
-  : IF LPAREN expression RPAREN LBRACE runtimeSiteStatement* RBRACE SEMI
-  ;
-
 expression
   : assignment
   ;
 
 assignment
-  : orExpr
+  : identifierPath ASSIGN assignment
+  | orExpr
   ;
 
 orExpr
