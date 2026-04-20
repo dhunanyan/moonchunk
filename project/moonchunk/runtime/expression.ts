@@ -510,16 +510,30 @@ class ExprEvaluator {
   }
 
   private executeForStatement(stmt: ForStatementContext, fnScope: Scope, line: number): void {
-    const source = this.evaluateExpressionInScope(stmt.expression(), fnScope, line);
-    if (!Array.isArray(source)) {
-      throw new MoonChunkError('For source must be an array.', stmt.start.line, 1);
+    const loopScope = fnScope.derive();
+    const init = stmt.forInit();
+    const initName = init.IDENTIFIER().text;
+
+    const typeCtxRaw = (init as unknown as { typeName?: () => unknown }).typeName?.();
+    let initDeclaredType: string | null = null;
+    if (Array.isArray(typeCtxRaw)) {
+      initDeclaredType = typeCtxRaw.length > 0 ? (typeCtxRaw[0] as { text: string }).text : null;
+    } else if (typeCtxRaw && typeof typeCtxRaw === 'object' && 'text' in typeCtxRaw) {
+      initDeclaredType = (typeCtxRaw as { text: string }).text;
     }
-    for (const item of source) {
-      const iterScope = fnScope.derive();
-      iterScope.set(stmt.IDENTIFIER().text, item);
+
+    const initValue = this.evaluateExpressionInScope(init.expression(), loopScope, init.start.line);
+    loopScope.declare(initName, initValue, initDeclaredType, init.start.line);
+
+    while (Boolean(this.evaluateExpressionInScope(stmt.expression(), loopScope, line))) {
+      const iterScope = loopScope.derive();
       for (const nested of stmt.runtimeChunkStatement()) {
         this.executeRuntimeChunkStatement(nested, iterScope, line);
       }
+
+      const updateName = stmt.forUpdate().IDENTIFIER().text;
+      const current = coerceToNumeric(loopScope.get(updateName), stmt.start.line);
+      loopScope.assign(updateName, makeNumeric(current.value + 1, current.numType), stmt.start.line);
     }
   }
 

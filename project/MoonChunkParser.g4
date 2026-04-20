@@ -209,7 +209,17 @@ textNode
   ;
 
 forStatement
-  : FOR IDENTIFIER IN expression LBRACE runtimeChunkStatement* RBRACE SEMI
+  : FOR LPAREN forInit SEMI expression SEMI forUpdate RPAREN LBRACE runtimeChunkStatement* RBRACE SEMI
+  ;
+
+forInit
+  : LET typeName IDENTIFIER ASSIGN expression
+  | LET IDENTIFIER (COLON typeName)? ASSIGN expression
+  ;
+
+forUpdate
+  : IDENTIFIER PLUSPLUS
+  | PLUSPLUS IDENTIFIER
   ;
 
 ifStatement

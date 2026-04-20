@@ -18,7 +18,7 @@ MoonChunk to pakiet npm z util funkcjami do wykonywania DSL static-site generato
 - `const variable = expression;`
 - `title: "My page";` (skrócona składnia metadanych)
 - `output: "./dist";` (alternatywa dla `output "./dist";`)
-- `for item in expression { ... };`
+- `for (let int i = 0; i < limit; i++) { ... };`
 - `if (expression) { ... };`
 - typy: `int`, `float`, `double`, `bool`, `string`
 - `content { ... };` z dynamicznymi wyrażeniami:

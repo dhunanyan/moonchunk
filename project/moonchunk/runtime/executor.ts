@@ -23,7 +23,7 @@ import { Scope } from './scope';
 import { evalExpr, isCallable, makeCallable } from './expression';
 import { routeToOutputFile } from './route';
 import { renderContentTemplate, renderLayoutTemplate, renderStringWithInterpolations } from './template';
-import { inferType, isAssignable } from './values';
+import { coerceToNumeric, inferType, isAssignable, makeNumeric } from './values';
 
 class FunctionReturn {
   constructor(public readonly value: unknown) {}
@@ -234,15 +234,19 @@ export function runAst(ast: AstProgramNode, options: ExecOptions): { output: str
   }
 
   function execForRuntime(node: AstForNode, scope: Scope, currentDir: string): void {
-    const data = evalExpr(node.sourceExpr, scope, currentDir, node.line, { getGlobal });
-    if (!Array.isArray(data)) throw new MoonChunkError('For source must be an array.', node.line, 1);
-    for (const item of data) {
-      const child = scope.derive();
-      child.set(node.item, item);
+    const loopScope = scope.derive();
+    const initValue = evalExpr(node.initExpr, loopScope, currentDir, node.line, { getGlobal });
+    loopScope.declare(node.initName, initValue, node.initDeclaredType, node.line);
+
+    while (Boolean(evalExpr(node.conditionExpr, loopScope, currentDir, node.line, { getGlobal }))) {
+      const child = loopScope.derive();
       for (const nested of node.body) {
         if (!nested) continue;
         execRuntimeStatement(nested, child, currentDir);
       }
+
+      const current = coerceToNumeric(loopScope.get(node.updateName), node.line);
+      loopScope.assign(node.updateName, makeNumeric(current.value + 1, current.numType), node.line);
     }
   }
 

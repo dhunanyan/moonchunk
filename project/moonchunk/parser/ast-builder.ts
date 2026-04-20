@@ -68,6 +68,20 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
     return raw.replace(/\s*:\s*$/, '').trim();
   }
 
+  private parseForInit(raw: string, line: number): { name: string; declaredType: string | null; expr: string } {
+    const prefixed = raw.match(/^let\s+(int|float|double|bool|string)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+    if (prefixed) {
+      return { name: prefixed[2], declaredType: prefixed[1], expr: prefixed[3].trim() };
+    }
+
+    const suffixed = raw.match(/^let\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*(int|float|double|bool|string))?\s*=\s*(.+)$/);
+    if (suffixed) {
+      return { name: suffixed[1], declaredType: suffixed[2] || null, expr: suffixed[3].trim() };
+    }
+
+    throw new Error(`Invalid for-init syntax at line ${line}: ${raw}`);
+  }
+
   visitProgram(ctx: ProgramContext): unknown {
     return {
       type: 'Program',
@@ -298,10 +312,17 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
   }
 
   visitForStatement(ctx: ForStatementContext): unknown {
+    const initRaw = this.toSource(ctx.forInit());
+    const parsedInit = this.parseForInit(initRaw, ctx.start.line);
+    const updateRaw = this.toSource(ctx.forUpdate());
     return {
       type: 'For',
-      item: ctx.IDENTIFIER().text,
-      sourceExpr: this.toExpr(ctx.expression()),
+      initName: parsedInit.name,
+      initDeclaredType: parsedInit.declaredType,
+      initExpr: parsedInit.expr,
+      conditionExpr: this.toExpr(ctx.expression()),
+      updateName: ctx.forUpdate().IDENTIFIER().text,
+      updatePrefix: updateRaw.startsWith('++'),
       body: ctx.runtimeChunkStatement().map((stmt) => this.visit(stmt)),
       line: ctx.start.line
     };

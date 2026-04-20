@@ -105,8 +105,12 @@ export type AstPageNode = {
 
 export type AstForNode = {
   type: 'For';
-  item: string;
-  sourceExpr: string;
+  initName: string;
+  initDeclaredType: string | null;
+  initExpr: string;
+  conditionExpr: string;
+  updateName: string;
+  updatePrefix: boolean;
   body: Array<AstRuntimeNode | null>;
   line: number;
 };
