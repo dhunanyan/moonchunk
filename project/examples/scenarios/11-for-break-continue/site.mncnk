@@ -1,13 +1,30 @@
-chunk "OnlyEven" {
+chunk "Metadata" {
   output: "./dist";
   title: "This is title Metadata for Browser SEO";
   metaDescription: "This is my description Metadata for Browser SEO";
+};
 
+chunk "OnlyEven" {
   for(let index: int = 0; index < 10; index++) {
     if(index % 2 != 0) {
       continue;
     };
-    page "/{{index}}.html" {
+    page "/even/{{index}}.html" {
+      content {
+        <p>MyHtml No:{index}</p>
+      };
+    };
+  };
+};
+
+chunk "OnlyFirst5" {
+  output: "./dist";
+
+  for(let index: int = 0; index < 10; index++) {
+    if(index == 5) {
+      break;
+    };
+    page "/first-five/{{index}}.html" {
       content {
         <p>MyHtml No:{index}</p>
       };

@@ -1,10 +1,16 @@
 Walidacja deklaracji w dynamicznych blockach w RUNTIME!!! (a nie w g4)
-contentStatement* - może być więcej niż jeden content XD
-dodać: 
+contentStatement\* - może być więcej niż jeden content XD
+dodać:
+
 ```
 title { // chodzi o to ze to identyfikator a nie token=title (to samo token=content)
 
 }
-``` 
+```
 
 warning nieuztych zmiennych jak title {}
+
+---
+
+Dodać wszystkie takiego rodzaju rzeczy do gramatyki a nie trzymać w plikach .ts:
+`const IDENTIFIER_PATH_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/;`
