@@ -1,6 +1,6 @@
 chunk "LetFragment" {
   let header = "Import starts with let";
-  page "/" using "layout.tpl" {
+  page "/" {
     let title = header;
     content {
       <h1>{title}</h1>

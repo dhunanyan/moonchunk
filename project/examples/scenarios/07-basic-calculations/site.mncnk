@@ -1,9 +1,9 @@
 chunk "Scenario07BasicCalculations" {
   output "./dist";
 
-  env {
-    global title: string = "07 - Basic Calculations";
+  title: "07 - Basic Calculations";
 
+  env {
     global int_div: int = 1 / 2;
     global double_div: double = 1 / 2.0;
     global float_div: float = 1f / 2;
@@ -18,7 +18,7 @@ chunk "Scenario07BasicCalculations" {
     global logic_mix: bool = cmp_int and cmp_double;
   };
 
-  page "/" using "layout.tpl" {
+  page "/" {
     content {
       <h1>{title}</h1>
       <h2>Division</h2>

@@ -1,15 +1,16 @@
 chunk "Scenario08GlobalEnvBasic" {
   output "./dist";
 
+  title: "08 - Global Env Basic";
+
   env {
-    global title: string = "08 - Global Env Basic";
     global a: int = 1 / 2;
     global b: double = 1 / 2.0;
     global c: float = 1f / 2;
     global is_ok: bool = (a == 0) and (b == 0.5);
   };
 
-  page "/" using "layout.tpl" {
+  page "/" {
     content {
       <h1>{title}</h1>
       <ul>

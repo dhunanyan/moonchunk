@@ -1,9 +1,10 @@
 chunk "Scenario01" {
   output "./dist";
 
-  page "/" using "layout.tpl" {
+  page "/" {
     let title = "Site Basic";
     let msg = "Hello from chunk body";
+
     content {
       <h1>{title}</h1>
       <p>{msg}</p>

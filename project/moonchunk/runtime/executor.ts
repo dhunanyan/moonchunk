@@ -32,6 +32,11 @@ class FunctionReturn {
 export function runAst(ast: AstProgramNode, options: ExecOptions): { output: string[]; result: unknown; generatedFiles: string[] } {
   const cwd = options.cwd || process.cwd();
   const writeFiles = options.writeFiles !== false;
+  const internalLayoutPath = path.resolve(__dirname, '../base.tpl');
+  if (!fs.existsSync(internalLayoutPath)) {
+    throw new MoonChunkError(`Internal base template does not exist: ${internalLayoutPath}`, 1, 1);
+  }
+  const internalLayoutTemplate = fs.readFileSync(internalLayoutPath, 'utf8');
 
   const outputLogs: string[] = [];
   const generatedFiles: string[] = [];
@@ -241,10 +246,77 @@ export function runAst(ast: AstProgramNode, options: ExecOptions): { output: str
     }
   }
 
+  function applyMetaAssignment(scope: Scope, key: string, value: unknown, line: number): void {
+    if (key === 'output') {
+      outputDir = path.resolve(cwd, String(value ?? ''));
+      return;
+    }
+    scope.declare(key, value, null, line);
+  }
+
+  function ensureLayoutDefaults(scope: Scope): void {
+    const defaults: Record<string, unknown> = {
+      lang: 'en',
+      dir: 'ltr',
+      htmlClass: '',
+      charset: 'utf-8',
+      viewport: 'width=device-width, initial-scale=1',
+      title: '',
+      metaDescription: '',
+      metaKeywords: '',
+      metaAuthor: '',
+      metaRobots: 'index,follow',
+      themeColor: '',
+      canonicalUrl: '',
+      faviconHref: '',
+      appleTouchIconHref: '',
+      manifestHref: '',
+      ogType: 'website',
+      ogTitle: '',
+      ogDescription: '',
+      ogImage: '',
+      ogUrl: '',
+      ogSiteName: '',
+      ogLocale: '',
+      twitterCard: 'summary',
+      twitterSite: '',
+      twitterCreator: '',
+      twitterTitle: '',
+      twitterDescription: '',
+      twitterImage: '',
+      preloadLinks: '',
+      preconnectLinks: '',
+      styles: '',
+      headScripts: '',
+      headExtra: '',
+      bodyClass: '',
+      pageId: '',
+      topBar: '',
+      header: '',
+      footer: '',
+      modals: '',
+      scripts: '',
+      bodyEndExtra: '',
+      content: ''
+    };
+
+    for (const [key, value] of Object.entries(defaults)) {
+      if (scope.get(key) === undefined) {
+        scope.set(key, value);
+      }
+    }
+  }
+
   function execRuntimeStatement(node: AstRuntimeNode, scope: Scope, currentDir: string): void {
     if (node.type === 'Let' || node.type === 'Const') {
       const value = evalExpr(node.expr, scope, currentDir, node.line, { getGlobal });
       scope.declare(node.name, value, node.declaredType ?? null, node.line);
+      return;
+    }
+
+    if (node.type === 'Meta') {
+      const value = evalExpr(node.expr, scope, currentDir, node.line, { getGlobal });
+      applyMetaAssignment(scope, node.name, value, node.line);
       return;
     }
 
@@ -292,21 +364,19 @@ export function runAst(ast: AstProgramNode, options: ExecOptions): { output: str
       if (statement.type === 'Let' || statement.type === 'Const') {
         const value = evalExpr(statement.expr, pageScope, currentDir, statement.line, { getGlobal });
         pageScope.declare(statement.name, value, statement.declaredType ?? null, statement.line);
+      } else if (statement.type === 'Meta') {
+        const value = evalExpr(statement.expr, pageScope, currentDir, statement.line, { getGlobal });
+        applyMetaAssignment(pageScope, statement.name, value, statement.line);
       } else if (statement.type === 'Content') {
         contentHtml = renderContentTemplate(statement.template, pageScope, currentDir, { getGlobal });
       }
     }
 
     pageScope.set('content', contentHtml);
+    ensureLayoutDefaults(pageScope);
 
     const route = renderStringWithInterpolations(node.route, pageScope, currentDir, { getGlobal });
-    const layoutPath = path.resolve(currentDir, node.layout);
-    if (!fs.existsSync(layoutPath)) {
-      throw new MoonChunkError(`Layout file does not exist: ${node.layout}`, node.line, 1);
-    }
-
-    const layout = fs.readFileSync(layoutPath, 'utf8');
-    const html = renderLayoutTemplate(layout, pageScope, currentDir, { getGlobal });
+    const html = renderLayoutTemplate(internalLayoutTemplate, pageScope, currentDir, { getGlobal });
 
     const relativeOut = routeToOutputFile(route);
     const absOut = path.resolve(outputDir, relativeOut);
@@ -394,6 +464,12 @@ export function runAst(ast: AstProgramNode, options: ExecOptions): { output: str
     if (node.type === 'Let' || node.type === 'Const') {
       const value = evalExpr(node.expr, scope, currentDir, node.line, { getGlobal });
       scope.declare(node.name, value, node.declaredType ?? null, node.line);
+      return;
+    }
+
+    if (node.type === 'Meta') {
+      const value = evalExpr(node.expr, scope, currentDir, node.line, { getGlobal });
+      applyMetaAssignment(scope, node.name, value, node.line);
       return;
     }
 

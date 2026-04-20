@@ -1,23 +1,15 @@
 chunk "Scenario09" {
   output "./dist";
 
-  for item in data("a.json") {
-    page "/items/{{item.slug }}.html" using "layout.tpl" {
-      let title = item.title;
-      content {
-        <h1>{item.title}</h1>
-        <p>{item.body}</p>
-      };
+  page "items/a.html" {
+    content {
+      <h1>1</h1>
     };
   };
 
-  for item in data("b.json") {
-    page "/items/{{item.slug }}.html" using "layout.tpl" {
-      let title = item.title;
-      content {
-        <h1>{item.title}</h1>
-        <p>{item.body}</p>
-      };
+  page "items/b.html" {
+    let title = "Site Basic";    content {
+      <h1>2</h1>
     };
   };
 };

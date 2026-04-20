@@ -1,6 +1,6 @@
 chunk "LoopFragment" {
   for item in data("items.json") {
-    page "/items/{{item.slug }}.html" using "layout.tpl" {
+    page "/items/{{item.slug }}.html" {
       let title = item.title;
       content {
         <h1>{item.title}</h1>

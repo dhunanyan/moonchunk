@@ -83,6 +83,13 @@ export type AstConstNode = {
   line: number;
 };
 
+export type AstMetaNode = {
+  type: 'Meta';
+  name: string;
+  expr: string;
+  line: number;
+};
+
 export type AstContentNode = {
   type: 'Content';
   template: string;
@@ -92,8 +99,7 @@ export type AstContentNode = {
 export type AstPageNode = {
   type: 'Page';
   route: string;
-  layout: string;
-  body: Array<AstLetNode | AstConstNode | AstContentNode | null>;
+  body: Array<AstLetNode | AstConstNode | AstMetaNode | AstContentNode | null>;
   line: number;
 };
 
@@ -157,6 +163,7 @@ export type AstArrowFunctionDeclarationNode = {
 };
 
 export type AstRuntimeNode =
+  | AstMetaNode
   | AstLetNode
   | AstConstNode
   | AstPageNode

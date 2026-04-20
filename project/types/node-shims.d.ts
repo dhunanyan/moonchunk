@@ -14,3 +14,5 @@ declare module 'node:path' {
 declare const process: {
   cwd(): string;
 };
+
+declare const __dirname: string;

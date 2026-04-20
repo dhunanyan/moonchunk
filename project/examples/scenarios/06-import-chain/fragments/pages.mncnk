@@ -1,5 +1,5 @@
 chunk "Pages" {
-  page "/" using "../layout.tpl" {
+  page "/" {
     let title = siteName;
     content {
       <h1>{title}</h1>

@@ -32,6 +32,7 @@ chunkStatement
 runtimeChunkStatement
   : functionDeclaration
   | arrowFunctionDeclaration
+  | metaStatement
   | constStatement
   | letStatement
   | pageStatement
@@ -62,6 +63,7 @@ namespaceImportClause
 
 outputStatement
   : OUTPUT STRING SEMI
+  | OUTPUT_COLON STRING SEMI
   ;
 
 envBlock
@@ -115,13 +117,62 @@ returnStatement
   ;
 
 pageStatement
-  : PAGE STRING USING STRING LBRACE pageInnerStatement* RBRACE SEMI
+  : PAGE STRING LBRACE pageInnerStatement* RBRACE SEMI
   ;
 
 pageInnerStatement
   : letStatement
   | constStatement
+  | metaStatement
   | contentStatement
+  ;
+
+metaStatement
+  : metaKeyColon expression SEMI
+  ;
+
+metaKeyColon
+  : META_LANG_COLON
+  | META_DIR_COLON
+  | META_HTML_CLASS_COLON
+  | META_CHARSET_COLON
+  | META_VIEWPORT_COLON
+  | META_TITLE_COLON
+  | META_DESCRIPTION_COLON
+  | META_KEYWORDS_COLON
+  | META_AUTHOR_COLON
+  | META_ROBOTS_COLON
+  | META_THEME_COLOR_COLON
+  | META_CANONICAL_URL_COLON
+  | META_FAVICON_HREF_COLON
+  | META_APPLE_TOUCH_ICON_COLON
+  | META_MANIFEST_HREF_COLON
+  | META_OG_TYPE_COLON
+  | META_OG_TITLE_COLON
+  | META_OG_DESCRIPTION_COLON
+  | META_OG_IMAGE_COLON
+  | META_OG_URL_COLON
+  | META_OG_SITE_NAME_COLON
+  | META_OG_LOCALE_COLON
+  | META_TWITTER_CARD_COLON
+  | META_TWITTER_SITE_COLON
+  | META_TWITTER_CREATOR_COLON
+  | META_TWITTER_TITLE_COLON
+  | META_TWITTER_DESCRIPTION_COLON
+  | META_TWITTER_IMAGE_COLON
+  | META_PRELOAD_LINKS_COLON
+  | META_PRECONNECT_LINKS_COLON
+  | META_STYLES_COLON
+  | META_HEAD_SCRIPTS_COLON
+  | META_HEAD_EXTRA_COLON
+  | META_BODY_CLASS_COLON
+  | META_PAGE_ID_COLON
+  | META_TOP_BAR_COLON
+  | META_HEADER_COLON
+  | META_FOOTER_COLON
+  | META_MODALS_COLON
+  | META_SCRIPTS_COLON
+  | META_BODY_END_EXTRA_COLON
   ;
 
 contentStatement

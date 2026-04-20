@@ -19,6 +19,7 @@ import {
   ImportItemContext,
   ImportStatementContext,
   LetStatementContext,
+  MetaStatementContext,
   MoonChunkParser,
   NamedImportClauseContext,
   NamespaceImportClauseContext,
@@ -63,6 +64,10 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
     return this.sliceFromTokens(ctx.start, ctx.stop).trim();
   }
 
+  private stripTrailingColonToken(raw: string): string {
+    return raw.replace(/\s*:\s*$/, '').trim();
+  }
+
   visitProgram(ctx: ProgramContext): unknown {
     return {
       type: 'Program',
@@ -94,6 +99,7 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
   visitRuntimeChunkStatement(ctx: RuntimeChunkStatementContext): unknown {
     if (ctx.functionDeclaration()) return this.visit(ctx.functionDeclaration()!);
     if (ctx.arrowFunctionDeclaration()) return this.visit(ctx.arrowFunctionDeclaration()!);
+    if (ctx.metaStatement()) return this.visit(ctx.metaStatement()!);
     if (ctx.constStatement()) return this.visit(ctx.constStatement()!);
     if (ctx.letStatement()) return this.visit(ctx.letStatement()!);
     if (ctx.pageStatement()) return this.visit(ctx.pageStatement()!);
@@ -184,6 +190,15 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
     };
   }
 
+  visitMetaStatement(ctx: MetaStatementContext): unknown {
+    return {
+      type: 'Meta',
+      name: this.stripTrailingColonToken(ctx.metaKeyColon().text),
+      expr: this.toExpr(ctx.expression()),
+      line: ctx.start.line
+    };
+  }
+
   visitExpressionStatement(ctx: ExpressionStatementContext): unknown {
     return {
       type: 'ExpressionStatement',
@@ -245,11 +260,10 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
   }
 
   visitPageStatement(ctx: PageStatementContext): unknown {
-    const strings = ctx.STRING();
+    const routeLiteral = ctx.STRING();
     return {
       type: 'Page',
-      route: this.unquote(strings[0].text),
-      layout: this.unquote(strings[1].text),
+      route: this.unquote(routeLiteral.text),
       body: ctx.pageInnerStatement().map((item) => this.visit(item)),
       line: ctx.start.line
     };
@@ -258,6 +272,7 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
   visitPageInnerStatement(ctx: PageInnerStatementContext): unknown {
     if (ctx.letStatement()) return this.visit(ctx.letStatement()!);
     if (ctx.constStatement()) return this.visit(ctx.constStatement()!);
+    if (ctx.metaStatement()) return this.visit(ctx.metaStatement()!);
     if (ctx.contentStatement()) return this.visit(ctx.contentStatement()!);
     return null;
   }

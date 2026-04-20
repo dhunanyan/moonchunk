@@ -13,9 +13,11 @@ MoonChunk to pakiet npm z util funkcjami do wykonywania DSL static-site generato
 - `env { global name: type = expr; ... };` (globalna przestrzeń nazw)
 - `import { A, B } from "./part/file.mncnk";`
 - `import * as AnyName from "./part/file.mncnk";` (ładuje wszystkie chunki z pliku)
-- `page "/path" using "layout.tpl" { ... };`
+- `page "/path" { ... };`
 - `let variable = expression;`
 - `const variable = expression;`
+- `title: "My page";` (skrócona składnia metadanych)
+- `output: "./dist";` (alternatywa dla `output "./dist";`)
 - `for item in expression { ... };`
 - `if (expression) { ... };`
 - typy: `int`, `float`, `double`, `bool`, `string`
@@ -27,6 +29,8 @@ MoonChunk to pakiet npm z util funkcjami do wykonywania DSL static-site generato
 
 Uwaga:
 - aliasy w named import (`A as B`) nie są jeszcze wspierane runtime i zgłaszają błąd.
+- skrócona składnia `key: expr;` działa tylko dla wspieranych kluczy layoutu `base.tpl` oraz `output`.
+- layout jest wewnętrzny i stały: `moonchunk/base.tpl` (nie podajemy już `using "layout.tpl"`).
 
 ## Instalacja
 
@@ -54,7 +58,7 @@ Eksporty:
 
 Opcje:
 
-- `cwd?: string` (bazowy katalog do `data(...)`, layoutów i outputu)
+- `cwd?: string` (bazowy katalog do `data(...)` i outputu)
 - `writeFiles?: boolean` (domyślnie `true`)
 
 ## Global namespace (2-pass)

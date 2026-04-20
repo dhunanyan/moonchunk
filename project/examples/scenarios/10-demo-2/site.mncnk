@@ -1,11 +1,9 @@
 chunk "Scenario10Demo2" {
   output "./dist";
 
-  env {
-    global title: string = "10 - Demo 2";
-  };
+  title: "10 - Demo 2";
 
-  page "/" using "layout.tpl" {
+  page "/" {
     content {
       <p>{2 + 2}</p>
     };
