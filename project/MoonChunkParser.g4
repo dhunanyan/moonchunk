@@ -37,9 +37,11 @@ runtimeChunkStatement
   | letStatement
   | pageStatement
   | forStatement
+  | whileStatement
   | ifStatement
   | breakStatement
   | continueStatement
+  | expressionStatement
   ;
 
 importStatement
@@ -109,6 +111,7 @@ functionBodyStatement
   | letStatement
   | ifStatement
   | forStatement
+  | whileStatement
   | breakStatement
   | continueStatement
   | returnStatement
@@ -217,6 +220,10 @@ dynamicMustache
 
 textNode
   : CONTENT_TEXT
+  ;
+
+whileStatement
+  : WHILE LPAREN expression RPAREN LBRACE runtimeChunkStatement* RBRACE SEMI
   ;
 
 forStatement

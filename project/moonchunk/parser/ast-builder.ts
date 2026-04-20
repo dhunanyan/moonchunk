@@ -1,5 +1,5 @@
-import { Token } from 'antlr4ts';
-import { AbstractParseTreeVisitor } from 'antlr4ts/tree/AbstractParseTreeVisitor';
+import { Token } from "antlr4ts";
+import { AbstractParseTreeVisitor } from "antlr4ts/tree/AbstractParseTreeVisitor";
 import {
   ArrowFunctionDeclarationContext,
   BreakStatementContext,
@@ -13,6 +13,7 @@ import {
   ExpressionFragmentContext,
   ExpressionStatementContext,
   ForStatementContext,
+  WhileStatementContext,
   FunctionBodyStatementContext,
   FunctionDeclarationContext,
   GlobalStatementContext,
@@ -32,11 +33,14 @@ import {
   ParameterListContext,
   ProgramContext,
   ReturnStatementContext,
-  RuntimeChunkStatementContext
-} from '../../.antlr/MoonChunkParser';
-import { MoonChunkParserVisitor } from '../../.antlr/MoonChunkParserVisitor';
+  RuntimeChunkStatementContext,
+} from "../../.antlr/MoonChunkParser";
+import { MoonChunkParserVisitor } from "../../.antlr/MoonChunkParserVisitor";
 
-export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements MoonChunkParserVisitor<unknown> {
+export class AstBuilder
+  extends AbstractParseTreeVisitor<unknown>
+  implements MoonChunkParserVisitor<unknown>
+{
   constructor(private readonly sourceCode: string) {
     super();
   }
@@ -67,18 +71,33 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
   }
 
   private stripTrailingColonToken(raw: string): string {
-    return raw.replace(/\s*:\s*$/, '').trim();
+    return raw.replace(/\s*:\s*$/, "").trim();
   }
 
-  private parseForInit(raw: string, line: number): { name: string; declaredType: string | null; expr: string } {
-    const prefixed = raw.match(/^let\s+(int|float|double|bool|string)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/);
+  private parseForInit(
+    raw: string,
+    line: number,
+  ): { name: string; declaredType: string | null; expr: string } {
+    const prefixed = raw.match(
+      /^let\s+(int|float|double|bool|string)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/,
+    );
     if (prefixed) {
-      return { name: prefixed[2], declaredType: prefixed[1], expr: prefixed[3].trim() };
+      return {
+        name: prefixed[2],
+        declaredType: prefixed[1],
+        expr: prefixed[3].trim(),
+      };
     }
 
-    const suffixed = raw.match(/^let\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*(int|float|double|bool|string))?\s*=\s*(.+)$/);
+    const suffixed = raw.match(
+      /^let\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*(int|float|double|bool|string))?\s*=\s*(.+)$/,
+    );
     if (suffixed) {
-      return { name: suffixed[1], declaredType: suffixed[2] || null, expr: suffixed[3].trim() };
+      return {
+        name: suffixed[1],
+        declaredType: suffixed[2] || null,
+        expr: suffixed[3].trim(),
+      };
     }
 
     throw new Error(`Invalid for-init syntax at line ${line}: ${raw}`);
@@ -86,8 +105,8 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
 
   visitProgram(ctx: ProgramContext): unknown {
     return {
-      type: 'Program',
-      chunks: ctx.chunkDecl().map((decl) => this.visit(decl))
+      type: "Program",
+      chunks: ctx.chunkDecl().map((decl) => this.visit(decl)),
     };
   }
 
@@ -97,10 +116,10 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
 
   visitChunkDecl(ctx: ChunkDeclContext): unknown {
     return {
-      type: 'Chunk',
+      type: "Chunk",
       name: this.unquote(ctx.chunkNameLiteral().text),
       body: ctx.chunkStatement().map((stmt) => this.visit(stmt)),
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 
@@ -108,43 +127,49 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
     if (ctx.importStatement()) return this.visit(ctx.importStatement()!);
     if (ctx.outputStatement()) return this.visit(ctx.outputStatement()!);
     if (ctx.envBlock()) return this.visit(ctx.envBlock()!);
-    if (ctx.runtimeChunkStatement()) return this.visit(ctx.runtimeChunkStatement()!);
+    if (ctx.runtimeChunkStatement())
+      return this.visit(ctx.runtimeChunkStatement()!);
     return null;
   }
 
   visitRuntimeChunkStatement(ctx: RuntimeChunkStatementContext): unknown {
-    if (ctx.functionDeclaration()) return this.visit(ctx.functionDeclaration()!);
-    if (ctx.arrowFunctionDeclaration()) return this.visit(ctx.arrowFunctionDeclaration()!);
+    if (ctx.functionDeclaration())
+      return this.visit(ctx.functionDeclaration()!);
+    if (ctx.arrowFunctionDeclaration())
+      return this.visit(ctx.arrowFunctionDeclaration()!);
     if (ctx.metaStatement()) return this.visit(ctx.metaStatement()!);
     if (ctx.constStatement()) return this.visit(ctx.constStatement()!);
     if (ctx.letStatement()) return this.visit(ctx.letStatement()!);
     if (ctx.pageStatement()) return this.visit(ctx.pageStatement()!);
     if (ctx.forStatement()) return this.visit(ctx.forStatement()!);
+    if (ctx.whileStatement()) return this.visit(ctx.whileStatement()!);
     if (ctx.ifStatement()) return this.visit(ctx.ifStatement()!);
     if (ctx.breakStatement()) return this.visit(ctx.breakStatement()!);
     if (ctx.continueStatement()) return this.visit(ctx.continueStatement()!);
+    if (ctx.expressionStatement()) return this.visit(ctx.expressionStatement()!);
     return null;
   }
 
   visitImportStatement(ctx: ImportStatementContext): unknown {
     return {
-      type: 'Import',
+      type: "Import",
       clause: this.visit(ctx.importClause()),
       source: this.unquote(ctx.STRING().text),
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 
   visitImportClause(ctx: ImportClauseContext): unknown {
     if (ctx.namedImportClause()) return this.visit(ctx.namedImportClause()!);
-    if (ctx.namespaceImportClause()) return this.visit(ctx.namespaceImportClause()!);
+    if (ctx.namespaceImportClause())
+      return this.visit(ctx.namespaceImportClause()!);
     return null;
   }
 
   visitNamedImportClause(ctx: NamedImportClauseContext): unknown {
     return {
-      type: 'NamedImport',
-      items: ctx.importItem().map((item) => this.visit(item))
+      type: "NamedImport",
+      items: ctx.importItem().map((item) => this.visit(item)),
     };
   }
 
@@ -157,93 +182,93 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
 
   visitNamespaceImportClause(ctx: NamespaceImportClauseContext): unknown {
     return {
-      type: 'NamespaceImport',
-      alias: ctx.IDENTIFIER().text
+      type: "NamespaceImport",
+      alias: ctx.IDENTIFIER().text,
     };
   }
 
   visitOutputStatement(ctx: OutputStatementContext): unknown {
     return {
-      type: 'Output',
+      type: "Output",
       value: this.unquote(ctx.STRING().text),
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 
   visitEnvBlock(ctx: EnvBlockContext): unknown {
     return {
-      type: 'Env',
+      type: "Env",
       body: ctx.globalStatement().map((g) => this.visit(g)),
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 
   visitGlobalStatement(ctx: GlobalStatementContext): unknown {
     return {
-      type: 'Global',
+      type: "Global",
       name: ctx.IDENTIFIER().text,
       declaredType: ctx.typeName() ? ctx.typeName()!.text : null,
       expr: this.toExpr(ctx.expression()),
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 
   visitLetStatement(ctx: LetStatementContext): unknown {
     return {
-      type: 'Let',
+      type: "Let",
       name: ctx.IDENTIFIER().text,
       declaredType: ctx.typeName() ? ctx.typeName()!.text : null,
       expr: this.toExpr(ctx.expression()),
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 
   visitConstStatement(ctx: ConstStatementContext): unknown {
     return {
-      type: 'Const',
+      type: "Const",
       name: ctx.IDENTIFIER().text,
       declaredType: ctx.typeName() ? ctx.typeName()!.text : null,
       expr: this.toExpr(ctx.expression()),
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 
   visitMetaStatement(ctx: MetaStatementContext): unknown {
     return {
-      type: 'Meta',
+      type: "Meta",
       name: ctx.metaKey().text,
       expr: this.toExpr(ctx.expression()),
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 
   visitExpressionStatement(ctx: ExpressionStatementContext): unknown {
     return {
-      type: 'ExpressionStatement',
+      type: "ExpressionStatement",
       expr: this.toExpr(ctx.expression()),
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 
   visitFunctionDeclaration(ctx: FunctionDeclarationContext): unknown {
     return {
-      type: 'FunctionDeclaration',
+      type: "FunctionDeclaration",
       name: ctx.IDENTIFIER().text,
       params: ctx.parameterList() ? this.visit(ctx.parameterList()!) : [],
       returnType: ctx.typeName() ? ctx.typeName()!.text : null,
       body: ctx.functionBodyStatement().map((stmt) => this.visit(stmt)),
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 
   visitArrowFunctionDeclaration(ctx: ArrowFunctionDeclarationContext): unknown {
     return {
-      type: 'ArrowFunctionDeclaration',
+      type: "ArrowFunctionDeclaration",
       name: ctx.IDENTIFIER().text,
       params: ctx.parameterList() ? this.visit(ctx.parameterList()!) : [],
       returnType: ctx.typeName() ? ctx.typeName()!.text : null,
       bodyExpr: this.toSource(ctx.arrowFunctionBody()),
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 
@@ -254,52 +279,55 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
   visitParameter(ctx: ParameterContext): unknown {
     return {
       name: ctx.IDENTIFIER().text,
-      declaredType: ctx.typeName() ? ctx.typeName()!.text : null
+      declaredType: ctx.typeName() ? ctx.typeName()!.text : null,
     };
   }
 
   visitFunctionBodyStatement(ctx: FunctionBodyStatementContext): unknown {
     if (ctx.constStatement()) return this.visit(ctx.constStatement()!);
-    if (ctx.arrowFunctionDeclaration()) return this.visit(ctx.arrowFunctionDeclaration()!);
+    if (ctx.arrowFunctionDeclaration())
+      return this.visit(ctx.arrowFunctionDeclaration()!);
     if (ctx.letStatement()) return this.visit(ctx.letStatement()!);
     if (ctx.ifStatement()) return this.visit(ctx.ifStatement()!);
     if (ctx.forStatement()) return this.visit(ctx.forStatement()!);
+    if (ctx.whileStatement()) return this.visit(ctx.whileStatement()!);
     if (ctx.breakStatement()) return this.visit(ctx.breakStatement()!);
     if (ctx.continueStatement()) return this.visit(ctx.continueStatement()!);
     if (ctx.returnStatement()) return this.visit(ctx.returnStatement()!);
-    if (ctx.expressionStatement()) return this.visit(ctx.expressionStatement()!);
+    if (ctx.expressionStatement())
+      return this.visit(ctx.expressionStatement()!);
     return null;
   }
 
   visitReturnStatement(ctx: ReturnStatementContext): unknown {
     return {
-      type: 'Return',
+      type: "Return",
       expr: this.toExpr(ctx.expression()),
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 
   visitBreakStatement(ctx: BreakStatementContext): unknown {
     return {
-      type: 'Break',
-      line: ctx.start.line
+      type: "Break",
+      line: ctx.start.line,
     };
   }
 
   visitContinueStatement(ctx: ContinueStatementContext): unknown {
     return {
-      type: 'Continue',
-      line: ctx.start.line
+      type: "Continue",
+      line: ctx.start.line,
     };
   }
 
   visitPageStatement(ctx: PageStatementContext): unknown {
     const routeLiteral = ctx.STRING();
     return {
-      type: 'Page',
+      type: "Page",
       route: this.unquote(routeLiteral.text),
       body: ctx.pageInnerStatement().map((item) => this.visit(item)),
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 
@@ -315,19 +343,19 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
     const open = ctx.CONTENT_START().symbol;
     const close = ctx.CONTENT_END().symbol;
 
-    let inner = '';
+    let inner = "";
     if (open && close) {
       const from = open.stopIndex + 1;
       const to = close.startIndex;
-      inner = to > from ? this.sourceCode.slice(from, to) : '';
+      inner = to > from ? this.sourceCode.slice(from, to) : "";
     }
 
-    inner = inner.replace(/^\s*\r?\n/, '').replace(/\r?\n\s*$/, '');
+    inner = inner.replace(/^\s*\r?\n/, "").replace(/\r?\n\s*$/, "");
 
     return {
-      type: 'Content',
+      type: "Content",
       template: inner,
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 
@@ -336,24 +364,33 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
     const parsedInit = this.parseForInit(initRaw, ctx.start.line);
     const updateRaw = this.toSource(ctx.forUpdate());
     return {
-      type: 'For',
+      type: "For",
       initName: parsedInit.name,
       initDeclaredType: parsedInit.declaredType,
       initExpr: parsedInit.expr,
       conditionExpr: this.toExpr(ctx.expression()),
       updateName: ctx.forUpdate().IDENTIFIER().text,
-      updatePrefix: updateRaw.startsWith('++'),
+      updatePrefix: updateRaw.startsWith("++"),
       body: ctx.runtimeChunkStatement().map((stmt) => this.visit(stmt)),
-      line: ctx.start.line
+      line: ctx.start.line,
+    };
+  }
+
+  visitWhileStatement(ctx: WhileStatementContext): unknown {
+    return {
+      type: "While",
+      condition: this.toExpr(ctx.expression()),
+      body: ctx.runtimeChunkStatement().map((stmt) => this.visit(stmt)),
+      line: ctx.start.line,
     };
   }
 
   visitIfStatement(ctx: IfStatementContext): unknown {
     return {
-      type: 'If',
+      type: "If",
       condition: this.toExpr(ctx.expression()),
       body: ctx.runtimeChunkStatement().map((stmt) => this.visit(stmt)),
-      line: ctx.start.line
+      line: ctx.start.line,
     };
   }
 }

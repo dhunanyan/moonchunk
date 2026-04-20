@@ -14,3 +14,7 @@ warning nieuztych zmiennych jak title {}
 
 Dodać wszystkie takiego rodzaju rzeczy do gramatyki a nie trzymać w plikach .ts:
 `const IDENTIFIER_PATH_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/;`
+
+---
+
+Move i++ logic outside of the `forUpdate` and make it general not inside loop line

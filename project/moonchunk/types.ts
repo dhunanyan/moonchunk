@@ -19,11 +19,11 @@ export type ExecResult = {
   generatedFiles?: string[];
 };
 
-export type NumericType = 'int' | 'float' | 'double';
-export type RuntimeType = NumericType | 'bool' | 'string' | 'unknown';
+export type NumericType = "int" | "float" | "double";
+export type RuntimeType = NumericType | "bool" | "string" | "unknown";
 
 export type NumericValue = {
-  __kind: 'numeric';
+  __kind: "numeric";
   numType: NumericType;
   value: number;
 };
@@ -38,24 +38,24 @@ export type AstImportNamedItem = {
 };
 
 export type AstImportClause =
-  | { type: 'NamedImport'; items: AstImportNamedItem[] }
-  | { type: 'NamespaceImport'; alias: string };
+  | { type: "NamedImport"; items: AstImportNamedItem[] }
+  | { type: "NamespaceImport"; alias: string };
 
 export type AstImportNode = {
-  type: 'Import';
+  type: "Import";
   clause: AstImportClause;
   source: string;
   line: number;
 };
 
 export type AstOutputNode = {
-  type: 'Output';
+  type: "Output";
   value: string;
   line: number;
 };
 
 export type AstGlobalNode = {
-  type: 'Global';
+  type: "Global";
   name: string;
   declaredType: string | null;
   expr: string;
@@ -63,13 +63,13 @@ export type AstGlobalNode = {
 };
 
 export type AstEnvNode = {
-  type: 'Env';
+  type: "Env";
   body: AstGlobalNode[];
   line: number;
 };
 
 export type AstLetNode = {
-  type: 'Let';
+  type: "Let";
   name: string;
   declaredType: string | null;
   expr: string;
@@ -77,7 +77,7 @@ export type AstLetNode = {
 };
 
 export type AstConstNode = {
-  type: 'Const';
+  type: "Const";
   name: string;
   declaredType: string | null;
   expr: string;
@@ -85,27 +85,27 @@ export type AstConstNode = {
 };
 
 export type AstMetaNode = {
-  type: 'Meta';
+  type: "Meta";
   name: string;
   expr: string;
   line: number;
 };
 
 export type AstContentNode = {
-  type: 'Content';
+  type: "Content";
   template: string;
   line: number;
 };
 
 export type AstPageNode = {
-  type: 'Page';
+  type: "Page";
   route: string;
   body: Array<AstLetNode | AstConstNode | AstMetaNode | AstContentNode | null>;
   line: number;
 };
 
 export type AstForNode = {
-  type: 'For';
+  type: "For";
   initName: string;
   initDeclaredType: string | null;
   initExpr: string;
@@ -116,8 +116,15 @@ export type AstForNode = {
   line: number;
 };
 
+export type AstWhileNode = {
+  type: "While";
+  condition: string;
+  body: Array<AstRuntimeNode | null>;
+  line: number;
+};
+
 export type AstIfNode = {
-  type: 'If';
+  type: "If";
   condition: string;
   body: Array<AstRuntimeNode | null>;
   line: number;
@@ -129,24 +136,24 @@ export type AstParameter = {
 };
 
 export type AstExpressionStatementNode = {
-  type: 'ExpressionStatement';
+  type: "ExpressionStatement";
   expr: string;
   line: number;
 };
 
 export type AstReturnNode = {
-  type: 'Return';
+  type: "Return";
   expr: string;
   line: number;
 };
 
 export type AstBreakNode = {
-  type: 'Break';
+  type: "Break";
   line: number;
 };
 
 export type AstContinueNode = {
-  type: 'Continue';
+  type: "Continue";
   line: number;
 };
 
@@ -155,6 +162,7 @@ export type AstFunctionBodyNode =
   | AstLetNode
   | AstIfNode
   | AstForNode
+  | AstWhileNode
   | AstBreakNode
   | AstContinueNode
   | AstReturnNode
@@ -162,7 +170,7 @@ export type AstFunctionBodyNode =
   | AstArrowFunctionDeclarationNode;
 
 export type AstFunctionDeclarationNode = {
-  type: 'FunctionDeclaration';
+  type: "FunctionDeclaration";
   name: string;
   params: AstParameter[];
   returnType: string | null;
@@ -171,7 +179,7 @@ export type AstFunctionDeclarationNode = {
 };
 
 export type AstArrowFunctionDeclarationNode = {
-  type: 'ArrowFunctionDeclaration';
+  type: "ArrowFunctionDeclaration";
   name: string;
   params: AstParameter[];
   returnType: string | null;
@@ -183,25 +191,31 @@ export type AstRuntimeNode =
   | AstMetaNode
   | AstLetNode
   | AstConstNode
+  | AstExpressionStatementNode
   | AstPageNode
   | AstForNode
+  | AstWhileNode
   | AstIfNode
   | AstBreakNode
   | AstContinueNode
   | AstFunctionDeclarationNode
   | AstArrowFunctionDeclarationNode;
 
-export type AstChunkStatement = AstImportNode | AstOutputNode | AstEnvNode | AstRuntimeNode;
+export type AstChunkStatement =
+  | AstImportNode
+  | AstOutputNode
+  | AstEnvNode
+  | AstRuntimeNode;
 
 export type AstChunkNode = {
-  type: 'Chunk';
+  type: "Chunk";
   name: string;
   body: Array<AstChunkStatement | null>;
   line: number;
 };
 
 export type AstProgramNode = {
-  type: 'Program';
+  type: "Program";
   chunks: AstChunkNode[];
 };
 
