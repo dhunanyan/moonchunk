@@ -13,9 +13,11 @@
   ],
   "scripts": {
     "build": "sh scripts/build.sh",
+    "compile:ts": "tsc -p tsconfig.json",
     "compile:antlr": "sh scripts/compile-antlr.sh",
     "check": "sh scripts/check.sh",
     "start": "bash ./scripts/start.sh",
+    "start:debug": "bash ./scripts/start-debug.sh",
     "prebuild": "rm -rf dist",
     "postbuild": "rm -rf .antlr"
   },
