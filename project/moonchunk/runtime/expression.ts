@@ -25,6 +25,7 @@ import {
   FunctionBodyStatementContext,
   FunctionDeclarationContext,
   FunctionExprContext,
+  IdentifierAtomContext,
   IdentifierPathContext,
   IfStatementContext,
   LetStatementContext,
@@ -408,13 +409,19 @@ class ExprEvaluator {
     if (ctx.NUMBER()) return parseNumberLiteral(ctx.NUMBER()!.text);
     if (ctx.TRUE()) return true;
     if (ctx.FALSE()) return false;
+    if (ctx.identifierAtom())
+      return this.resolveIdentifierAtom(ctx.identifierAtom()!);
     if (ctx.expression()) return this.evaluateExpression(ctx.expression()!);
     throw new MoonChunkError("Unsupported expression primary.", this.line, 1);
   }
 
+  private resolveIdentifierAtom(ctx: IdentifierAtomContext): unknown {
+    return this.resolveIdentifierName(ctx.text);
+  }
+
   private createFunctionExpression(ctx: FunctionExprContext): RuntimeCallable {
     const params = paramsFromList(ctx.parameterList());
-    const returnType = ctx.typeName() ? ctx.typeName()!.text : null;
+    const returnType = ctx.returnTypeName() ? ctx.returnTypeName()!.text : null;
     const bodyStatements = ctx.functionBodyStatement();
     const closure = this.scope;
 
@@ -440,11 +447,13 @@ class ExprEvaluator {
       ? [
           {
             name: ctx.IDENTIFIER()!.text,
-            declaredType: ctx.typeName() ? ctx.typeName()!.text : null,
+            declaredType: ctx.returnTypeName()
+              ? ctx.returnTypeName()!.text
+              : null,
           },
         ]
       : paramsFromList(ctx.parameterList());
-    const returnType = ctx.typeName() ? ctx.typeName()!.text : null;
+    const returnType = ctx.returnTypeName() ? ctx.returnTypeName()!.text : null;
     const body = ctx.arrowFunctionBody();
     const closure = this.scope;
 
@@ -478,7 +487,7 @@ class ExprEvaluator {
     ctx: ArrowFunctionDeclarationContext,
   ): RuntimeCallable {
     const params = paramsFromList(ctx.parameterList());
-    const returnType = ctx.typeName() ? ctx.typeName()!.text : null;
+    const returnType = ctx.returnTypeName() ? ctx.returnTypeName()!.text : null;
     const body = ctx.arrowFunctionBody();
     const closure = this.scope;
 
@@ -513,7 +522,7 @@ class ExprEvaluator {
     ctx: FunctionDeclarationContext,
   ): RuntimeCallable {
     const params = paramsFromList(ctx.parameterList());
-    const returnType = ctx.typeName() ? ctx.typeName()!.text : null;
+    const returnType = ctx.returnTypeName() ? ctx.returnTypeName()!.text : null;
     const bodyStatements = ctx.functionBodyStatement();
     const closure = this.scope;
 
@@ -619,12 +628,11 @@ class ExprEvaluator {
     }
     if (statement.returnStatement()) {
       const ret = statement.returnStatement()!;
+      if (!ret.expression()) {
+        throw new ReturnSignal(null);
+      }
       throw new ReturnSignal(
-        this.evaluateExpressionInScope(
-          ret.expression(),
-          fnScope,
-          ret.start.line,
-        ),
+        this.evaluateExpressionInScope(ret.expression()!, fnScope, ret.start.line),
       );
     }
     if (statement.expressionStatement()) {
@@ -716,9 +724,11 @@ class ExprEvaluator {
       fnScope,
       line,
     );
-    if (!Boolean(cond)) return;
+    const blocks = stmt.runtimeBlock();
+    const selected = Boolean(cond) ? blocks[0] : blocks[1];
+    if (!selected) return;
     const blockScope = fnScope.derive();
-    for (const nested of stmt.runtimeChunkStatement()) {
+    for (const nested of selected.runtimeChunkStatement()) {
       this.executeRuntimeChunkStatement(nested, blockScope, line, inLoop);
     }
   }
@@ -760,7 +770,7 @@ class ExprEvaluator {
       )
     ) {
       const iterScope = loopScope.derive();
-      for (const nested of stmt.runtimeChunkStatement()) {
+      for (const nested of stmt.runtimeBlock().runtimeChunkStatement()) {
         try {
           this.executeRuntimeChunkStatement(nested, iterScope, line, true);
         } catch (error) {
@@ -793,7 +803,7 @@ class ExprEvaluator {
       Boolean(this.evaluateExpressionInScope(stmt.expression(), fnScope, line))
     ) {
       const iterScope = loopScope.derive();
-      for (const nested of stmt.runtimeChunkStatement()) {
+      for (const nested of stmt.runtimeBlock().runtimeChunkStatement()) {
         try {
           this.executeRuntimeChunkStatement(nested, iterScope, line, true);
         } catch (error) {
@@ -878,17 +888,21 @@ class ExprEvaluator {
     );
   }
 
+  private resolveIdentifierName(name: string): unknown {
+    let value: unknown = this.scope.get(name);
+    if (value === undefined) value = this.helpers.getGlobal(name, this.line);
+    if (value === undefined) value = this.getBuiltin(name);
+    if (value === undefined) {
+      throw new MoonChunkError(`Unknown variable: ${name}`, this.line, 1);
+    }
+    return value;
+  }
+
   private resolveIdentifierPath(ctx: IdentifierPathContext): unknown {
     const segments = getTerminalNodes(ctx.IDENTIFIER()).map(
       (node) => node.text,
     );
-    const rootName = segments[0];
-    let root: unknown = this.scope.get(rootName);
-    if (root === undefined) root = this.helpers.getGlobal(rootName, this.line);
-    if (root === undefined) root = this.getBuiltin(rootName);
-    if (root === undefined) {
-      throw new MoonChunkError(`Unknown variable: ${rootName}`, this.line, 1);
-    }
+    const root = this.resolveIdentifierName(segments[0]);
 
     if (segments.length === 1) return root;
     return resolvePathValue(root, segments.slice(1));

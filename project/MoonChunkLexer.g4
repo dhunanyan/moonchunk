@@ -18,6 +18,7 @@ BREAK       : 'break' ;
 CONTINUE    : 'continue' ;
 IN          : 'in' ;
 IF          : 'if' ;
+ELSE        : 'else' ;
 OR          : 'or' ;
 AND         : 'and' ;
 NOT         : 'not' ;
@@ -28,6 +29,7 @@ TYPE_FLOAT  : 'float' ;
 TYPE_DOUBLE : 'double' ;
 TYPE_BOOL   : 'bool' ;
 TYPE_STRING : 'string' ;
+TYPE_VOID   : 'void' ;
 META_LANG               : 'lang' ;
 META_DIR                : 'dir' ;
 META_HTML_CLASS         : 'htmlClass' ;
@@ -208,6 +210,7 @@ EXPR_BREAK       : 'break' -> type(BREAK) ;
 EXPR_CONTINUE    : 'continue' -> type(CONTINUE) ;
 EXPR_IN          : 'in' -> type(IN) ;
 EXPR_IF          : 'if' -> type(IF) ;
+EXPR_ELSE        : 'else' -> type(ELSE) ;
 EXPR_OR          : 'or' -> type(OR) ;
 EXPR_AND         : 'and' -> type(AND) ;
 EXPR_NOT         : 'not' -> type(NOT) ;
@@ -218,6 +221,7 @@ EXPR_TYPE_FLOAT  : 'float' -> type(TYPE_FLOAT) ;
 EXPR_TYPE_DOUBLE : 'double' -> type(TYPE_DOUBLE) ;
 EXPR_TYPE_BOOL   : 'bool' -> type(TYPE_BOOL) ;
 EXPR_TYPE_STRING : 'string' -> type(TYPE_STRING) ;
+EXPR_TYPE_VOID   : 'void' -> type(TYPE_VOID) ;
 
 EXPR_STRING
   : '"' ( '\\' . | ~["\\\r\n] )* '"' -> type(STRING)

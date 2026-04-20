@@ -33,6 +33,7 @@ import {
   ParameterListContext,
   ProgramContext,
   ReturnStatementContext,
+  RuntimeBlockContext,
   RuntimeChunkStatementContext,
 } from "../../.antlr/MoonChunkParser";
 import { MoonChunkParserVisitor } from "../../.antlr/MoonChunkParserVisitor";
@@ -68,10 +69,6 @@ export class AstBuilder
 
   private toSource(ctx: { start: Token; stop?: Token }): string {
     return this.sliceFromTokens(ctx.start, ctx.stop).trim();
-  }
-
-  private stripTrailingColonToken(raw: string): string {
-    return raw.replace(/\s*:\s*$/, "").trim();
   }
 
   private parseForInit(
@@ -255,7 +252,7 @@ export class AstBuilder
       type: "FunctionDeclaration",
       name: ctx.IDENTIFIER().text,
       params: ctx.parameterList() ? this.visit(ctx.parameterList()!) : [],
-      returnType: ctx.typeName() ? ctx.typeName()!.text : null,
+      returnType: ctx.returnTypeName() ? ctx.returnTypeName()!.text : null,
       body: ctx.functionBodyStatement().map((stmt) => this.visit(stmt)),
       line: ctx.start.line,
     };
@@ -266,7 +263,7 @@ export class AstBuilder
       type: "ArrowFunctionDeclaration",
       name: ctx.IDENTIFIER().text,
       params: ctx.parameterList() ? this.visit(ctx.parameterList()!) : [],
-      returnType: ctx.typeName() ? ctx.typeName()!.text : null,
+      returnType: ctx.returnTypeName() ? ctx.returnTypeName()!.text : null,
       bodyExpr: this.toSource(ctx.arrowFunctionBody()),
       line: ctx.start.line,
     };
@@ -300,11 +297,16 @@ export class AstBuilder
   }
 
   visitReturnStatement(ctx: ReturnStatementContext): unknown {
+    const expr = ctx.expression() ? this.toExpr(ctx.expression()!) : null;
     return {
       type: "Return",
-      expr: this.toExpr(ctx.expression()),
+      expr,
       line: ctx.start.line,
     };
+  }
+
+  private mapRuntimeBlock(ctx: RuntimeBlockContext): Array<unknown> {
+    return ctx.runtimeChunkStatement().map((stmt) => this.visit(stmt));
   }
 
   visitBreakStatement(ctx: BreakStatementContext): unknown {
@@ -363,6 +365,7 @@ export class AstBuilder
     const initRaw = this.toSource(ctx.forInit());
     const parsedInit = this.parseForInit(initRaw, ctx.start.line);
     const updateRaw = this.toSource(ctx.forUpdate());
+    const body = this.mapRuntimeBlock(ctx.runtimeBlock());
     return {
       type: "For",
       initName: parsedInit.name,
@@ -371,7 +374,7 @@ export class AstBuilder
       conditionExpr: this.toExpr(ctx.expression()),
       updateName: ctx.forUpdate().IDENTIFIER().text,
       updatePrefix: updateRaw.startsWith("++"),
-      body: ctx.runtimeChunkStatement().map((stmt) => this.visit(stmt)),
+      body,
       line: ctx.start.line,
     };
   }
@@ -380,16 +383,20 @@ export class AstBuilder
     return {
       type: "While",
       condition: this.toExpr(ctx.expression()),
-      body: ctx.runtimeChunkStatement().map((stmt) => this.visit(stmt)),
+      body: this.mapRuntimeBlock(ctx.runtimeBlock()),
       line: ctx.start.line,
     };
   }
 
   visitIfStatement(ctx: IfStatementContext): unknown {
+    const blocks = ctx.runtimeBlock();
+    const thenBlock = Array.isArray(blocks) ? blocks[0] : blocks;
+    const elseBlock = Array.isArray(blocks) ? blocks[1] : undefined;
     return {
       type: "If",
       condition: this.toExpr(ctx.expression()),
-      body: ctx.runtimeChunkStatement().map((stmt) => this.visit(stmt)),
+      body: this.mapRuntimeBlock(thenBlock),
+      elseBody: elseBlock ? this.mapRuntimeBlock(elseBlock) : null,
       line: ctx.start.line,
     };
   }

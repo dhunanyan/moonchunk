@@ -27,6 +27,7 @@ export function promoteNumericType(a: NumericType, b: NumericType): NumericType 
 }
 
 export function inferType(value: unknown): RuntimeType {
+  if (value === null || value === undefined) return 'void';
   if (isNumericValue(value)) return value.numType;
   if (typeof value === 'number') return Number.isInteger(value) ? 'int' : 'double';
   if (typeof value === 'boolean') return 'bool';
@@ -36,6 +37,7 @@ export function inferType(value: unknown): RuntimeType {
 
 export function isAssignable(declaredType: string, inferredType: string): boolean {
   if (declaredType === inferredType) return true;
+  if (declaredType === 'void') return inferredType === 'void';
   if (declaredType === 'double' && (inferredType === 'int' || inferredType === 'float')) return true;
   if (declaredType === 'float' && inferredType === 'int') return true;
   return false;

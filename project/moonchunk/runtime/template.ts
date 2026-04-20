@@ -2,34 +2,9 @@ import { MoonChunkError } from '../errors';
 import { RuntimeHelpers } from '../types';
 import { Scope } from './scope';
 import { evalExpr } from './expression';
-import { resolvePathValue } from './path';
 import { stringifyValue } from './values';
 
 const NO_HELPERS: RuntimeHelpers = { getGlobal: () => undefined };
-const IDENTIFIER_PATH_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/;
-
-function evalTemplateExpr(
-  expr: string,
-  scope: Scope,
-  cwd: string,
-  helpers: RuntimeHelpers
-): unknown {
-  const trimmed = expr.trim();
-
-  if (IDENTIFIER_PATH_PATTERN.test(trimmed)) {
-    const segments = trimmed.split('.');
-    const rootName = segments[0];
-    let root: unknown = scope.get(rootName);
-    if (root === undefined) root = helpers.getGlobal(rootName, 1);
-    if (root === undefined) {
-      throw new MoonChunkError(`Unknown variable: ${rootName}`, 1, 1);
-    }
-    if (segments.length === 1) return root;
-    return resolvePathValue(root, segments.slice(1));
-  }
-
-  return evalExpr(trimmed, scope, cwd, 1, helpers);
-}
 
 function findBalancedBraceSegment(input: string, openPos: number): { expr: string; end: number } {
   let depth = 0;
@@ -96,7 +71,7 @@ export function renderContentTemplate(
       continue;
     }
 
-    const value = evalTemplateExpr(expr, scope, cwd, helpers);
+    const value = evalExpr(expr, scope, cwd, 1, helpers);
     out += stringifyValue(value);
     i = segment.end;
   }
@@ -111,7 +86,7 @@ export function renderStringWithInterpolations(
   helpers: RuntimeHelpers = NO_HELPERS
 ): string {
   return value.replace(/\{\{\s*([^}]+)\s*\}\}/g, (_all, expr) => {
-    const resolved = evalTemplateExpr(expr, scope, cwd, helpers);
+    const resolved = evalExpr(expr, scope, cwd, 1, helpers);
     return stringifyValue(resolved);
   });
 }

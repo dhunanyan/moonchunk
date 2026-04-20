@@ -90,11 +90,11 @@ expressionStatement
   ;
 
 functionDeclaration
-  : FUNCTION IDENTIFIER LPAREN parameterList? RPAREN (COLON typeName)? LBRACE functionBodyStatement* RBRACE
+  : FUNCTION IDENTIFIER LPAREN parameterList? RPAREN (COLON returnTypeName)? LBRACE functionBodyStatement* RBRACE
   ;
 
 arrowFunctionDeclaration
-  : IDENTIFIER LPAREN parameterList? RPAREN (COLON typeName)? ARROW arrowFunctionBody SEMI
+  : IDENTIFIER LPAREN parameterList? RPAREN (COLON returnTypeName)? ARROW arrowFunctionBody SEMI
   ;
 
 parameterList
@@ -119,7 +119,7 @@ functionBodyStatement
   ;
 
 returnStatement
-  : RETURN expression SEMI
+  : RETURN expression? SEMI
   ;
 
 breakStatement
@@ -223,11 +223,11 @@ textNode
   ;
 
 whileStatement
-  : WHILE LPAREN expression RPAREN LBRACE runtimeChunkStatement* RBRACE SEMI
+  : WHILE LPAREN expression RPAREN runtimeBlock SEMI
   ;
 
 forStatement
-  : FOR LPAREN forInit SEMI expression SEMI forUpdate RPAREN LBRACE runtimeChunkStatement* RBRACE SEMI
+  : FOR LPAREN forInit SEMI expression SEMI forUpdate RPAREN runtimeBlock SEMI
   ;
 
 forInit
@@ -241,7 +241,7 @@ forUpdate
   ;
 
 ifStatement
-  : IF LPAREN expression RPAREN LBRACE runtimeChunkStatement* RBRACE SEMI
+  : IF LPAREN expression RPAREN runtimeBlock (ELSE runtimeBlock)? SEMI
   ;
 
 typeName
@@ -250,6 +250,15 @@ typeName
   | TYPE_DOUBLE
   | TYPE_BOOL
   | TYPE_STRING
+  ;
+
+returnTypeName
+  : typeName
+  | TYPE_VOID
+  ;
+
+runtimeBlock
+  : LBRACE runtimeChunkStatement* RBRACE
   ;
 
 expression
@@ -317,16 +326,22 @@ nonCallablePrimary
   | NUMBER
   | TRUE
   | FALSE
+  | identifierAtom
   | LPAREN expression RPAREN
   ;
 
+identifierAtom
+  : IDENTIFIER
+  | metaKey
+  ;
+
 functionExpr
-  : FUNCTION LPAREN parameterList? RPAREN (COLON typeName)? LBRACE functionBodyStatement* RBRACE
+  : FUNCTION LPAREN parameterList? RPAREN (COLON returnTypeName)? LBRACE functionBodyStatement* RBRACE
   ;
 
 arrowFunctionExpr
-  : LPAREN parameterList? RPAREN (COLON typeName)? ARROW arrowFunctionBody
-  | IDENTIFIER (COLON typeName)? ARROW arrowFunctionBody
+  : LPAREN parameterList? RPAREN (COLON returnTypeName)? ARROW arrowFunctionBody
+  | IDENTIFIER (COLON returnTypeName)? ARROW arrowFunctionBody
   ;
 
 arrowFunctionBody

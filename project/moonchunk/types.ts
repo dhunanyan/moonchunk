@@ -20,7 +20,7 @@ export type ExecResult = {
 };
 
 export type NumericType = "int" | "float" | "double";
-export type RuntimeType = NumericType | "bool" | "string" | "unknown";
+export type RuntimeType = NumericType | "bool" | "string" | "void" | "unknown";
 
 export type NumericValue = {
   __kind: "numeric";
@@ -127,6 +127,7 @@ export type AstIfNode = {
   type: "If";
   condition: string;
   body: Array<AstRuntimeNode | null>;
+  elseBody: Array<AstRuntimeNode | null> | null;
   line: number;
 };
 
@@ -143,7 +144,7 @@ export type AstExpressionStatementNode = {
 
 export type AstReturnNode = {
   type: "Return";
-  expr: string;
+  expr: string | null;
   line: number;
 };
 

@@ -245,65 +245,60 @@ export function runAst(
     currentDir: string,
   ): void {
     for (const statement of body) {
-      if (statement.type === "Let" || statement.type === "Const") {
-        const value = evalExpr(
-          statement.expr,
-          fnScope,
-          currentDir,
-          statement.line,
-          { getGlobal },
-        );
-        fnScope.declare(
-          statement.name,
-          value,
-          statement.declaredType ?? null,
-          statement.line,
-          statement.type === "Let",
-        );
-        continue;
-      }
-
-      if (statement.type === "ExpressionStatement") {
-        evalExpr(statement.expr, fnScope, currentDir, statement.line, {
-          getGlobal,
-        });
-        continue;
-      }
-
-      if (statement.type === "Return") {
-        throw new FunctionReturn(
+      switch (statement.type) {
+        case "Let":
+        case "Const": {
+          const value = evalExpr(
+            statement.expr,
+            fnScope,
+            currentDir,
+            statement.line,
+            { getGlobal },
+          );
+          fnScope.declare(
+            statement.name,
+            value,
+            statement.declaredType ?? null,
+            statement.line,
+            statement.type === "Let",
+          );
+          break;
+        }
+        case "ExpressionStatement":
           evalExpr(statement.expr, fnScope, currentDir, statement.line, {
             getGlobal,
-          }),
-        );
-      }
-
-      if (statement.type === "ArrowFunctionDeclaration") {
-        const callable = callArrowDeclaration(statement, fnScope, currentDir);
-        if (!isCallable(callable)) {
-          throw new MoonChunkError(
-            `Invalid function declaration: ${statement.name}`,
-            statement.line,
-            1,
-          );
+          });
+          break;
+        case "Return": {
+          const value =
+            statement.expr === null
+              ? null
+              : evalExpr(statement.expr, fnScope, currentDir, statement.line, {
+                  getGlobal,
+                });
+          throw new FunctionReturn(value);
         }
-        fnScope.declare(statement.name, callable, null, statement.line);
-        continue;
-      }
-
-      if (statement.type === "If") {
-        execIfRuntime(statement, fnScope, currentDir, false);
-        continue;
-      }
-
-      if (statement.type === "For") {
-        execForRuntime(statement, fnScope, currentDir);
-        continue;
-      }
-
-      if (statement.type === "While") {
-        execWhileRuntime(statement, fnScope, currentDir);
-        continue;
+        case "ArrowFunctionDeclaration": {
+          const callable = callArrowDeclaration(statement, fnScope, currentDir);
+          if (!isCallable(callable)) {
+            throw new MoonChunkError(
+              `Invalid function declaration: ${statement.name}`,
+              statement.line,
+              1,
+            );
+          }
+          fnScope.declare(statement.name, callable, null, statement.line);
+          break;
+        }
+        case "If":
+          execIfRuntime(statement, fnScope, currentDir, false);
+          break;
+        case "For":
+          execForRuntime(statement, fnScope, currentDir);
+          break;
+        case "While":
+          execWhileRuntime(statement, fnScope, currentDir);
+          break;
       }
     }
   }
@@ -317,9 +312,10 @@ export function runAst(
     const cond = evalExpr(node.condition, scope, currentDir, node.line, {
       getGlobal,
     });
-    if (!Boolean(cond)) return;
+    const selectedBody = Boolean(cond) ? node.body : node.elseBody;
+    if (!selectedBody) return;
     const child = scope.derive();
-    for (const nested of node.body) {
+    for (const nested of selectedBody) {
       if (!nested) continue;
       execRuntimeStatement(nested, child, currentDir, inLoop);
     }
@@ -475,101 +471,89 @@ export function runAst(
     currentDir: string,
     inLoop = false,
   ): void {
-    if (node.type === "Let" || node.type === "Const") {
-      const value = evalExpr(node.expr, scope, currentDir, node.line, {
-        getGlobal,
-      });
-      scope.declare(
-        node.name,
-        value,
-        node.declaredType ?? null,
-        node.line,
-        node.type === "Let",
-      );
-      return;
-    }
-
-    if (node.type === "ExpressionStatement") {
-      evalExpr(node.expr, scope, currentDir, node.line, { getGlobal });
-      return;
-    }
-
-    if (node.type === "Meta") {
-      const value = evalExpr(node.expr, scope, currentDir, node.line, {
-        getGlobal,
-      });
-      applyMetaAssignment(scope, node.name, value, node.line);
-      return;
-    }
-
-    if (node.type === "FunctionDeclaration") {
-      const callable = createFunctionDeclarationCallable(
-        node,
-        scope,
-        currentDir,
-      );
-      if (!isCallable(callable)) {
-        throw new MoonChunkError(
-          `Invalid function declaration: ${node.name}`,
+    switch (node.type) {
+      case "Let":
+      case "Const": {
+        const value = evalExpr(node.expr, scope, currentDir, node.line, {
+          getGlobal,
+        });
+        scope.declare(
+          node.name,
+          value,
+          node.declaredType ?? null,
           node.line,
-          1,
+          node.type === "Let",
         );
+        return;
       }
-      scope.declare(node.name, callable, null, node.line);
-      return;
-    }
-
-    if (node.type === "ArrowFunctionDeclaration") {
-      const callable = callArrowDeclaration(node, scope, currentDir);
-      if (!isCallable(callable)) {
-        throw new MoonChunkError(
-          `Invalid function declaration: ${node.name}`,
-          node.line,
-          1,
-        );
+      case "ExpressionStatement":
+        evalExpr(node.expr, scope, currentDir, node.line, { getGlobal });
+        return;
+      case "Meta": {
+        const value = evalExpr(node.expr, scope, currentDir, node.line, {
+          getGlobal,
+        });
+        applyMetaAssignment(scope, node.name, value, node.line);
+        return;
       }
-      scope.declare(node.name, callable, null, node.line);
-      return;
-    }
-
-    if (node.type === "If") {
-      execIfRuntime(node, scope, currentDir, inLoop);
-      return;
-    }
-
-    if (node.type === "For") {
-      execForRuntime(node, scope, currentDir);
-      return;
-    }
-
-    if (node.type === "While") {
-      execWhileRuntime(node, scope, currentDir);
-      return;
-    }
-
-    if (node.type === "Break") {
-      if (!inLoop)
-        throw new MoonChunkError(
-          "break can only be used inside a loop.",
-          node.line,
-          1,
+      case "FunctionDeclaration": {
+        const callable = createFunctionDeclarationCallable(
+          node,
+          scope,
+          currentDir,
         );
-      throw new BreakSignal();
-    }
-
-    if (node.type === "Continue") {
-      if (!inLoop)
-        throw new MoonChunkError(
-          "continue can only be used inside a loop.",
-          node.line,
-          1,
-        );
-      throw new ContinueSignal();
-    }
-
-    if (node.type === "Page") {
-      execPage(node, scope, currentDir);
-      return;
+        if (!isCallable(callable)) {
+          throw new MoonChunkError(
+            `Invalid function declaration: ${node.name}`,
+            node.line,
+            1,
+          );
+        }
+        scope.declare(node.name, callable, null, node.line);
+        return;
+      }
+      case "ArrowFunctionDeclaration": {
+        const callable = callArrowDeclaration(node, scope, currentDir);
+        if (!isCallable(callable)) {
+          throw new MoonChunkError(
+            `Invalid function declaration: ${node.name}`,
+            node.line,
+            1,
+          );
+        }
+        scope.declare(node.name, callable, null, node.line);
+        return;
+      }
+      case "If":
+        execIfRuntime(node, scope, currentDir, inLoop);
+        return;
+      case "For":
+        execForRuntime(node, scope, currentDir);
+        return;
+      case "While":
+        execWhileRuntime(node, scope, currentDir);
+        return;
+      case "Break":
+        if (!inLoop) {
+          throw new MoonChunkError(
+            "break can only be used inside a loop.",
+            node.line,
+            1,
+          );
+        }
+        throw new BreakSignal();
+      case "Continue":
+        if (!inLoop) {
+          throw new MoonChunkError(
+            "continue can only be used inside a loop.",
+            node.line,
+            1,
+          );
+        }
+        throw new ContinueSignal();
+      case "Page":
+        execPage(node, scope, currentDir);
+        return;
     }
   }
 
@@ -741,106 +725,7 @@ export function runAst(
     if (node.type === "Env") {
       return;
     }
-
-    if (node.type === "Let" || node.type === "Const") {
-      const value = evalExpr(node.expr, scope, currentDir, node.line, {
-        getGlobal,
-      });
-      scope.declare(
-        node.name,
-        value,
-        node.declaredType ?? null,
-        node.line,
-        node.type === "Let",
-      );
-      return;
-    }
-
-    if (node.type === "ExpressionStatement") {
-      evalExpr(node.expr, scope, currentDir, node.line, { getGlobal });
-      return;
-    }
-
-    if (node.type === "Meta") {
-      const value = evalExpr(node.expr, scope, currentDir, node.line, {
-        getGlobal,
-      });
-      applyMetaAssignment(scope, node.name, value, node.line);
-      return;
-    }
-
-    if (node.type === "FunctionDeclaration") {
-      const callable = createFunctionDeclarationCallable(
-        node,
-        scope,
-        currentDir,
-      );
-      if (!isCallable(callable)) {
-        throw new MoonChunkError(
-          `Invalid function declaration: ${node.name}`,
-          node.line,
-          1,
-        );
-      }
-      scope.declare(node.name, callable, null, node.line);
-      return;
-    }
-
-    if (node.type === "ArrowFunctionDeclaration") {
-      const callable = callArrowDeclaration(node, scope, currentDir);
-      if (!isCallable(callable)) {
-        throw new MoonChunkError(
-          `Invalid function declaration: ${node.name}`,
-          node.line,
-          1,
-        );
-      }
-      scope.declare(node.name, callable, null, node.line);
-      return;
-    }
-
-    if (node.type === "If") {
-      execIfRuntime(node, scope, currentDir, false);
-      return;
-    }
-
-    if (node.type === "For") {
-      execForRuntime(node, scope, currentDir);
-      return;
-    }
-
-    if (node.type === "While") {
-      execWhileRuntime(node, scope, currentDir);
-      return;
-    }
-
-    if (node.type === "Break") {
-      throw new MoonChunkError(
-        "break can only be used inside a loop.",
-        node.line,
-        1,
-      );
-    }
-
-    if (node.type === "Continue") {
-      throw new MoonChunkError(
-        "continue can only be used inside a loop.",
-        node.line,
-        1,
-      );
-    }
-
-    if (node.type === "Page") {
-      execPage(node, scope, currentDir);
-      return;
-    }
-
-    const unknownNode = node as { type?: string; line?: number };
-    throw new MoonChunkError(
-      `Unsupported node type: ${unknownNode.type || "unknown"}`,
-      unknownNode.line || 1,
-      1,
-    );
+    execRuntimeStatement(node as AstRuntimeNode, scope, currentDir, false);
   }
 
   const rootStatements = flattenProgram(ast);
