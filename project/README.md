@@ -60,6 +60,7 @@ Opcje:
 
 - `cwd?: string` (bazowy katalog do `data(...)` i outputu)
 - `writeFiles?: boolean` (domyślnie `true`)
+- `formatHtml?: boolean` (domyślnie `true`, formatuje wygenerowane HTML)
 
 ## Global namespace (2-pass)
 

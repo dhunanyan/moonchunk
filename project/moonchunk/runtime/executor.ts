@@ -24,6 +24,7 @@ import { evalExpr, isCallable, makeCallable } from './expression';
 import { routeToOutputFile } from './route';
 import { renderContentTemplate, renderLayoutTemplate, renderStringWithInterpolations } from './template';
 import { coerceToNumeric, inferType, isAssignable, makeNumeric } from './values';
+import { formatHtmlDocument } from './format-html';
 
 class FunctionReturn {
   constructor(public readonly value: unknown) {}
@@ -32,6 +33,7 @@ class FunctionReturn {
 export function runAst(ast: AstProgramNode, options: ExecOptions): { output: string[]; result: unknown; generatedFiles: string[] } {
   const cwd = options.cwd || process.cwd();
   const writeFiles = options.writeFiles !== false;
+  const formatHtml = options.formatHtml !== false;
   const internalLayoutPath = path.resolve(__dirname, '../base.tpl');
   if (!fs.existsSync(internalLayoutPath)) {
     throw new MoonChunkError(`Internal base template does not exist: ${internalLayoutPath}`, 1, 1);
@@ -380,10 +382,10 @@ export function runAst(ast: AstProgramNode, options: ExecOptions): { output: str
     ensureLayoutDefaults(pageScope);
 
     const route = renderStringWithInterpolations(node.route, pageScope, currentDir, { getGlobal });
-    const html = renderLayoutTemplate(internalLayoutTemplate, pageScope, currentDir, { getGlobal });
-
     const relativeOut = routeToOutputFile(route);
     const absOut = path.resolve(outputDir, relativeOut);
+    const htmlRaw = renderLayoutTemplate(internalLayoutTemplate, pageScope, currentDir, { getGlobal });
+    const html = formatHtmlDocument(htmlRaw, formatHtml, absOut);
 
     if (writeFiles) {
       fs.mkdirSync(path.dirname(absOut), { recursive: true });

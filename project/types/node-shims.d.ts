@@ -16,3 +16,5 @@ declare const process: {
 };
 
 declare const __dirname: string;
+
+declare function require(moduleName: string): any;

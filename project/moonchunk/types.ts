@@ -1,6 +1,7 @@
 export type ExecOptions = {
   cwd?: string;
   writeFiles?: boolean;
+  formatHtml?: boolean;
 };
 
 export type Diagnostic = {
