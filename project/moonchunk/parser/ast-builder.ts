@@ -2,10 +2,12 @@ import { Token } from 'antlr4ts';
 import { AbstractParseTreeVisitor } from 'antlr4ts/tree/AbstractParseTreeVisitor';
 import {
   ArrowFunctionDeclarationContext,
+  BreakStatementContext,
   ChunkDeclContext,
   ChunkStatementContext,
   ConstStatementContext,
   ContentStatementContext,
+  ContinueStatementContext,
   EnvBlockContext,
   ExpressionContext,
   ExpressionFragmentContext,
@@ -119,6 +121,8 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
     if (ctx.pageStatement()) return this.visit(ctx.pageStatement()!);
     if (ctx.forStatement()) return this.visit(ctx.forStatement()!);
     if (ctx.ifStatement()) return this.visit(ctx.ifStatement()!);
+    if (ctx.breakStatement()) return this.visit(ctx.breakStatement()!);
+    if (ctx.continueStatement()) return this.visit(ctx.continueStatement()!);
     return null;
   }
 
@@ -207,7 +211,7 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
   visitMetaStatement(ctx: MetaStatementContext): unknown {
     return {
       type: 'Meta',
-      name: this.stripTrailingColonToken(ctx.metaKeyColon().text),
+      name: ctx.metaKey().text,
       expr: this.toExpr(ctx.expression()),
       line: ctx.start.line
     };
@@ -260,6 +264,8 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
     if (ctx.letStatement()) return this.visit(ctx.letStatement()!);
     if (ctx.ifStatement()) return this.visit(ctx.ifStatement()!);
     if (ctx.forStatement()) return this.visit(ctx.forStatement()!);
+    if (ctx.breakStatement()) return this.visit(ctx.breakStatement()!);
+    if (ctx.continueStatement()) return this.visit(ctx.continueStatement()!);
     if (ctx.returnStatement()) return this.visit(ctx.returnStatement()!);
     if (ctx.expressionStatement()) return this.visit(ctx.expressionStatement()!);
     return null;
@@ -269,6 +275,20 @@ export class AstBuilder extends AbstractParseTreeVisitor<unknown> implements Moo
     return {
       type: 'Return',
       expr: this.toExpr(ctx.expression()),
+      line: ctx.start.line
+    };
+  }
+
+  visitBreakStatement(ctx: BreakStatementContext): unknown {
+    return {
+      type: 'Break',
+      line: ctx.start.line
+    };
+  }
+
+  visitContinueStatement(ctx: ContinueStatementContext): unknown {
+    return {
+      type: 'Continue',
       line: ctx.start.line
     };
   }

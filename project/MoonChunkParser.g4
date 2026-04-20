@@ -38,6 +38,8 @@ runtimeChunkStatement
   | pageStatement
   | forStatement
   | ifStatement
+  | breakStatement
+  | continueStatement
   ;
 
 importStatement
@@ -62,8 +64,7 @@ namespaceImportClause
   ;
 
 outputStatement
-  : OUTPUT STRING SEMI
-  | OUTPUT_COLON STRING SEMI
+  : OUTPUT COLON STRING SEMI
   ;
 
 envBlock
@@ -108,12 +109,22 @@ functionBodyStatement
   | letStatement
   | ifStatement
   | forStatement
+  | breakStatement
+  | continueStatement
   | returnStatement
   | expressionStatement
   ;
 
 returnStatement
   : RETURN expression SEMI
+  ;
+
+breakStatement
+  : BREAK SEMI
+  ;
+
+continueStatement
+  : CONTINUE SEMI
   ;
 
 pageStatement
@@ -128,51 +139,51 @@ pageInnerStatement
   ;
 
 metaStatement
-  : metaKeyColon expression SEMI
+  : metaKey COLON expression SEMI
   ;
 
-metaKeyColon
-  : META_LANG_COLON
-  | META_DIR_COLON
-  | META_HTML_CLASS_COLON
-  | META_CHARSET_COLON
-  | META_VIEWPORT_COLON
-  | META_TITLE_COLON
-  | META_DESCRIPTION_COLON
-  | META_KEYWORDS_COLON
-  | META_AUTHOR_COLON
-  | META_ROBOTS_COLON
-  | META_THEME_COLOR_COLON
-  | META_CANONICAL_URL_COLON
-  | META_FAVICON_HREF_COLON
-  | META_APPLE_TOUCH_ICON_COLON
-  | META_MANIFEST_HREF_COLON
-  | META_OG_TYPE_COLON
-  | META_OG_TITLE_COLON
-  | META_OG_DESCRIPTION_COLON
-  | META_OG_IMAGE_COLON
-  | META_OG_URL_COLON
-  | META_OG_SITE_NAME_COLON
-  | META_OG_LOCALE_COLON
-  | META_TWITTER_CARD_COLON
-  | META_TWITTER_SITE_COLON
-  | META_TWITTER_CREATOR_COLON
-  | META_TWITTER_TITLE_COLON
-  | META_TWITTER_DESCRIPTION_COLON
-  | META_TWITTER_IMAGE_COLON
-  | META_PRELOAD_LINKS_COLON
-  | META_PRECONNECT_LINKS_COLON
-  | META_STYLES_COLON
-  | META_HEAD_SCRIPTS_COLON
-  | META_HEAD_EXTRA_COLON
-  | META_BODY_CLASS_COLON
-  | META_PAGE_ID_COLON
-  | META_TOP_BAR_COLON
-  | META_HEADER_COLON
-  | META_FOOTER_COLON
-  | META_MODALS_COLON
-  | META_SCRIPTS_COLON
-  | META_BODY_END_EXTRA_COLON
+metaKey
+  : META_LANG
+  | META_DIR
+  | META_HTML_CLASS
+  | META_CHARSET
+  | META_VIEWPORT
+  | META_TITLE
+  | META_DESCRIPTION
+  | META_KEYWORDS
+  | META_AUTHOR
+  | META_ROBOTS
+  | META_THEME_COLOR
+  | META_CANONICAL_URL
+  | META_FAVICON_HREF
+  | META_APPLE_TOUCH_ICON
+  | META_MANIFEST_HREF
+  | META_OG_TYPE
+  | META_OG_TITLE
+  | META_OG_DESCRIPTION
+  | META_OG_IMAGE
+  | META_OG_URL
+  | META_OG_SITE_NAME
+  | META_OG_LOCALE
+  | META_TWITTER_CARD
+  | META_TWITTER_SITE
+  | META_TWITTER_CREATOR
+  | META_TWITTER_TITLE
+  | META_TWITTER_DESCRIPTION
+  | META_TWITTER_IMAGE
+  | META_PRELOAD_LINKS
+  | META_PRECONNECT_LINKS
+  | META_STYLES
+  | META_HEAD_SCRIPTS
+  | META_HEAD_EXTRA
+  | META_BODY_CLASS
+  | META_PAGE_ID
+  | META_TOP_BAR
+  | META_HEADER
+  | META_FOOTER
+  | META_MODALS
+  | META_SCRIPTS
+  | META_BODY_END_EXTRA
   ;
 
 contentStatement
@@ -272,7 +283,7 @@ additiveExpr
   ;
 
 multiplicativeExpr
-  : unaryExpr ((STAR | SLASH) unaryExpr)*
+  : unaryExpr ((STAR | SLASH | PERCENT) unaryExpr)*
   ;
 
 unaryExpr

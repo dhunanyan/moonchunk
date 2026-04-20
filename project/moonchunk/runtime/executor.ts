@@ -30,6 +30,9 @@ class FunctionReturn {
   constructor(public readonly value: unknown) {}
 }
 
+class BreakSignal {}
+class ContinueSignal {}
+
 export function runAst(ast: AstProgramNode, options: ExecOptions): { output: string[]; result: unknown; generatedFiles: string[] } {
   const cwd = options.cwd || process.cwd();
   const writeFiles = options.writeFiles !== false;
@@ -214,7 +217,7 @@ export function runAst(ast: AstProgramNode, options: ExecOptions): { output: str
       }
 
       if (statement.type === 'If') {
-        execIfRuntime(statement, fnScope, currentDir);
+        execIfRuntime(statement, fnScope, currentDir, false);
         continue;
       }
 
@@ -225,13 +228,13 @@ export function runAst(ast: AstProgramNode, options: ExecOptions): { output: str
     }
   }
 
-  function execIfRuntime(node: AstIfNode, scope: Scope, currentDir: string): void {
+  function execIfRuntime(node: AstIfNode, scope: Scope, currentDir: string, inLoop: boolean): void {
     const cond = evalExpr(node.condition, scope, currentDir, node.line, { getGlobal });
     if (!Boolean(cond)) return;
     const child = scope.derive();
     for (const nested of node.body) {
       if (!nested) continue;
-      execRuntimeStatement(nested, child, currentDir);
+      execRuntimeStatement(nested, child, currentDir, inLoop);
     }
   }
 
@@ -244,7 +247,13 @@ export function runAst(ast: AstProgramNode, options: ExecOptions): { output: str
       const child = loopScope.derive();
       for (const nested of node.body) {
         if (!nested) continue;
-        execRuntimeStatement(nested, child, currentDir);
+        try {
+          execRuntimeStatement(nested, child, currentDir, true);
+        } catch (error) {
+          if (error instanceof ContinueSignal) break;
+          if (error instanceof BreakSignal) return;
+          throw error;
+        }
       }
 
       const current = coerceToNumeric(loopScope.get(node.updateName), node.line);
@@ -313,7 +322,7 @@ export function runAst(ast: AstProgramNode, options: ExecOptions): { output: str
     }
   }
 
-  function execRuntimeStatement(node: AstRuntimeNode, scope: Scope, currentDir: string): void {
+  function execRuntimeStatement(node: AstRuntimeNode, scope: Scope, currentDir: string, inLoop = false): void {
     if (node.type === 'Let' || node.type === 'Const') {
       const value = evalExpr(node.expr, scope, currentDir, node.line, { getGlobal });
       scope.declare(node.name, value, node.declaredType ?? null, node.line);
@@ -345,13 +354,23 @@ export function runAst(ast: AstProgramNode, options: ExecOptions): { output: str
     }
 
     if (node.type === 'If') {
-      execIfRuntime(node, scope, currentDir);
+      execIfRuntime(node, scope, currentDir, inLoop);
       return;
     }
 
     if (node.type === 'For') {
       execForRuntime(node, scope, currentDir);
       return;
+    }
+
+    if (node.type === 'Break') {
+      if (!inLoop) throw new MoonChunkError('break can only be used inside a loop.', node.line, 1);
+      throw new BreakSignal();
+    }
+
+    if (node.type === 'Continue') {
+      if (!inLoop) throw new MoonChunkError('continue can only be used inside a loop.', node.line, 1);
+      throw new ContinueSignal();
     }
 
     if (node.type === 'Page') {
@@ -498,13 +517,21 @@ export function runAst(ast: AstProgramNode, options: ExecOptions): { output: str
     }
 
     if (node.type === 'If') {
-      execIfRuntime(node, scope, currentDir);
+      execIfRuntime(node, scope, currentDir, false);
       return;
     }
 
     if (node.type === 'For') {
       execForRuntime(node, scope, currentDir);
       return;
+    }
+
+    if (node.type === 'Break') {
+      throw new MoonChunkError('break can only be used inside a loop.', node.line, 1);
+    }
+
+    if (node.type === 'Continue') {
+      throw new MoonChunkError('continue can only be used inside a loop.', node.line, 1);
     }
 
     if (node.type === 'Page') {

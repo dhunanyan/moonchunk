@@ -69,6 +69,9 @@ class ReturnSignal {
   constructor(public readonly value: unknown) {}
 }
 
+class BreakSignal {}
+class ContinueSignal {}
+
 function makeCallable(
   params: RuntimeParameter[],
   returnType: string | null,
@@ -269,7 +272,7 @@ class ExprEvaluator {
     const ops: string[] = [];
     for (let i = 1; i < ctx.childCount; i += 1) {
       const text = ctx.getChild(i).text;
-      if (text === '*' || text === '/') ops.push(text);
+      if (text === '*' || text === '/' || text === '%') ops.push(text);
     }
 
     let current = this.evaluateUnary(parts[0]);
@@ -279,10 +282,18 @@ class ExprEvaluator {
       const b = coerceToNumeric(this.evaluateUnary(parts[i]), this.line);
       if (op === '*') {
         current = makeNumeric(a.value * b.value, promoteNumericType(a.numType, b.numType));
-      } else if (a.numType === 'int' && b.numType === 'int') {
-        current = makeNumeric(Math.trunc(a.value / b.value), 'int');
+      } else if (op === '/') {
+        if (a.numType === 'int' && b.numType === 'int') {
+          current = makeNumeric(Math.trunc(a.value / b.value), 'int');
+        } else {
+          current = makeNumeric(a.value / b.value, promoteNumericType(a.numType, b.numType));
+        }
       } else {
-        current = makeNumeric(a.value / b.value, promoteNumericType(a.numType, b.numType));
+        if (a.numType === 'int' && b.numType === 'int') {
+          current = makeNumeric(a.value % b.value, 'int');
+        } else {
+          current = makeNumeric(a.value % b.value, promoteNumericType(a.numType, b.numType));
+        }
       }
     }
     return current;
@@ -457,7 +468,12 @@ class ExprEvaluator {
     }
   }
 
-  private executeFunctionBodyStatement(statement: FunctionBodyStatementContext, fnScope: Scope, line: number): void {
+  private executeFunctionBodyStatement(
+    statement: FunctionBodyStatementContext,
+    fnScope: Scope,
+    line: number,
+    inLoop = false
+  ): void {
     if (statement.constStatement()) return this.executeConstStatement(statement.constStatement()!, fnScope, line);
     if (statement.letStatement()) return this.executeLetStatement(statement.letStatement()!, fnScope, line);
     if (statement.arrowFunctionDeclaration()) {
@@ -466,8 +482,16 @@ class ExprEvaluator {
       fnScope.declare(decl.IDENTIFIER().text, callable, null, decl.start.line);
       return;
     }
-    if (statement.ifStatement()) return this.executeIfStatement(statement.ifStatement()!, fnScope, line);
+    if (statement.ifStatement()) return this.executeIfStatement(statement.ifStatement()!, fnScope, line, inLoop);
     if (statement.forStatement()) return this.executeForStatement(statement.forStatement()!, fnScope, line);
+    if (statement.breakStatement()) {
+      if (!inLoop) throw new MoonChunkError('break can only be used inside a loop.', statement.start.line, 1);
+      throw new BreakSignal();
+    }
+    if (statement.continueStatement()) {
+      if (!inLoop) throw new MoonChunkError('continue can only be used inside a loop.', statement.start.line, 1);
+      throw new ContinueSignal();
+    }
     if (statement.returnStatement()) {
       const ret = statement.returnStatement()!;
       throw new ReturnSignal(this.evaluateExpressionInScope(ret.expression(), fnScope, ret.start.line));
@@ -478,7 +502,12 @@ class ExprEvaluator {
     }
   }
 
-  private executeRuntimeChunkStatement(stmt: RuntimeChunkStatementContext, fnScope: Scope, line: number): void {
+  private executeRuntimeChunkStatement(
+    stmt: RuntimeChunkStatementContext,
+    fnScope: Scope,
+    line: number,
+    inLoop = false
+  ): void {
     if (stmt.constStatement()) return this.executeConstStatement(stmt.constStatement()!, fnScope, line);
     if (stmt.letStatement()) return this.executeLetStatement(stmt.letStatement()!, fnScope, line);
     if (stmt.functionDeclaration()) {
@@ -493,19 +522,27 @@ class ExprEvaluator {
       fnScope.declare(decl.IDENTIFIER().text, callable, null, decl.start.line);
       return;
     }
-    if (stmt.ifStatement()) return this.executeIfStatement(stmt.ifStatement()!, fnScope, line);
+    if (stmt.ifStatement()) return this.executeIfStatement(stmt.ifStatement()!, fnScope, line, inLoop);
     if (stmt.forStatement()) return this.executeForStatement(stmt.forStatement()!, fnScope, line);
+    if (stmt.breakStatement()) {
+      if (!inLoop) throw new MoonChunkError('break can only be used inside a loop.', stmt.start.line, 1);
+      throw new BreakSignal();
+    }
+    if (stmt.continueStatement()) {
+      if (!inLoop) throw new MoonChunkError('continue can only be used inside a loop.', stmt.start.line, 1);
+      throw new ContinueSignal();
+    }
     if (stmt.pageStatement()) {
       throw new MoonChunkError('Page statements are not allowed in expression function runtime.', stmt.start.line, 1);
     }
   }
 
-  private executeIfStatement(stmt: IfStatementContext, fnScope: Scope, line: number): void {
+  private executeIfStatement(stmt: IfStatementContext, fnScope: Scope, line: number, inLoop = false): void {
     const cond = this.evaluateExpressionInScope(stmt.expression(), fnScope, line);
     if (!Boolean(cond)) return;
     const blockScope = fnScope.derive();
     for (const nested of stmt.runtimeChunkStatement()) {
-      this.executeRuntimeChunkStatement(nested, blockScope, line);
+      this.executeRuntimeChunkStatement(nested, blockScope, line, inLoop);
     }
   }
 
@@ -528,7 +565,13 @@ class ExprEvaluator {
     while (Boolean(this.evaluateExpressionInScope(stmt.expression(), loopScope, line))) {
       const iterScope = loopScope.derive();
       for (const nested of stmt.runtimeChunkStatement()) {
-        this.executeRuntimeChunkStatement(nested, iterScope, line);
+        try {
+          this.executeRuntimeChunkStatement(nested, iterScope, line, true);
+        } catch (error) {
+          if (error instanceof ContinueSignal) break;
+          if (error instanceof BreakSignal) return;
+          throw error;
+        }
       }
 
       const updateName = stmt.forUpdate().IDENTIFIER().text;

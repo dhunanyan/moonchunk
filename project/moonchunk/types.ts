@@ -140,11 +140,23 @@ export type AstReturnNode = {
   line: number;
 };
 
+export type AstBreakNode = {
+  type: 'Break';
+  line: number;
+};
+
+export type AstContinueNode = {
+  type: 'Continue';
+  line: number;
+};
+
 export type AstFunctionBodyNode =
   | AstConstNode
   | AstLetNode
   | AstIfNode
   | AstForNode
+  | AstBreakNode
+  | AstContinueNode
   | AstReturnNode
   | AstExpressionStatementNode
   | AstArrowFunctionDeclarationNode;
@@ -174,6 +186,8 @@ export type AstRuntimeNode =
   | AstPageNode
   | AstForNode
   | AstIfNode
+  | AstBreakNode
+  | AstContinueNode
   | AstFunctionDeclarationNode
   | AstArrowFunctionDeclarationNode;
 

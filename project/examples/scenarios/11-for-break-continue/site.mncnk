@@ -1,0 +1,16 @@
+chunk "OnlyEven" {
+  output: "./dist";
+  title: "This is title Metadata for Browser SEO";
+  metaDescription: "This is my description Metadata for Browser SEO";
+
+  for(let index: int = 0; index < 10; index++) {
+    if(index % 2 != 0) {
+      continue;
+    };
+    page "/{{index}}.html" {
+      content {
+        <p>MyHtml No:{index}</p>
+      };
+    };
+  };
+};
