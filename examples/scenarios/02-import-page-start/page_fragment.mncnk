@@ -1,5 +1,5 @@
 chunk "PageFragment" {
-  page "/" {
+  page "" {
     let title = "Import starts with page";
     let msg = "Fragment first token: page";
     content {

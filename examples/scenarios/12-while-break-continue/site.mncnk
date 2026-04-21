@@ -7,7 +7,7 @@ chunk "Metadata" {
 chunk "While" {
   let counter: int = 0;
   while(counter < 20) {
-    page "/{{counter}}.html" {
+    page "{{counter}}" {
       content {
         <p>MyHtml No:{counter}</p>
       };

@@ -1,7 +1,7 @@
 chunk "Scenario01" {
   output "./dist";
 
-  page "/" {
+  page "" {
     let title = "Site Basic";
     let msg = "Hello from chunk body";
 

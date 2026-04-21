@@ -10,7 +10,7 @@ chunk "Scenario08GlobalEnvBasic" {
     global is_ok: bool = (a == 0) and (b == 0.5);
   };
 
-  page "/" {
+  page "" {
     content {
       <h1>{title}</h1>
       <ul>

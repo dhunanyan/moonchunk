@@ -4,16 +4,18 @@ chunk "Metadata" {
   metaDescription: "This is my description Metadata for Browser SEO";
 };
 
-chunk "Scope1" {
-  const sameVarName: string = "test";
-  page "scope1" {
+chunk "LetInSameScope" {
+  let sameVarName: string = "test1";
+  let sameVarName: string = "test2";
+  page "scope2" {
     content {
-      <p>sameVarName from scope1:{sameVarName}</p>
+      <p>sameVarName from scope2:{sameVarName}</p>
     };
   };
 };
 
-chunk "Scope2" {
+chunk "ConstInSameScope" {
+  const sameVarName: string = "test1";
   const sameVarName: string = "test2";
   page "scope2" {
     content {

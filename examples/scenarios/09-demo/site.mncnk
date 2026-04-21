@@ -1,13 +1,13 @@
 chunk "Scenario09" {
   output "./dist";
 
-  page "items/a.html" {
+  page "items/a" {
     content {
       <h1>1</h1>
     };
   };
 
-  page "items/b.html" {
+  page "items/b" {
     let title = "Site Basic";    content {
       <h1>2</h1>
     };

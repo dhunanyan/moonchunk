@@ -1,6 +1,6 @@
 chunk "IfFragment" {
   if (enabled == true) {
-    page "/" {
+    page "" {
       let title = "Import starts with if";
       content {
         <h1>{title}</h1>

@@ -9,7 +9,7 @@ chunk "OnlyEven" {
     if(index % 2 != 0) {
       continue;
     };
-    page "/even/{{index}}.html" {
+    page "even/{{index}}" {
       content {
         <p>MyHtml No:{index}</p>
       };
@@ -24,7 +24,7 @@ chunk "OnlyFirst5" {
     if(index == 5) {
       break;
     };
-    page "/first-five/{{index}}.html" {
+    page "first-five/{{index}}" {
       content {
         <p>MyHtml No:{index}</p>
       };
