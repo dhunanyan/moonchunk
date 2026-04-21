@@ -1,4 +1,4 @@
-chunk "LetFragment" {
+export chunk "LetFragment" {
   let header = "Import starts with let";
   page "" {
     let title = header;

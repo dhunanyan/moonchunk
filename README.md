@@ -28,6 +28,7 @@ MoonChunk to pakiet npm z util funkcjami do wykonywania DSL static-site generato
 - `data("file.json")`
 
 Uwaga:
+
 - aliasy w named import (`A as B`) nie są jeszcze wspierane runtime i zgłaszają błąd.
 - skrócona składnia `key: expr;` działa tylko dla wspieranych kluczy layoutu `base.tpl` oraz `output`.
 - layout jest wewnętrzny i stały: `moonchunk/base.tpl` (nie podajemy już `using "layout.tpl"`).
@@ -35,7 +36,7 @@ Uwaga:
 ## Instalacja
 
 ```bash
-cd /Users/dhunanyan/studies/kompilatory/project
+cd moonchunk
 yarn install
 ```
 
@@ -46,6 +47,7 @@ yarn build
 ```
 
 `yarn build` automatycznie:
+
 1. generuje parser/lexer/visitor z `MoonChunkLexer.g4` i `MoonChunkParser.g4` do `.antlr/`,
 2. kompiluje TS do `dist/`.
 
@@ -68,6 +70,7 @@ Opcje:
 2. Pass 2: ewaluacja i wykonanie programu.
 
 Błędy:
+
 - redeklaracja globala -> błąd,
 - użycie niezarejestrowanej zmiennej -> błąd.
 
@@ -76,9 +79,7 @@ Błędy:
 ```ts
 import { executeMoonChunkFile } from "moonchunk";
 
-const result = executeMoonChunkFile(
-  "/Users/dhunanyan/studies/kompilatory/project/examples/miniblog.mncnk",
-);
+const result = executeMoonChunkFile("./examples/miniblog.mncnk");
 console.log(result.ok);
 console.log(result.generatedFiles);
 console.log(result.diagnostics);
@@ -86,4 +87,4 @@ console.log(result.diagnostics);
 
 ## Demo input
 
-- `/Users/dhunanyan/studies/kompilatory/project/examples/scenarios/07-basic-calculations/site.mncnk`
+- `./examples/scenarios/07-basic-calculations/site.mncnk`

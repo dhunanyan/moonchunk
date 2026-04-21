@@ -1,5 +1,5 @@
 chunk "Scenario10Demo2" {
-  output "./dist";
+  output: "./dist";
 
   title: "10 - Demo 2";
 

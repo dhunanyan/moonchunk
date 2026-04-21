@@ -1,4 +1,4 @@
-chunk "Pages" {
+export chunk "Pages" {
   page "" {
     let title = siteName;
     content {

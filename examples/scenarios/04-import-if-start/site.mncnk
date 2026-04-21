@@ -1,5 +1,5 @@
+import * as Fragments from "./if_fragment.mncnk";
+
 chunk "Scenario04" {
-  output "./dist";
-  let enabled = true;
-  import * as Fragments from "./if_fragment.mncnk";
+  output: "./dist";
 };

@@ -1,5 +1,5 @@
 chunk "Scenario07BasicCalculations" {
-  output "./dist";
+  output: "./dist";
 
   title: "07 - Basic Calculations";
 

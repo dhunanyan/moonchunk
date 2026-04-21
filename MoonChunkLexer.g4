@@ -1,6 +1,9 @@
 lexer grammar MoonChunkLexer;
 
 CHUNK       : 'chunk' ;
+EXPORT      : 'export' ;
+MOON        : 'moon' ;
+INCLUDE     : '@include' ;
 AS          : 'as' ;
 FROM        : 'from' ;
 IMPORT      : 'import' ;

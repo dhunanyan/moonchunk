@@ -18,11 +18,13 @@ import {
   FunctionDeclarationContext,
   GlobalStatementContext,
   IfStatementContext,
+  IncludeStatementContext,
   ImportClauseContext,
   ImportItemContext,
   ImportStatementContext,
   LetStatementContext,
   MetaStatementContext,
+  MoonStatementContext,
   MoonChunkParser,
   NamedImportClauseContext,
   NamespaceImportClauseContext,
@@ -35,6 +37,7 @@ import {
   ReturnStatementContext,
   RuntimeBlockContext,
   RuntimeChunkStatementContext,
+  TopLevelStatementContext,
 } from "../../.antlr/MoonChunkParser";
 import { MoonChunkParserVisitor } from "../../.antlr/MoonChunkParserVisitor";
 
@@ -101,10 +104,25 @@ export class AstBuilder
   }
 
   visitProgram(ctx: ProgramContext): unknown {
+    const topLevel = ctx
+      .topLevelStatement()
+      .map((node) => this.visit(node)) as Array<unknown>;
     return {
       type: "Program",
-      chunks: ctx.chunkDecl().map((decl) => this.visit(decl)),
+      imports: ctx.importStatement().map((stmt) => this.visit(stmt)),
+      moons: topLevel.filter(
+        (node) => (node as { type?: string }).type === "Moon",
+      ),
+      chunks: topLevel.filter(
+        (node) => (node as { type?: string }).type === "Chunk",
+      ),
     };
+  }
+
+  visitTopLevelStatement(ctx: TopLevelStatementContext): unknown {
+    if (ctx.chunkDecl()) return this.visit(ctx.chunkDecl()!);
+    if (ctx.moonStatement()) return this.visit(ctx.moonStatement()!);
+    return null;
   }
 
   visitExpressionFragment(ctx: ExpressionFragmentContext): unknown {
@@ -115,13 +133,32 @@ export class AstBuilder
     return {
       type: "Chunk",
       name: this.unquote(ctx.chunkNameLiteral().text),
+      exported: Boolean(ctx.EXPORT()),
+      includes: ctx
+        .includeStatement()
+        .map((includeStmt) => this.visit(includeStmt)),
       body: ctx.chunkStatement().map((stmt) => this.visit(stmt)),
       line: ctx.start.line,
     };
   }
 
+  visitIncludeStatement(ctx: IncludeStatementContext): unknown {
+    return {
+      type: "Include",
+      targetPath: this.toSource(ctx.identifierPath()),
+      line: ctx.start.line,
+    };
+  }
+
+  visitMoonStatement(ctx: MoonStatementContext): unknown {
+    return {
+      type: "Moon",
+      targetPath: this.toSource(ctx.identifierPath()),
+      line: ctx.start.line,
+    };
+  }
+
   visitChunkStatement(ctx: ChunkStatementContext): unknown {
-    if (ctx.importStatement()) return this.visit(ctx.importStatement()!);
     if (ctx.outputStatement()) return this.visit(ctx.outputStatement()!);
     if (ctx.envBlock()) return this.visit(ctx.envBlock()!);
     if (ctx.runtimeChunkStatement())
@@ -143,7 +180,8 @@ export class AstBuilder
     if (ctx.ifStatement()) return this.visit(ctx.ifStatement()!);
     if (ctx.breakStatement()) return this.visit(ctx.breakStatement()!);
     if (ctx.continueStatement()) return this.visit(ctx.continueStatement()!);
-    if (ctx.expressionStatement()) return this.visit(ctx.expressionStatement()!);
+    if (ctx.expressionStatement())
+      return this.visit(ctx.expressionStatement()!);
     return null;
   }
 
@@ -171,7 +209,7 @@ export class AstBuilder
   }
 
   visitImportItem(ctx: ImportItemContext): unknown {
-    const ids = ctx.IDENTIFIER();
+    const ids = ctx.identifierAtom();
     const name = ids[0].text;
     const alias = ids.length > 1 ? ids[1].text : null;
     return { name, alias };
@@ -180,7 +218,7 @@ export class AstBuilder
   visitNamespaceImportClause(ctx: NamespaceImportClauseContext): unknown {
     return {
       type: "NamespaceImport",
-      alias: ctx.IDENTIFIER().text,
+      alias: ctx.identifierAtom().text,
     };
   }
 
@@ -203,7 +241,7 @@ export class AstBuilder
   visitGlobalStatement(ctx: GlobalStatementContext): unknown {
     return {
       type: "Global",
-      name: ctx.IDENTIFIER().text,
+      name: ctx.identifierAtom().text,
       declaredType: ctx.typeName() ? ctx.typeName()!.text : null,
       expr: this.toExpr(ctx.expression()),
       line: ctx.start.line,
@@ -213,7 +251,7 @@ export class AstBuilder
   visitLetStatement(ctx: LetStatementContext): unknown {
     return {
       type: "Let",
-      name: ctx.IDENTIFIER().text,
+      name: ctx.identifierAtom().text,
       declaredType: ctx.typeName() ? ctx.typeName()!.text : null,
       expr: this.toExpr(ctx.expression()),
       line: ctx.start.line,
@@ -223,7 +261,7 @@ export class AstBuilder
   visitConstStatement(ctx: ConstStatementContext): unknown {
     return {
       type: "Const",
-      name: ctx.IDENTIFIER().text,
+      name: ctx.identifierAtom().text,
       declaredType: ctx.typeName() ? ctx.typeName()!.text : null,
       expr: this.toExpr(ctx.expression()),
       line: ctx.start.line,
@@ -250,7 +288,7 @@ export class AstBuilder
   visitFunctionDeclaration(ctx: FunctionDeclarationContext): unknown {
     return {
       type: "FunctionDeclaration",
-      name: ctx.IDENTIFIER().text,
+      name: ctx.identifierAtom().text,
       params: ctx.parameterList() ? this.visit(ctx.parameterList()!) : [],
       returnType: ctx.returnTypeName() ? ctx.returnTypeName()!.text : null,
       body: ctx.functionBodyStatement().map((stmt) => this.visit(stmt)),
@@ -261,7 +299,7 @@ export class AstBuilder
   visitArrowFunctionDeclaration(ctx: ArrowFunctionDeclarationContext): unknown {
     return {
       type: "ArrowFunctionDeclaration",
-      name: ctx.IDENTIFIER().text,
+      name: ctx.identifierAtom().text,
       params: ctx.parameterList() ? this.visit(ctx.parameterList()!) : [],
       returnType: ctx.returnTypeName() ? ctx.returnTypeName()!.text : null,
       bodyExpr: this.toSource(ctx.arrowFunctionBody()),
@@ -275,14 +313,15 @@ export class AstBuilder
 
   visitParameter(ctx: ParameterContext): unknown {
     return {
-      name: ctx.IDENTIFIER().text,
+      name: ctx.identifierAtom().text,
       declaredType: ctx.typeName() ? ctx.typeName()!.text : null,
     };
   }
 
   visitFunctionBodyStatement(ctx: FunctionBodyStatementContext): unknown {
     if (ctx.constStatement()) return this.visit(ctx.constStatement()!);
-    if (ctx.functionDeclaration()) return this.visit(ctx.functionDeclaration()!);
+    if (ctx.functionDeclaration())
+      return this.visit(ctx.functionDeclaration()!);
     if (ctx.arrowFunctionDeclaration())
       return this.visit(ctx.arrowFunctionDeclaration()!);
     if (ctx.letStatement()) return this.visit(ctx.letStatement()!);
@@ -373,7 +412,7 @@ export class AstBuilder
       initDeclaredType: parsedInit.declaredType,
       initExpr: parsedInit.expr,
       conditionExpr: this.toExpr(ctx.expression()),
-      updateName: ctx.forUpdate().IDENTIFIER().text,
+      updateName: updateRaw.replaceAll("+", "").trim(),
       updatePrefix: updateRaw.startsWith("++"),
       body,
       line: ctx.start.line,

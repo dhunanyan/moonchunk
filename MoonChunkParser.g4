@@ -3,11 +3,16 @@ parser grammar MoonChunkParser;
 options { tokenVocab=MoonChunkLexer; }
 
 program
-  : chunkDecl+ EOF
+  : importStatement* topLevelStatement+ EOF
   ;
 
 fragmentProgram
-  : chunkDecl+ EOF
+  : importStatement* topLevelStatement+ EOF
+  ;
+
+topLevelStatement
+  : chunkDecl
+  | moonStatement
   ;
 
 expressionFragment
@@ -15,7 +20,7 @@ expressionFragment
   ;
 
 chunkDecl
-  : CHUNK chunkNameLiteral LBRACE chunkStatement* RBRACE SEMI
+  : EXPORT? CHUNK chunkNameLiteral LBRACE includeStatement* chunkStatement* RBRACE SEMI
   ;
 
 chunkNameLiteral
@@ -23,10 +28,17 @@ chunkNameLiteral
   ;
 
 chunkStatement
-  : importStatement
-  | outputStatement
+  : outputStatement
   | envBlock
   | runtimeChunkStatement
+  ;
+
+includeStatement
+  : INCLUDE identifierPath SEMI
+  ;
+
+moonStatement
+  : MOON LPAREN identifierPath RPAREN SEMI
   ;
 
 runtimeChunkStatement
@@ -58,11 +70,11 @@ namedImportClause
   ;
 
 importItem
-  : IDENTIFIER (AS IDENTIFIER)?
+  : identifierAtom (AS identifierAtom)?
   ;
 
 namespaceImportClause
-  : STAR AS IDENTIFIER
+  : STAR AS identifierAtom
   ;
 
 outputStatement
@@ -74,15 +86,15 @@ envBlock
   ;
 
 globalStatement
-  : GLOBAL IDENTIFIER (COLON typeName)? ASSIGN expression SEMI
+  : GLOBAL identifierAtom (COLON typeName)? ASSIGN expression SEMI
   ;
 
 letStatement
-  : LET IDENTIFIER (COLON typeName)? ASSIGN expression SEMI
+  : LET identifierAtom (COLON typeName)? ASSIGN expression SEMI
   ;
 
 constStatement
-  : CONST IDENTIFIER (COLON typeName)? ASSIGN expression SEMI
+  : CONST identifierAtom (COLON typeName)? ASSIGN expression SEMI
   ;
 
 expressionStatement
@@ -90,11 +102,11 @@ expressionStatement
   ;
 
 functionDeclaration
-  : FUNCTION IDENTIFIER LPAREN parameterList? RPAREN (COLON returnTypeName)? LBRACE functionBodyStatement* RBRACE
+  : FUNCTION identifierAtom LPAREN parameterList? RPAREN (COLON returnTypeName)? LBRACE functionBodyStatement* RBRACE
   ;
 
 arrowFunctionDeclaration
-  : IDENTIFIER LPAREN parameterList? RPAREN (COLON returnTypeName)? ARROW arrowFunctionBody SEMI
+  : identifierAtom LPAREN parameterList? RPAREN (COLON returnTypeName)? ARROW arrowFunctionBody SEMI
   ;
 
 parameterList
@@ -102,7 +114,7 @@ parameterList
   ;
 
 parameter
-  : IDENTIFIER (COLON typeName)?
+  : identifierAtom (COLON typeName)?
   ;
 
 functionBodyStatement
@@ -232,13 +244,13 @@ forStatement
   ;
 
 forInit
-  : LET typeName IDENTIFIER ASSIGN expression
-  | LET IDENTIFIER (COLON typeName)? ASSIGN expression
+  : LET typeName identifierAtom ASSIGN expression
+  | LET identifierAtom (COLON typeName)? ASSIGN expression
   ;
 
 forUpdate
-  : IDENTIFIER PLUSPLUS
-  | PLUSPLUS IDENTIFIER
+  : identifierAtom PLUSPLUS
+  | PLUSPLUS identifierAtom
   ;
 
 ifStatement
@@ -342,7 +354,7 @@ functionExpr
 
 arrowFunctionExpr
   : LPAREN parameterList? RPAREN (COLON returnTypeName)? ARROW arrowFunctionBody
-  | IDENTIFIER (COLON returnTypeName)? ARROW arrowFunctionBody
+  | identifierAtom (COLON returnTypeName)? ARROW arrowFunctionBody
   ;
 
 arrowFunctionBody

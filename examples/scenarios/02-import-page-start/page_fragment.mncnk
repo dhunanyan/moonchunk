@@ -1,4 +1,4 @@
-chunk "PageFragment" {
+export chunk "PageFragment" {
   page "" {
     let title = "Import starts with page";
     let msg = "Fragment first token: page";

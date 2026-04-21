@@ -1,0 +1,76 @@
+export chunk "Metadata" {
+  lang: "pl";
+  dir: "ltr";
+  htmlClass: "no-js";
+  charset: "utf-8";
+  viewport: "width=device-width, initial-scale=1";
+
+  title: "MoonChunk - Wspolne Metadata";
+  metaDescription: "Wspolny opis SEO dla wszystkich stron.";
+  metaKeywords: "moonchunk,kompilatory,metadata,seo";
+  metaAuthor: "MoonChunk Team";
+  metaRobots: "index,follow";
+  themeColor: "#0f172a";
+
+  canonicalUrl: "https://example.com";
+  faviconHref: "/assets/favicon.ico";
+  appleTouchIconHref: "/assets/apple-touch-icon.png";
+  manifestHref: "/site.webmanifest";
+
+  ogType: "website";
+  ogTitle: "MoonChunk - Wspolne Metadata";
+  ogDescription: "Wspolny opis OpenGraph dla wszystkich stron.";
+  ogImage: "https://example.com/assets/og-image.png";
+  ogUrl: "https://example.com";
+  ogSiteName: "MoonChunk Demo";
+  ogLocale: "pl_PL";
+
+  twitterCard: "summary_large_image";
+  twitterSite: "@moonchunk";
+  twitterCreator: "@moonchunk";
+  twitterTitle: "MoonChunk - Wspolne Metadata";
+  twitterDescription: "Wspolny opis Twitter dla wszystkich stron.";
+  twitterImage: "https://example.com/assets/twitter-image.png";
+
+  preloadLinks: "<link rel='preload' href='/assets/app.css' as='style'>";
+  preconnectLinks: "<link rel='preconnect' href='https://fonts.googleapis.com'>";
+  styles: "<link rel='stylesheet' href='/assets/app.css'>";
+  headScripts: "<script src='/assets/head.js' defer></script>";
+  headExtra: "<meta name='x-demo' content='head-extra'>";
+
+  bodyClass: "app-layout";
+  pageId: "default-page";
+  topBar: "<div class='topbar'>TopBar</div>";
+  header: "<header><h1>MoonChunk Header</h1></header>";
+  footer: "<footer><small>MoonChunk Footer</small></footer>";
+  modals: "<div id='modal-root'></div>";
+  scripts: "<script src='/assets/app.js' defer></script>";
+  bodyEndExtra: "<div id='end-extra'></div>";
+};
+
+chunk "File1" {
+  @include Metadata;
+  output: "./dist";
+  title: "File1 - Unikalny Tytul";
+  metaDescription: "File1 - unikalny opis SEO.";
+
+  page "file1" {
+    content {
+      <h1>File1</h1>
+      <p>This page overrides title + metaDescription.</p>
+    };
+  };
+};
+
+chunk "File2" {
+  @include Metadata;
+  title: "File2 - Unikalny Tytul";
+  metaDescription: "File2 - unikalny opis SEO.";
+
+  page "file2" {
+    content {
+      <h1>File2</h1>
+      <p>This page overrides title + metaDescription.</p>
+    };
+  };
+};

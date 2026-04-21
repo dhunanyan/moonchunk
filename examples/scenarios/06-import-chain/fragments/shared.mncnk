@@ -1,3 +1,5 @@
-chunk "Shared" {
-  let siteName = "Nested imports";
+export chunk "Shared" {
+  env {
+    global siteName: string = "Nested imports";
+  };
 };

@@ -48,6 +48,18 @@ export type AstImportNode = {
   line: number;
 };
 
+export type AstIncludeNode = {
+  type: "Include";
+  targetPath: string;
+  line: number;
+};
+
+export type AstMoonNode = {
+  type: "Moon";
+  targetPath: string;
+  line: number;
+};
+
 export type AstOutputNode = {
   type: "Output";
   value: string;
@@ -203,21 +215,21 @@ export type AstRuntimeNode =
   | AstFunctionDeclarationNode
   | AstArrowFunctionDeclarationNode;
 
-export type AstChunkStatement =
-  | AstImportNode
-  | AstOutputNode
-  | AstEnvNode
-  | AstRuntimeNode;
+export type AstChunkStatement = AstOutputNode | AstEnvNode | AstRuntimeNode;
 
 export type AstChunkNode = {
   type: "Chunk";
   name: string;
+  exported: boolean;
+  includes: AstIncludeNode[];
   body: Array<AstChunkStatement | null>;
   line: number;
 };
 
 export type AstProgramNode = {
   type: "Program";
+  imports: AstImportNode[];
+  moons: AstMoonNode[];
   chunks: AstChunkNode[];
 };
 

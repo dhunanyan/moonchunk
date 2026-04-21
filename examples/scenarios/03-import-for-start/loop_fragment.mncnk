@@ -1,4 +1,4 @@
-chunk "LoopFragment" {
+export chunk "LoopFragment" {
   for (let int i = 0; i < 3; i++) {
     page "items/{{i}}" {
       let title = "Item";

@@ -1,5 +1,5 @@
 chunk "Scenario01" {
-  output "./dist";
+  output: "./dist";
 
   page "" {
     let title = "Site Basic";

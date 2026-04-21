@@ -126,7 +126,7 @@ function paramsFromList(
 ): RuntimeParameter[] {
   if (!parameterList) return [];
   return parameterList.parameter().map((param: ParameterContext) => ({
-    name: param.IDENTIFIER().text,
+    name: param.identifierAtom().text,
     declaredType: param.typeName() ? param.typeName()!.text : null,
   }));
 }
@@ -443,10 +443,11 @@ class ExprEvaluator {
   }
 
   private createArrowFunction(ctx: ArrowFunctionExprContext): RuntimeCallable {
-    const params = ctx.IDENTIFIER()
+    const shortParam = ctx.identifierAtom();
+    const params = shortParam
       ? [
           {
-            name: ctx.IDENTIFIER()!.text,
+            name: shortParam.text,
             declaredType: ctx.returnTypeName()
               ? ctx.returnTypeName()!.text
               : null,
@@ -514,7 +515,7 @@ class ExprEvaluator {
         this.ensureReturnType(returnType, result, callLine);
         return result;
       },
-      ctx.IDENTIFIER().text,
+      ctx.identifierAtom().text,
     );
   }
 
@@ -540,7 +541,7 @@ class ExprEvaluator {
         this.ensureReturnType(returnType, result, callLine);
         return result;
       },
-      ctx.IDENTIFIER().text,
+      ctx.identifierAtom().text,
     );
   }
 
@@ -588,7 +589,7 @@ class ExprEvaluator {
     if (statement.functionDeclaration()) {
       const decl = statement.functionDeclaration()!;
       const callable = this.createFunctionDeclarationCallable(decl);
-      fnScope.declare(decl.IDENTIFIER().text, callable, null, decl.start.line);
+      fnScope.declare(decl.identifierAtom().text, callable, null, decl.start.line);
       return;
     }
     if (statement.letStatement())
@@ -596,7 +597,7 @@ class ExprEvaluator {
     if (statement.arrowFunctionDeclaration()) {
       const decl = statement.arrowFunctionDeclaration()!;
       const callable = this.createArrowDeclarationCallable(decl);
-      fnScope.declare(decl.IDENTIFIER().text, callable, null, decl.start.line);
+      fnScope.declare(decl.identifierAtom().text, callable, null, decl.start.line);
       return;
     }
     if (statement.ifStatement())
@@ -664,13 +665,13 @@ class ExprEvaluator {
     if (stmt.functionDeclaration()) {
       const decl = stmt.functionDeclaration()!;
       const callable = this.createFunctionDeclarationCallable(decl);
-      fnScope.declare(decl.IDENTIFIER().text, callable, null, decl.start.line);
+      fnScope.declare(decl.identifierAtom().text, callable, null, decl.start.line);
       return;
     }
     if (stmt.arrowFunctionDeclaration()) {
       const decl = stmt.arrowFunctionDeclaration()!;
       const callable = this.createArrowDeclarationCallable(decl);
-      fnScope.declare(decl.IDENTIFIER().text, callable, null, decl.start.line);
+      fnScope.declare(decl.identifierAtom().text, callable, null, decl.start.line);
       return;
     }
     if (stmt.ifStatement())
@@ -746,7 +747,7 @@ class ExprEvaluator {
   ): void {
     const loopScope = fnScope.derive();
     const init = stmt.forInit();
-    const initName = init.IDENTIFIER().text;
+    const initName = init.identifierAtom().text;
 
     const typeCtxRaw = (
       init as unknown as { typeName?: () => unknown }
@@ -786,7 +787,7 @@ class ExprEvaluator {
         }
       }
 
-      const updateName = stmt.forUpdate().IDENTIFIER().text;
+      const updateName = stmt.forUpdate().identifierAtom().text;
       const current = coerceToNumeric(
         loopScope.get(updateName),
         stmt.start.line,
@@ -832,7 +833,7 @@ class ExprEvaluator {
       line,
     );
     fnScope.declare(
-      stmt.IDENTIFIER().text,
+      stmt.identifierAtom().text,
       value,
       stmt.typeName() ? stmt.typeName()!.text : null,
       stmt.start.line,
@@ -851,7 +852,7 @@ class ExprEvaluator {
       line,
     );
     fnScope.declare(
-      stmt.IDENTIFIER().text,
+      stmt.identifierAtom().text,
       value,
       stmt.typeName() ? stmt.typeName()!.text : null,
       stmt.start.line,

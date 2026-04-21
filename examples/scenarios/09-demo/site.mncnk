@@ -1,5 +1,5 @@
 chunk "Scenario09" {
-  output "./dist";
+  output: "./dist";
 
   page "items/a" {
     content {
