@@ -7,7 +7,8 @@ chunk "Metadata" {
 chunk "LetInSameScope" {
   let sameVarName: string = "test1";
   let sameVarName: string = "test2";
-  page "scope2" {
+  page "let" {
+    title: "This is title Metadata for Browser SEO";
     content {
       <p>sameVarName from scope2:{sameVarName}</p>
     };
@@ -17,7 +18,8 @@ chunk "LetInSameScope" {
 chunk "ConstInSameScope" {
   const sameVarName: string = "test1";
   const sameVarName: string = "test2";
-  page "scope2" {
+  page "const" {
+    title: "This is title Metadata for Browser SEO";
     content {
       <p>sameVarName from scope2:{sameVarName}</p>
     };

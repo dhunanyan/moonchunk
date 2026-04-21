@@ -1,0 +1,25 @@
+chunk "Metadata" {
+  output: "./dist";
+  title: "This is title Metadata for Browser SEO";
+  metaDescription: "This is my description Metadata for Browser SEO";
+};
+
+chunk "ChangeLetVar" {
+  let sameVarName: string = "test1";
+  sameVarName = "test2";
+  page "let" {
+    content {
+      <p>sameVarName from scope2:{sameVarName}</p>
+    };
+  };
+};
+
+chunk "ChangeConstVar" {
+  const sameVarName: string = "test1";
+  sameVarName = "test2";
+  page "const" {
+    content {
+      <p>sameVarName from scope2:{sameVarName}</p>
+    };
+  };
+};
