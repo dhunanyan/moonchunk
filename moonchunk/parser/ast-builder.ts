@@ -282,6 +282,7 @@ export class AstBuilder
 
   visitFunctionBodyStatement(ctx: FunctionBodyStatementContext): unknown {
     if (ctx.constStatement()) return this.visit(ctx.constStatement()!);
+    if (ctx.functionDeclaration()) return this.visit(ctx.functionDeclaration()!);
     if (ctx.arrowFunctionDeclaration())
       return this.visit(ctx.arrowFunctionDeclaration()!);
     if (ctx.letStatement()) return this.visit(ctx.letStatement()!);

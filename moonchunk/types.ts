@@ -160,6 +160,7 @@ export type AstContinueNode = {
 
 export type AstFunctionBodyNode =
   | AstConstNode
+  | AstFunctionDeclarationNode
   | AstLetNode
   | AstIfNode
   | AstForNode

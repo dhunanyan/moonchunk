@@ -290,6 +290,22 @@ export function runAst(
           fnScope.declare(statement.name, callable, null, statement.line);
           break;
         }
+        case "FunctionDeclaration": {
+          const callable = createFunctionDeclarationCallable(
+            statement,
+            fnScope,
+            currentDir,
+          );
+          if (!isCallable(callable)) {
+            throw new MoonChunkError(
+              `Invalid function declaration: ${statement.name}`,
+              statement.line,
+              1,
+            );
+          }
+          fnScope.declare(statement.name, callable, null, statement.line);
+          break;
+        }
         case "If":
           execIfRuntime(statement, fnScope, currentDir, false);
           break;
@@ -734,7 +750,11 @@ export function runAst(
     evaluateGlobal(name, 1);
   }
 
-  execList(rootStatements, globalScope, cwd);
+  for (const chunk of ast.chunks) {
+    const chunkScope = globalScope.derive();
+    const chunkStatements = chunk.body as Array<AstNode | null>;
+    execList(chunkStatements, chunkScope, cwd);
+  }
   return {
     output: outputLogs,
     result: {

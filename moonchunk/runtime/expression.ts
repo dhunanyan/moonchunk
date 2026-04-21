@@ -585,6 +585,12 @@ class ExprEvaluator {
         fnScope,
         line,
       );
+    if (statement.functionDeclaration()) {
+      const decl = statement.functionDeclaration()!;
+      const callable = this.createFunctionDeclarationCallable(decl);
+      fnScope.declare(decl.IDENTIFIER().text, callable, null, decl.start.line);
+      return;
+    }
     if (statement.letStatement())
       return this.executeLetStatement(statement.letStatement()!, fnScope, line);
     if (statement.arrowFunctionDeclaration()) {

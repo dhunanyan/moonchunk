@@ -107,6 +107,7 @@ parameter
 
 functionBodyStatement
   : constStatement
+  | functionDeclaration
   | arrowFunctionDeclaration
   | letStatement
   | ifStatement
