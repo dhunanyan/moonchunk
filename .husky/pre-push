@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+echo "[husky] pre-push: running build..."
+yarn build

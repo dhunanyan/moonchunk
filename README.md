@@ -69,7 +69,44 @@ yarn start:debug <path/to/file.mncnk>
 
 # Type checks / validation script
 yarn check
+
+# Lint checks
+yarn lint
+
+# Auto-fix lint issues
+yarn lint:fix
 ```
+
+## Git Hooks (Husky)
+
+Husky is configured for local quality gates:
+
+- `pre-commit` -> `yarn lint` + `yarn check`
+- `pre-push` -> `yarn build`
+
+After pulling changes, run:
+
+```bash
+yarn install
+```
+
+(`prepare` script will initialize Husky hooks automatically.)
+
+## Quality Checks
+
+Recommended local verification before opening a PR:
+
+```bash
+yarn lint
+yarn check
+yarn build
+```
+
+Checks overview:
+
+- `yarn lint` -> ESLint for TypeScript and scripts
+- `yarn check` -> Yarn dependency/package consistency checks
+- `yarn build` -> grammar generation + TypeScript compilation
 
 ## Programmatic API
 
@@ -109,6 +146,10 @@ Run any example:
 ```bash
 yarn start examples/scenarios/17-print-builtin/site.mncnk
 ```
+
+## Ecosystem
+
+- VS Code syntax highlight extension: [moonchunk-highlight-vscode-extension](https://github.com/dhunanyan/moonchunk-highlight-vscode-extension)
 
 ## Status
 

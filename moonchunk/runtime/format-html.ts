@@ -1,3 +1,5 @@
+import prettier from "prettier";
+
 export function formatHtmlDocument(
   html: string,
   enabled: boolean,
@@ -6,7 +8,6 @@ export function formatHtmlDocument(
   if (!enabled) return html;
 
   try {
-    const prettier = require("prettier");
     const resolved =
       typeof prettier.resolveConfig?.sync === "function" && filePath
         ? prettier.resolveConfig.sync(filePath)

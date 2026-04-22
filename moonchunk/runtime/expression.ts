@@ -6,8 +6,6 @@ import { MoonChunkLexer } from "../../.antlr/MoonChunkLexer";
 import {
   AdditiveExprContext,
   AndExprContext,
-  ArgumentListContext,
-  ArrowFunctionBodyContext,
   ArrowFunctionDeclarationContext,
   ArrowFunctionExprContext,
   AssignmentContext,
@@ -19,7 +17,6 @@ import {
   EqualityExprContext,
   ExpressionContext,
   ExpressionFragmentContext,
-  ExpressionStatementContext,
   ForStatementContext,
   WhileStatementContext,
   FunctionBodyStatementContext,
@@ -35,7 +32,6 @@ import {
   OrExprContext,
   ParameterContext,
   ParameterListContext,
-  ReturnStatementContext,
   RuntimeChunkStatementContext,
   UnaryExprContext,
 } from "../../.antlr/MoonChunkParser";
@@ -208,7 +204,7 @@ class ExprEvaluator {
     if (!ctx.expression() || !ctx.conditionalExpr()) {
       throw new MoonChunkError("Invalid ternary expression.", this.line, 1);
     }
-    return Boolean(cond)
+    return cond
       ? this.evaluateExpression(ctx.expression()!)
       : this.evaluateConditional(ctx.conditionalExpr()!);
   }
@@ -775,7 +771,7 @@ class ExprEvaluator {
       line,
     );
     const blocks = stmt.runtimeBlock();
-    const selected = Boolean(cond) ? blocks[0] : blocks[1];
+    const selected = cond ? blocks[0] : blocks[1];
     if (!selected) return;
     const blockScope = fnScope.derive();
     for (const nested of selected.runtimeChunkStatement()) {
@@ -814,11 +810,7 @@ class ExprEvaluator {
     );
     loopScope.declare(initName, initValue, initDeclaredType, init.start.line);
 
-    while (
-      Boolean(
-        this.evaluateExpressionInScope(stmt.expression(), loopScope, line),
-      )
-    ) {
+    while (this.evaluateExpressionInScope(stmt.expression(), loopScope, line)) {
       const iterScope = loopScope.derive();
       for (const nested of stmt.runtimeBlock().runtimeChunkStatement()) {
         try {
@@ -849,9 +841,7 @@ class ExprEvaluator {
     line: number,
   ): void {
     const loopScope = fnScope.derive();
-    while (
-      Boolean(this.evaluateExpressionInScope(stmt.expression(), fnScope, line))
-    ) {
+    while (this.evaluateExpressionInScope(stmt.expression(), fnScope, line)) {
       const iterScope = loopScope.derive();
       for (const nested of stmt.runtimeBlock().runtimeChunkStatement()) {
         try {

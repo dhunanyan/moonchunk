@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+echo "[husky] pre-commit: running lint + checks..."
+yarn lint && yarn check

@@ -25,7 +25,6 @@ import {
   LetStatementContext,
   MetaStatementContext,
   MoonStatementContext,
-  MoonChunkParser,
   NamedImportClauseContext,
   NamespaceImportClauseContext,
   OutputStatementContext,

@@ -343,7 +343,7 @@ export function runAst(
     const cond = evalExpr(node.condition, scope, currentDir, node.line, {
       getGlobal,
     });
-    const selectedBody = Boolean(cond) ? node.body : node.elseBody;
+    const selectedBody = cond ? node.body : node.elseBody;
     if (!selectedBody) return;
     const child = scope.derive();
     for (const nested of selectedBody) {
@@ -372,13 +372,7 @@ export function runAst(
       node.line,
     );
 
-    while (
-      Boolean(
-        evalExpr(node.conditionExpr, loopScope, currentDir, node.line, {
-          getGlobal,
-        }),
-      )
-    ) {
+    while (evalExpr(node.conditionExpr, loopScope, currentDir, node.line, { getGlobal })) {
       const child = loopScope.derive();
       for (const nested of node.body) {
         if (!nested) continue;
@@ -409,13 +403,7 @@ export function runAst(
     currentDir: string,
   ): void {
     const loopScope = scope.derive();
-    while (
-      Boolean(
-        evalExpr(node.condition, scope, currentDir, node.line, {
-          getGlobal,
-        }),
-      )
-    ) {
+    while (evalExpr(node.condition, scope, currentDir, node.line, { getGlobal })) {
       const child = loopScope.derive();
       for (const nested of node.body) {
         if (!nested) continue;
