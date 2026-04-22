@@ -1,90 +1,132 @@
-# MoonChunk (npm package)
+<p align="center">
+  <img src="./assets/logo.png" alt="MoonChunk logo" width="180" />
+</p>
 
-MoonChunk to pakiet npm z util funkcjami do wykonywania DSL static-site generatora.
+<h1 align="center">MoonChunk</h1>
 
-## Rozszerzenie plików
+<p align="center">
+  A compact DSL and runtime for generating static HTML from <code>.mncnk</code> source files.
+</p>
 
-- źródła MoonChunk: `*.mncnk`
+<p align="center">
+  <img src="https://img.shields.io/badge/version-1.0.0-2ea44f" alt="Version" />
+  <img src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white" alt="Node >= 18" />
+  <img src="https://img.shields.io/badge/typescript-5.x-3178c6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/antlr4ts-0.5.0--alpha.4-fb8c00" alt="ANTLR4TS" />
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License" />
+</p>
 
-## Co wspiera DSL
+## Overview
 
-- `chunk "Name" { ... };`
-- `output "./dist";`
-- `env { global name: type = expr; ... };` (globalna przestrzeń nazw)
-- `import { A, B } from "./part/file.mncnk";`
-- `import * as AnyName from "./part/file.mncnk";` (ładuje wszystkie chunki z pliku)
-- `page "/path" { ... };`
-- `let variable = expression;`
-- `const variable = expression;`
-- `title: "My page";` (skrócona składnia metadanych)
-- `output: "./dist";` (alternatywa dla `output "./dist";`)
-- `for (let int i = 0; i < limit; i++) { ... };`
-- `if (expression) { ... };`
-- typy: `int`, `float`, `double`, `bool`, `string`
-- `content { ... };` z dynamicznymi wyrażeniami:
-  - `<div>{expr}</div>`
-  - `<div>{condition ? "A" : "B"}</div>`
-  - `<div>{myFunc()}</div>`
-- `data("file.json")`
+MoonChunk is an open-source language runtime focused on:
 
-Uwaga:
+- describing page generation in a concise DSL (`*.mncnk`)
+- parsing with ANTLR4TS
+- executing language constructs (imports, scopes, loops, functions, recursion)
+- generating formatted HTML output
 
-- aliasy w named import (`A as B`) nie są jeszcze wspierane runtime i zgłaszają błąd.
-- skrócona składnia `key: expr;` działa tylko dla wspieranych kluczy layoutu `base.tpl` oraz `output`.
-- layout jest wewnętrzny i stały: `moonchunk/base.tpl` (nie podajemy już `using "layout.tpl"`).
+## Features
 
-## Instalacja
+- Modular chunks with `import` / `@include`
+- Explicit entrypoint execution via `moon(...)`
+- Local and global variable model (`let`, `const`, `env { global ... }`)
+- Type-aware expressions (`int`, `float`, `double`, `bool`, `string`)
+- Control flow: `if`, `for`, `while`, `break`, `continue`
+- Functions (including recursive calls)
+- Builtins like `data(...)` and `print(...)`
+- Internal base layout + metadata defined directly in `.mncnk`
+- Friendly error diagnostics with line/column information
+
+## Requirements
+
+- Node.js `>=18`
+- Yarn Classic (`1.x`) recommended
+
+## Installation
 
 ```bash
-cd moonchunk
 yarn install
 ```
 
-## Build flow (ANTLR TS + kompilacja TS)
+## Quick Start
 
 ```bash
 yarn build
+yarn start examples/scenarios/18-recursive-function/site.mncnk
 ```
 
-`yarn build` automatycznie:
+## Build & Run
 
-1. generuje parser/lexer/visitor z `MoonChunkLexer.g4` i `MoonChunkParser.g4` do `.antlr/`,
-2. kompiluje TS do `dist/`.
+```bash
+# Full build (ANTLR generation + TypeScript compilation)
+yarn build
 
-## API
+# Start runtime
+yarn start <path/to/file.mncnk>
 
-Eksporty:
+# Debug mode
+yarn start:debug <path/to/file.mncnk>
 
-- `executeMoonChunk(code, options?)`
-- `executeMoonChunkFile(filePath, options?)` (wymaga rozszerzenia `.mncnk`)
+# Type checks / validation script
+yarn check
+```
 
-Opcje:
-
-- `cwd?: string` (bazowy katalog do `data(...)` i outputu)
-- `writeFiles?: boolean` (domyślnie `true`)
-- `formatHtml?: boolean` (domyślnie `true`, formatuje wygenerowane HTML)
-
-## Global namespace (2-pass)
-
-1. Pass 1: rejestracja wszystkich deklaracji `global` z bloków `env`.
-2. Pass 2: ewaluacja i wykonanie programu.
-
-Błędy:
-
-- redeklaracja globala -> błąd,
-- użycie niezarejestrowanej zmiennej -> błąd.
-
-## Przykład uruchomienia pliku
+## Programmatic API
 
 ```ts
-import { executeMoonChunkFile } from "moonchunk";
+import { executeMoonChunk, executeMoonChunkFile } from "moonchunk";
 
-const result = executeMoonChunkFile("./examples/miniblog.mncnk");
-console.log(result.ok);
-console.log(result.generatedFiles);
-console.log(result.diagnostics);
+const fromFile = executeMoonChunkFile("examples/scenarios/17-print-builtin/site.mncnk");
+console.log(fromFile.ok, fromFile.generatedFiles);
+
+const fromSource = executeMoonChunk('chunk "Main" { output: "./dist"; }; moon(Main);');
+console.log(fromSource.ok, fromSource.diagnostics);
 ```
 
-## Demo input
+## Project Layout
 
-- `./examples/scenarios/07-basic-calculations/site.mncnk`
+```text
+moonchunk/
+├── MoonChunkLexer.g4
+├── MoonChunkParser.g4
+├── moonchunk/
+│   ├── api.ts
+│   ├── parser/
+│   ├── runtime/
+│   └── base.tpl
+├── scripts/
+└── examples/scenarios/
+```
+
+## Examples
+
+- `examples/scenarios/16-metadata-common`
+- `examples/scenarios/17-print-builtin`
+- `examples/scenarios/18-recursive-function`
+
+Run any example:
+
+```bash
+yarn start examples/scenarios/17-print-builtin/site.mncnk
+```
+
+## Status
+
+MoonChunk is under active development.  
+The language is intentionally evolving and new tokens/runtime capabilities are being added incrementally.
+
+## Contributing
+
+Issues and pull requests are welcome.
+
+Suggested flow:
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Add/update scenario examples when adding language behavior.
+4. Run `yarn build` and `yarn check`.
+5. Open a pull request with a short change summary.
+
+## License
+
+MIT

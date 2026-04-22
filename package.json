@@ -1,16 +1,30 @@
 {
   "name": "moonchunk",
   "version": "1.0.0",
-  "description": "MoonChunk language core package",
+  "description": "MoonChunk DSL runtime for generating static HTML from .mncnk sources",
+  "author": "dhunanyan",
+  "homepage": "https://github.com/dhunanyan/moonchunk#readme",
+  "bugs": {
+    "url": "https://github.com/dhunanyan/moonchunk/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dhunanyan/moonchunk.git"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "MIT",
+  "sideEffects": false,
   "keywords": [
     "dsl",
     "interpreter",
     "antlr",
-    "moonchunk"
+    "moonchunk",
+    "static-site-generator",
+    "compiler",
+    "parser"
   ],
+  "packageManager": "yarn@1.22.22",
   "scripts": {
     "build": "sh scripts/build.sh",
     "compile:ts": "tsc -p tsconfig.json",
@@ -22,11 +36,13 @@
     "postbuild": "rm -rf .antlr"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=18",
+    "yarn": ">=1.22.0"
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "exports": {
     ".": {
@@ -36,10 +52,13 @@
   },
   "devDependencies": {
     "antlr4ts-cli": "^0.5.0-alpha.4",
+    "prettier": "^2.8.8",
     "typescript": "^5.8.2"
   },
   "dependencies": {
-    "antlr4ts": "0.5.0-alpha.4",
-    "prettier": "^2.8.8"
+    "antlr4ts": "0.5.0-alpha.4"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

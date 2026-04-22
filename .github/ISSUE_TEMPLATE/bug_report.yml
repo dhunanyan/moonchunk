@@ -1,0 +1,46 @@
+name: Bug report
+description: Report an issue in parser/runtime/output generation
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please provide a minimal reproducible `.mncnk` example.
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Node, OS, and Yarn versions
+      placeholder: Node 20.x, macOS 14.x, Yarn 1.22.x
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: Paste `.mncnk` snippet and command used (e.g. `yarn start ...`)
+      render: bash
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / diagnostics
+      render: text
