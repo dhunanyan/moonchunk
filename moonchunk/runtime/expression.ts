@@ -115,6 +115,49 @@ function parseNumberLiteral(text: string): unknown {
   return makeNumeric(Number(text), "int");
 }
 
+function formatPrintValue(value: unknown): string {
+  if (isNumericValue(value)) return stringifyValue(value);
+  if (value === null) return "null";
+  if (value === undefined) return "undefined";
+  if (typeof value === "string") return value;
+  if (typeof value === "function") {
+    const fn = value as { name?: string };
+    return fn.name ? `[Function ${fn.name}]` : "[Function]";
+  }
+  if (typeof value === "object") {
+    const seen = new WeakSet<object>();
+    try {
+      return JSON.stringify(
+        value,
+        (_key, nestedValue) => {
+          if (
+            nestedValue &&
+            typeof nestedValue === "object" &&
+            isNumericValue(nestedValue)
+          ) {
+            return stringifyValue(nestedValue);
+          }
+          if (typeof nestedValue === "function") {
+            const nestedFn = nestedValue as { name?: string };
+            return nestedFn.name
+              ? `[Function ${nestedFn.name}]`
+              : "[Function]";
+          }
+          if (nestedValue && typeof nestedValue === "object") {
+            if (seen.has(nestedValue as object)) return "[Circular]";
+            seen.add(nestedValue as object);
+          }
+          return nestedValue;
+        },
+        2,
+      );
+    } catch {
+      return String(value);
+    }
+  }
+  return stringifyValue(value);
+}
+
 function getTerminalNodes(
   nodes: TerminalNode[] | TerminalNode,
 ): TerminalNode[] {
@@ -973,33 +1016,44 @@ class ExprEvaluator {
   }
 
   private getBuiltin(name: string): unknown {
-    if (name !== "data") return undefined;
-    return makeCallable(
-      [{ name: "path", declaredType: "string" }],
-      null,
-      (args: unknown[], line: number) => {
-        if (args.length !== 1) {
-          throw new MoonChunkError(
-            "data(...) expects exactly one argument.",
-            line,
-            1,
-          );
-        }
-        if (typeof args[0] !== "string") {
-          throw new MoonChunkError("data(...) expects a string path.", line, 1);
-        }
-        const abs = path.resolve(this.cwd, args[0]);
-        if (!fs.existsSync(abs)) {
-          throw new MoonChunkError(
-            `Data file does not exist: ${args[0]}`,
-            line,
-            1,
-          );
-        }
-        return normalizeJsonNumbers(JSON.parse(fs.readFileSync(abs, "utf8")));
-      },
-      "data",
-    );
+    if (name === "data") {
+      return makeCallable(
+        [{ name: "path", declaredType: "string" }],
+        null,
+        (args: unknown[], line: number) => {
+          if (args.length !== 1) {
+            throw new MoonChunkError(
+              "data(...) expects exactly one argument.",
+              line,
+              1,
+            );
+          }
+          if (typeof args[0] !== "string") {
+            throw new MoonChunkError("data(...) expects a string path.", line, 1);
+          }
+          const abs = path.resolve(this.cwd, args[0]);
+          if (!fs.existsSync(abs)) {
+            throw new MoonChunkError(
+              `Data file does not exist: ${args[0]}`,
+              line,
+              1,
+            );
+          }
+          return normalizeJsonNumbers(JSON.parse(fs.readFileSync(abs, "utf8")));
+        },
+        "data",
+      );
+    }
+
+    if (name === "print") {
+      return makeCallable([], null, (args: unknown[]) => {
+        const output = args.map((arg) => formatPrintValue(arg)).join(" ");
+        console.log(output);
+        return null;
+      }, "print");
+    }
+
+    return undefined;
   }
 }
 

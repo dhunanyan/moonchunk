@@ -1,0 +1,21 @@
+chunk "Main" {
+  output: "./dist";
+
+  function walk(index: int, max: int): int {
+    print("recursive index:", index);
+    return (index >= max) ? index : walk(index + 1, max);
+  }
+
+  let finalIndex: int = walk(0, 10);
+  print("final index:", finalIndex);
+
+  page "" {
+    content {
+      <h1>18 - Recursive Function</h1>
+      <p>Check terminal output for recursive print logs.</p>
+      <p>Final index: {finalIndex}</p>
+    };
+  };
+};
+
+moon(Main);

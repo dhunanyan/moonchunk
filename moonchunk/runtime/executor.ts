@@ -51,6 +51,16 @@ type ProgramBindings = {
   namespaceImports: Map<string, Map<string, AstChunkNode>>;
 };
 
+function toChunkObject(chunk: AstChunkNode): Record<string, unknown> {
+  return {
+    __kind: "chunk",
+    name: chunk.name,
+    exported: chunk.exported,
+    includes: chunk.includes.map((node) => node.targetPath),
+    line: chunk.line,
+  };
+}
+
 export function runAst(
   ast: AstProgramNode,
   options: ExecOptions,
@@ -947,7 +957,21 @@ export function runAst(
     execRuntimeStatement(node as AstRuntimeNode, scope, currentDir, false);
   }
 
-  getProgramBindings(ast, cwd);
+  const rootBindings = getProgramBindings(ast, cwd);
+
+  for (const [name, chunk] of rootBindings.localChunks.entries()) {
+    globalScope.set(name, toChunkObject(chunk));
+  }
+  for (const [name, chunk] of rootBindings.namedImports.entries()) {
+    globalScope.set(name, toChunkObject(chunk));
+  }
+  for (const [namespaceName, namespaceChunks] of rootBindings.namespaceImports.entries()) {
+    const namespaceObject: Record<string, unknown> = {};
+    for (const [chunkName, chunk] of namespaceChunks.entries()) {
+      namespaceObject[chunkName] = toChunkObject(chunk);
+    }
+    globalScope.set(namespaceName, namespaceObject);
+  }
 
   registerGlobalsFromProgram(ast, cwd);
   for (const [name] of globalSymbols) {

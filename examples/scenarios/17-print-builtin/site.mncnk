@@ -1,0 +1,30 @@
+import * as Fragments from "./fragments.mncnk";
+
+chunk "Main" {
+  function greet(name: string): string {
+    return "Hello, " + name;
+  }
+
+  print("--- PRINT NUMBERS AND TEXT ---");
+  print(1, 1.0, true, "text");
+  print();
+  print("--- PRINT A FUNCTION");
+  print(greet);
+  print();
+  print("--- PRINT A CALLED FUNCTION ---");
+  print(greet("MoonChunk"));
+  print();
+  print("--- PRINT A CHUNK ---");
+  print(Main);
+  print();
+  print("--- PRINT A CHUNK ACCESSED THROUGH ALIAS ---");
+  print(Fragments.SharedFragment);
+
+  page "" {
+    content {
+      <p>Check terminal output for print(...) demo.</p>
+    };
+  };
+};
+
+moon(Main);
