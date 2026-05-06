@@ -1,0 +1,6 @@
+chunk "Main" {
+  while (1) {
+    break;
+  };
+};
+moon(Main);

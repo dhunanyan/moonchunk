@@ -1,0 +1,6 @@
+chunk "Main" {
+  for (let i: int = 0; i + 1; i++) {
+    print(i);
+  };
+};
+moon(Main);

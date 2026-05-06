@@ -1,0 +1,5 @@
+chunk "Main" {
+  const x: int = 5;
+  print(x());
+};
+moon(Main);

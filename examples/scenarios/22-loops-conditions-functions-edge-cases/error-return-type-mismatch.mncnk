@@ -1,0 +1,8 @@
+chunk "Main" {
+  function bad(): int {
+    return true;
+  }
+
+  print(bad());
+};
+moon(Main);

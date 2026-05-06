@@ -908,6 +908,15 @@ class ExprEvaluator {
         );
       throw new ContinueSignal();
     }
+    if (stmt.returnStatement()) {
+      const ret = stmt.returnStatement()!;
+      if (!ret.expression()) {
+        throw new ReturnSignal(null);
+      }
+      throw new ReturnSignal(
+        this.evaluateExpressionInScope(ret.expression()!, fnScope, ret.start.line),
+      );
+    }
     if (stmt.expressionStatement()) {
       this.evaluateExpressionInScope(
         stmt.expressionStatement()!.expression(),
@@ -936,6 +945,9 @@ class ExprEvaluator {
       fnScope,
       line,
     );
+    if (typeof cond !== "boolean") {
+      throw new MoonChunkError("if condition must be bool.", stmt.start.line, 1);
+    }
     const blocks = stmt.runtimeBlock();
     const selected = cond ? blocks[0] : blocks[1];
     if (!selected) return;
@@ -976,7 +988,20 @@ class ExprEvaluator {
     );
     loopScope.declare(initName, initValue, initDeclaredType, init.start.line);
 
-    while (this.evaluateExpressionInScope(stmt.expression(), loopScope, line)) {
+    while (true) {
+      const cond = this.evaluateExpressionInScope(
+        stmt.expression(),
+        loopScope,
+        line,
+      );
+      if (typeof cond !== "boolean") {
+        throw new MoonChunkError(
+          "for condition must be bool.",
+          stmt.start.line,
+          1,
+        );
+      }
+      if (!cond) break;
       const iterScope = loopScope.derive();
       for (const nested of stmt.runtimeBlock().runtimeChunkStatement()) {
         try {
@@ -1007,7 +1032,20 @@ class ExprEvaluator {
     line: number,
   ): void {
     const loopScope = fnScope.derive();
-    while (this.evaluateExpressionInScope(stmt.expression(), fnScope, line)) {
+    while (true) {
+      const cond = this.evaluateExpressionInScope(
+        stmt.expression(),
+        loopScope,
+        line,
+      );
+      if (typeof cond !== "boolean") {
+        throw new MoonChunkError(
+          "while condition must be bool.",
+          stmt.start.line,
+          1,
+        );
+      }
+      if (!cond) break;
       const iterScope = loopScope.derive();
       for (const nested of stmt.runtimeBlock().runtimeChunkStatement()) {
         try {

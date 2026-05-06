@@ -1,0 +1,38 @@
+chunk "Main" {
+  output: "./dist";
+
+  function factorial(n: int): int {
+    if (n == 0) {
+      return 1;
+    };
+    return n * factorial(n - 1);
+  }
+
+  let sum: int = 0;
+  for (let i: int = 0; i < 6; i++) {
+    if (i == 2) {
+      continue;
+    };
+    if (i == 5) {
+      break;
+    };
+    sum = sum + i;
+  };
+
+  let counter: int = 0;
+  while (counter < 3) {
+    counter = counter + 1;
+  };
+
+  const fact5: int = factorial(5);
+
+  page "" {
+    content {
+      <h1>22 - Loops/Conditions/Functions Edge Cases</h1>
+      <p>sum: {sum}</p>
+      <p>counter: {counter}</p>
+      <p>factorial(5): {fact5}</p>
+    };
+  };
+};
+moon(Main);

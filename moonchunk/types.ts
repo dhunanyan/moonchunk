@@ -217,6 +217,7 @@ export type AstRuntimeNode =
   | AstLetNode
   | AstConstNode
   | AstExpressionStatementNode
+  | AstReturnNode
   | AstPageNode
   | AstForNode
   | AstWhileNode

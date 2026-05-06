@@ -53,6 +53,7 @@ runtimeChunkStatement
   | ifStatement
   | breakStatement
   | continueStatement
+  | returnStatement
   | expressionStatement
   ;
 

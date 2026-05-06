@@ -1,0 +1,6 @@
+chunk "Main" {
+  if (1) {
+    print("never");
+  };
+};
+moon(Main);

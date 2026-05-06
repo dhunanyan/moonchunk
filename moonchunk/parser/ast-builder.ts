@@ -73,35 +73,6 @@ export class AstBuilder
     return this.sliceFromTokens(ctx.start, ctx.stop).trim();
   }
 
-  private parseForInit(
-    raw: string,
-    line: number,
-  ): { name: string; declaredType: string | null; expr: string } {
-    const prefixed = raw.match(
-      /^let\s+(int|float|double|bool|string)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+)$/,
-    );
-    if (prefixed) {
-      return {
-        name: prefixed[2],
-        declaredType: prefixed[1],
-        expr: prefixed[3].trim(),
-      };
-    }
-
-    const suffixed = raw.match(
-      /^let\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*:\s*(int|float|double|bool|string))?\s*=\s*(.+)$/,
-    );
-    if (suffixed) {
-      return {
-        name: suffixed[1],
-        declaredType: suffixed[2] || null,
-        expr: suffixed[3].trim(),
-      };
-    }
-
-    throw new Error(`Invalid for-init syntax at line ${line}: ${raw}`);
-  }
-
   visitProgram(ctx: ProgramContext): unknown {
     const topLevel = ctx
       .topLevelStatement()
@@ -179,6 +150,7 @@ export class AstBuilder
     if (ctx.ifStatement()) return this.visit(ctx.ifStatement()!);
     if (ctx.breakStatement()) return this.visit(ctx.breakStatement()!);
     if (ctx.continueStatement()) return this.visit(ctx.continueStatement()!);
+    if (ctx.returnStatement()) return this.visit(ctx.returnStatement()!);
     if (ctx.expressionStatement())
       return this.visit(ctx.expressionStatement()!);
     return null;
@@ -401,17 +373,34 @@ export class AstBuilder
   }
 
   visitForStatement(ctx: ForStatementContext): unknown {
-    const initRaw = this.toSource(ctx.forInit());
-    const parsedInit = this.parseForInit(initRaw, ctx.start.line);
-    const updateRaw = this.toSource(ctx.forUpdate());
+    const init = ctx.forInit();
+    const initName = init.identifierAtom().text;
+    const typeCtxRaw = (
+      init as unknown as { typeName?: () => unknown }
+    ).typeName?.();
+    let initDeclaredType: string | null = null;
+    if (Array.isArray(typeCtxRaw)) {
+      initDeclaredType =
+        typeCtxRaw.length > 0 ? (typeCtxRaw[0] as { text: string }).text : null;
+    } else if (
+      typeCtxRaw &&
+      typeof typeCtxRaw === "object" &&
+      "text" in typeCtxRaw
+    ) {
+      initDeclaredType = (typeCtxRaw as { text: string }).text;
+    }
+
+    const update = ctx.forUpdate();
+    const updateName = update.identifierAtom().text;
+    const updateRaw = this.toSource(update);
     const body = this.mapRuntimeBlock(ctx.runtimeBlock());
     return {
       type: "For",
-      initName: parsedInit.name,
-      initDeclaredType: parsedInit.declaredType,
-      initExpr: parsedInit.expr,
+      initName,
+      initDeclaredType,
+      initExpr: this.toExpr(init.expression()),
       conditionExpr: this.toExpr(ctx.expression()),
-      updateName: updateRaw.replaceAll("+", "").trim(),
+      updateName,
       updatePrefix: updateRaw.startsWith("++"),
       body,
       line: ctx.start.line,

@@ -322,13 +322,13 @@ export function runAst(
           break;
         }
         case "If":
-          execIfRuntime(statement, fnScope, currentDir, false);
+          execIfRuntime(statement, fnScope, currentDir, false, true);
           break;
         case "For":
-          execForRuntime(statement, fnScope, currentDir);
+          execForRuntime(statement, fnScope, currentDir, true);
           break;
         case "While":
-          execWhileRuntime(statement, fnScope, currentDir);
+          execWhileRuntime(statement, fnScope, currentDir, true);
           break;
       }
     }
@@ -339,16 +339,20 @@ export function runAst(
     scope: Scope,
     currentDir: string,
     inLoop: boolean,
+    inFunction = false,
   ): void {
     const cond = evalExpr(node.condition, scope, currentDir, node.line, {
       getGlobal,
     });
+    if (typeof cond !== "boolean") {
+      throw new MoonChunkError("if condition must be bool.", node.line, 1);
+    }
     const selectedBody = cond ? node.body : node.elseBody;
     if (!selectedBody) return;
     const child = scope.derive();
     for (const nested of selectedBody) {
       if (!nested) continue;
-      execRuntimeStatement(nested, child, currentDir, inLoop);
+      execRuntimeStatement(nested, child, currentDir, inLoop, inFunction);
     }
   }
 
@@ -356,6 +360,7 @@ export function runAst(
     node: AstForNode,
     scope: Scope,
     currentDir: string,
+    inFunction = false,
   ): void {
     const loopScope = scope.derive();
     const initValue = evalExpr(
@@ -372,12 +377,23 @@ export function runAst(
       node.line,
     );
 
-    while (evalExpr(node.conditionExpr, loopScope, currentDir, node.line, { getGlobal })) {
+    while (true) {
+      const cond = evalExpr(
+        node.conditionExpr,
+        loopScope,
+        currentDir,
+        node.line,
+        { getGlobal },
+      );
+      if (typeof cond !== "boolean") {
+        throw new MoonChunkError("for condition must be bool.", node.line, 1);
+      }
+      if (!cond) break;
       const child = loopScope.derive();
       for (const nested of node.body) {
         if (!nested) continue;
         try {
-          execRuntimeStatement(nested, child, currentDir, true);
+          execRuntimeStatement(nested, child, currentDir, true, inFunction);
         } catch (error) {
           if (error instanceof ContinueSignal) break;
           if (error instanceof BreakSignal) return;
@@ -401,14 +417,22 @@ export function runAst(
     node: AstWhileNode,
     scope: Scope,
     currentDir: string,
+    inFunction = false,
   ): void {
     const loopScope = scope.derive();
-    while (evalExpr(node.condition, scope, currentDir, node.line, { getGlobal })) {
+    while (true) {
+      const cond = evalExpr(node.condition, loopScope, currentDir, node.line, {
+        getGlobal,
+      });
+      if (typeof cond !== "boolean") {
+        throw new MoonChunkError("while condition must be bool.", node.line, 1);
+      }
+      if (!cond) break;
       const child = loopScope.derive();
       for (const nested of node.body) {
         if (!nested) continue;
         try {
-          execRuntimeStatement(nested, child, currentDir, true);
+          execRuntimeStatement(nested, child, currentDir, true, inFunction);
         } catch (error) {
           if (error instanceof ContinueSignal) break;
           if (error instanceof BreakSignal) return;
@@ -509,6 +533,7 @@ export function runAst(
     scope: Scope,
     currentDir: string,
     inLoop = false,
+    inFunction = false,
   ): void {
     switch (node.type) {
       case "Let":
@@ -564,13 +589,13 @@ export function runAst(
         return;
       }
       case "If":
-        execIfRuntime(node, scope, currentDir, inLoop);
+        execIfRuntime(node, scope, currentDir, inLoop, inFunction);
         return;
       case "For":
-        execForRuntime(node, scope, currentDir);
+        execForRuntime(node, scope, currentDir, inFunction);
         return;
       case "While":
-        execWhileRuntime(node, scope, currentDir);
+        execWhileRuntime(node, scope, currentDir, inFunction);
         return;
       case "Break":
         if (!inLoop) {
@@ -593,6 +618,20 @@ export function runAst(
       case "Page":
         execPage(node, scope, currentDir);
         return;
+      case "Return":
+        if (!inFunction) {
+          throw new MoonChunkError(
+            "return can only be used inside a function.",
+            node.line,
+            1,
+          );
+        }
+        if (node.expr === null) {
+          throw new FunctionReturn(null);
+        }
+        throw new FunctionReturn(
+          evalExpr(node.expr, scope, currentDir, node.line, { getGlobal }),
+        );
     }
   }
 

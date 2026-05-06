@@ -36,8 +36,18 @@ export class Scope {
       );
     }
 
-    let cursor: Scope | null = this.parent;
+    let cursor: Scope | null = this.isBoundary ? null : this.parent;
     while (cursor) {
+      if (cursor.isBoundary) {
+        if (cursor.values.has(name)) {
+          throw new MoonChunkError(
+            `Variable redeclaration in the same scope: ${name}`,
+            line,
+            1,
+          );
+        }
+        break;
+      }
       if (cursor.values.has(name)) {
         throw new MoonChunkError(
           `Variable redeclaration in the same scope: ${name}`,
@@ -45,7 +55,6 @@ export class Scope {
           1,
         );
       }
-      if (cursor.isBoundary) break;
       cursor = cursor.parent;
     }
 
