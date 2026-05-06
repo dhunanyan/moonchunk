@@ -1,33 +1,7 @@
 import * as Fragments from "./fragments.mncnk";
 
-chunk "Success" {
-  let a: bool = 5 > 5;
-  a = 3 as unknown as bool;
-  print(a);
-  page "" {
-    content {
-      <p>Check terminal output for print(...) demo.</p>
-    };
-  };
-};
-
-moon(Success);
-
 chunk "Error" {
-  let a: bool = 5 > 5;
-  a = -3 as unknown as bool;
-  print(a);
-  page "" {
-    content {
-      <p>Check terminal output for print(...) demo.</p>
-    };
-  };
-};
-
-chunk "DemoError" {
-  let a: bool = 5 > 5;
-  a = 3;
-  print(a);
+  print(a + 2 == 3);
   page "" {
     content {
       <p>Check terminal output for print(...) demo.</p>
