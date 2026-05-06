@@ -355,6 +355,9 @@ class ExprEvaluator {
           promoteNumericType(a.numType, b.numType),
         );
       } else if (op === "/") {
+        if (b.value === 0) {
+          throw new MoonChunkError("Division by zero.", this.line, 1);
+        }
         if (a.numType === "int" && b.numType === "int") {
           current = makeNumeric(Math.trunc(a.value / b.value), "int");
         } else {
@@ -364,6 +367,9 @@ class ExprEvaluator {
           );
         }
       } else {
+        if (b.value === 0) {
+          throw new MoonChunkError("Modulo by zero.", this.line, 1);
+        }
         if (a.numType === "int" && b.numType === "int") {
           current = makeNumeric(a.value % b.value, "int");
         } else {

@@ -1,3 +1,7 @@
 - usunąć puste metatagi w htmlu
 - zrobić porządek co do deklaracji tych samych metatagów
 - wszystko ma być w postaci object (nawet funkcje: mogę być wołane, ale możemy też odczytać różne rzeczy z nich, tak samo później na arrayach można będzie robić .map(), .forEach(), etc...)
+- type bez castowania nie mozna zmieniac
+- redeklaracja 
+"+2"
+a + 2 = 3 // lepszy error message

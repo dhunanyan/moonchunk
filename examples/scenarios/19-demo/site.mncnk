@@ -1,0 +1,14 @@
+import * as Fragments from "./fragments.mncnk";
+
+chunk "Main" {
+  let a: bool = 5 > 5;
+  a = 3;
+  print(a);
+  page "" {
+    content {
+      <p>Check terminal output for print(...) demo.</p>
+    };
+  };
+};
+
+moon(Main);
