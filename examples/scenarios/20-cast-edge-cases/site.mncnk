@@ -1,0 +1,33 @@
+chunk "Main" {
+  // Unary +/- with cast chain
+  let n1: bool = (+3) as unknown as bool;
+  let n2: bool = (-3) as unknown as bool;
+  let n3: bool = +3 as unknown as bool;
+  let n4: bool = -3 as unknown as bool;
+
+  // String -> numeric casts
+  let i: int = "42" as int;
+  let d: double = "-3.5" as number;
+
+  // Numeric -> string
+  let s: string = d as string;
+
+  print("n1,n2,n3,n4:", n1, n2, n3, n4);
+  print("i,d,s:", i, d, s);
+
+  // Expected errors (uncomment to verify):
+  // let badBool: bool = 3 as bool;
+  // let badNum: int = "abc" as int;
+  // let badArr: array = 3 as array;
+
+  page "" {
+    content {
+      <h1>20 - Cast Edge Cases</h1>
+      <p>Check terminal logs for cast output.</p>
+      <p>n1={n1}, n2={n2}</p>
+      <p>i={i}, d={d}, s={s}</p>
+    };
+  };
+};
+
+moon(Main);

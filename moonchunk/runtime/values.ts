@@ -27,16 +27,34 @@ export function promoteNumericType(a: NumericType, b: NumericType): NumericType 
 }
 
 export function inferType(value: unknown): RuntimeType {
-  if (value === null || value === undefined) return 'void';
+  if (value === null) return 'null';
+  if (value === undefined) return 'undefined';
   if (isNumericValue(value)) return value.numType;
+  if (
+    typeof value === 'object' &&
+    value !== null &&
+    (value as { __kind?: string; castType?: string }).__kind === 'cast_box' &&
+    ((value as { castType?: string }).castType === 'unknown' ||
+      (value as { castType?: string }).castType === 'any')
+  ) {
+    return (value as { castType: 'unknown' | 'any' }).castType;
+  }
+  if (Array.isArray(value)) return 'array';
   if (typeof value === 'number') return Number.isInteger(value) ? 'int' : 'double';
   if (typeof value === 'boolean') return 'bool';
   if (typeof value === 'string') return 'string';
+  if (typeof value === 'object') return 'object';
   return 'unknown';
 }
 
 export function isAssignable(declaredType: string, inferredType: string): boolean {
+  if (declaredType === 'any' || declaredType === 'unknown') return true;
+  if (inferredType === 'any') return true;
   if (declaredType === inferredType) return true;
+  if (declaredType === 'number' && (inferredType === 'int' || inferredType === 'float' || inferredType === 'double')) return true;
+  if (declaredType === 'object' && inferredType === 'array') return true;
+  if (declaredType === 'void' && inferredType === 'undefined') return true;
+  if (declaredType === 'undefined' && inferredType === 'void') return true;
   if (declaredType === 'void') return inferredType === 'void';
   if (declaredType === 'double' && (inferredType === 'int' || inferredType === 'float')) return true;
   if (declaredType === 'float' && inferredType === 'int') return true;

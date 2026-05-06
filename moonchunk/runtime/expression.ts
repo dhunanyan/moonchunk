@@ -9,6 +9,7 @@ import {
   ArrowFunctionDeclarationContext,
   ArrowFunctionExprContext,
   AssignmentContext,
+  CastExprContext,
   CallExprContext,
   CallablePrimaryContext,
   ComparisonExprContext,
@@ -63,12 +64,27 @@ type RuntimeCallable = {
   invoke: (args: unknown[], line: number) => unknown;
 };
 
+type CastBoxType = "any" | "unknown";
+type CastBox = {
+  __kind: "cast_box";
+  castType: CastBoxType;
+  value: unknown;
+};
+
 class ReturnSignal {
   constructor(public readonly value: unknown) {}
 }
 
 class BreakSignal {}
 class ContinueSignal {}
+
+function isCastBox(value: unknown): value is CastBox {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as { __kind?: string }).__kind === "cast_box"
+  );
+}
 
 function makeCallable(
   params: RuntimeParameter[],
@@ -109,6 +125,22 @@ function parseNumberLiteral(text: string): unknown {
     return makeNumeric(Number(text.slice(0, -1)), "double");
   if (text.includes(".")) return makeNumeric(Number(text), "double");
   return makeNumeric(Number(text), "int");
+}
+
+function parseStringToFiniteNumber(raw: string, line: number): number {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    throw new MoonChunkError("Cannot cast empty string to number.", line, 1);
+  }
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) {
+    throw new MoonChunkError(
+      `Cannot cast string "${raw}" to a finite number.`,
+      line,
+      1,
+    );
+  }
+  return parsed;
 }
 
 function formatPrintValue(value: unknown): string {
@@ -335,8 +367,8 @@ class ExprEvaluator {
   }
 
   private evaluateMultiplicative(ctx: MultiplicativeExprContext): unknown {
-    const parts = ctx.unaryExpr();
-    if (parts.length === 1) return this.evaluateUnary(parts[0]);
+    const parts = ctx.castExpr();
+    if (parts.length === 1) return this.evaluateCastExpr(parts[0]);
 
     const ops: string[] = [];
     for (let i = 1; i < ctx.childCount; i += 1) {
@@ -344,11 +376,11 @@ class ExprEvaluator {
       if (text === "*" || text === "/" || text === "%") ops.push(text);
     }
 
-    let current = this.evaluateUnary(parts[0]);
+    let current = this.evaluateCastExpr(parts[0]);
     for (let i = 1; i < parts.length; i += 1) {
       const op = ops[i - 1];
       const a = coerceToNumeric(current, this.line);
-      const b = coerceToNumeric(this.evaluateUnary(parts[i]), this.line);
+      const b = coerceToNumeric(this.evaluateCastExpr(parts[i]), this.line);
       if (op === "*") {
         current = makeNumeric(
           a.value * b.value,
@@ -402,7 +434,135 @@ class ExprEvaluator {
       );
       return makeNumeric(-numeric.value, numeric.numType);
     }
+    if (ctx.PLUS()) {
+      const numeric = coerceToNumeric(
+        this.evaluateUnary(ctx.unaryExpr()!),
+        this.line,
+      );
+      return makeNumeric(numeric.value, numeric.numType);
+    }
     return this.evaluateCallExpr(ctx.callExpr()!);
+  }
+
+  private castToType(value: unknown, typeName: string): unknown {
+    if (typeName === "unknown" || typeName === "any") {
+      return {
+        __kind: "cast_box",
+        castType: typeName,
+        value,
+      } as CastBox;
+    }
+
+    const rawValue = isCastBox(value) ? value.value : value;
+    const fromBridge = isCastBox(value);
+    const rawType = inferType(rawValue);
+
+    if (
+      (typeName === "int" || typeName === "float" || typeName === "double") &&
+      (rawType === "int" || rawType === "float" || rawType === "double")
+    ) {
+      const numeric = coerceToNumeric(rawValue, this.line);
+      return makeNumeric(numeric.value, typeName);
+    }
+    if (typeName === "number" && (rawType === "int" || rawType === "float" || rawType === "double")) {
+      const numeric = coerceToNumeric(rawValue, this.line);
+      return makeNumeric(numeric.value, "double");
+    }
+    if (typeName === "string" && rawType === "string") {
+      return rawValue;
+    }
+    if (typeName === "bool" && rawType === "bool") {
+      return rawValue;
+    }
+
+    if (typeName === "string") {
+      return stringifyValue(rawValue);
+    }
+
+    if (typeName === "bool") {
+      if (typeof rawValue === "boolean") return rawValue;
+      if (!fromBridge) {
+        throw new MoonChunkError(
+          "Direct cast to bool is not allowed. Use `as unknown as bool` or `as any as bool`.",
+          this.line,
+          1,
+        );
+      }
+      if (isNumericValue(rawValue) || typeof rawValue === "number") {
+        const numeric = coerceToNumeric(rawValue, this.line);
+        return numeric.value > 0;
+      }
+      return Boolean(rawValue);
+    }
+
+    if (typeName === "int" || typeName === "float" || typeName === "double") {
+      if (typeof rawValue === "boolean") {
+        return makeNumeric(rawValue ? 1 : 0, typeName);
+      }
+      if (typeof rawValue === "string") {
+        return makeNumeric(parseStringToFiniteNumber(rawValue, this.line), typeName);
+      }
+      const numeric = coerceToNumeric(rawValue, this.line);
+      return makeNumeric(numeric.value, typeName);
+    }
+
+    if (typeName === "number") {
+      if (typeof rawValue === "boolean") {
+        return makeNumeric(rawValue ? 1 : 0, "double");
+      }
+      if (typeof rawValue === "string") {
+        return makeNumeric(parseStringToFiniteNumber(rawValue, this.line), "double");
+      }
+      const numeric = coerceToNumeric(rawValue, this.line);
+      return makeNumeric(numeric.value, "double");
+    }
+
+    if (typeName === "array") {
+      if (!Array.isArray(rawValue)) {
+        throw new MoonChunkError("Cast target type array expects an array value.", this.line, 1);
+      }
+      return rawValue;
+    }
+
+    if (typeName === "object") {
+      if (
+        rawValue === null ||
+        typeof rawValue !== "object" ||
+        Array.isArray(rawValue)
+      ) {
+        throw new MoonChunkError("Cast target type object expects a non-array object value.", this.line, 1);
+      }
+      return rawValue;
+    }
+
+    if (typeName === "null") {
+      if (rawValue !== null) {
+        throw new MoonChunkError("Cast target type null expects a null value.", this.line, 1);
+      }
+      return null;
+    }
+
+    if (typeName === "undefined" || typeName === "void") {
+      if (rawValue !== undefined) {
+        throw new MoonChunkError("Cast target type undefined expects an undefined value.", this.line, 1);
+      }
+      return undefined;
+    }
+
+    throw new MoonChunkError(
+      `Unsupported cast target type: ${typeName}.`,
+      this.line,
+      1,
+    );
+  }
+
+  private evaluateCastExpr(ctx: CastExprContext): unknown {
+    let current = this.evaluateUnary(ctx.unaryExpr());
+    const castTypes = ctx.typeName();
+    for (const castType of castTypes) {
+      current = this.castToType(current, castType.text);
+    }
+    return current;
   }
 
   private evaluateCallExpr(ctx: CallExprContext): unknown {

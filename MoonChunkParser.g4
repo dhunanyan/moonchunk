@@ -263,6 +263,13 @@ typeName
   | TYPE_DOUBLE
   | TYPE_BOOL
   | TYPE_STRING
+  | TYPE_NUMBER
+  | TYPE_OBJECT
+  | TYPE_ARRAY
+  | TYPE_NULL
+  | TYPE_UNDEFINED
+  | TYPE_UNKNOWN
+  | TYPE_ANY
   ;
 
 returnTypeName
@@ -312,12 +319,16 @@ additiveExpr
   ;
 
 multiplicativeExpr
-  : unaryExpr ((STAR | SLASH | PERCENT) unaryExpr)*
+  : castExpr ((STAR | SLASH | PERCENT) castExpr)*
   ;
 
 unaryExpr
-  : (NOT | MINUS) unaryExpr
+  : (NOT | MINUS | PLUS) unaryExpr
   | callExpr
+  ;
+
+castExpr
+  : unaryExpr (AS typeName)*
   ;
 
 callExpr

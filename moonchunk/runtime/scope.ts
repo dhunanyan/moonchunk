@@ -67,6 +67,19 @@ export class Scope {
           1,
         );
       }
+
+      const declaredType = this.declaredTypes.get(name);
+      if (declaredType) {
+        const actual = inferType(value);
+        if (!isAssignable(declaredType, actual)) {
+          throw new MoonChunkError(
+            `Type mismatch for ${name}: declared ${declaredType}, got ${actual}.`,
+            line,
+            1,
+          );
+        }
+      }
+
       this.values.set(name, value);
       return;
     }

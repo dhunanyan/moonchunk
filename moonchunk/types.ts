@@ -20,7 +20,18 @@ export type ExecResult = {
 };
 
 export type NumericType = "int" | "float" | "double";
-export type RuntimeType = NumericType | "bool" | "string" | "void" | "unknown";
+export type RuntimeType =
+  | NumericType
+  | "bool"
+  | "string"
+  | "number"
+  | "object"
+  | "array"
+  | "null"
+  | "undefined"
+  | "void"
+  | "unknown"
+  | "any";
 
 export type NumericValue = {
   __kind: "numeric";

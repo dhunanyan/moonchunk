@@ -4,7 +4,7 @@ export class MoonChunkError extends Error {
 
   constructor(message: string, line = 1, column = 1) {
     super(message);
-    this.name = 'MoonChunkError';
+    this.name = "MoonChunkError";
     this.line = line;
     this.column = column;
   }
