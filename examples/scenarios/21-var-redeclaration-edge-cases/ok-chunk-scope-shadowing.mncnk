@@ -1,0 +1,12 @@
+chunk "First" {
+  const x: int = 1; // allowed: independent chunk scope
+  print("First.x:", x);
+};
+
+chunk "Second" {
+  const x: int = 2; // allowed: independent chunk scope
+  print("Second.x:", x);
+};
+
+moon(First);
+moon(Second);

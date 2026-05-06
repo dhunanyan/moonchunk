@@ -1,0 +1,8 @@
+chunk "Main" {
+  function add(a: int, a: int): int { // duplicate parameter name
+    return a;
+  }
+
+  print(add(1, 2)); // triggers function scope binding and redeclaration error
+};
+moon(Main);

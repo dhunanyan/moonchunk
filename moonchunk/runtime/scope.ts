@@ -6,12 +6,14 @@ export class Scope {
   values: Map<string, unknown>;
   declaredTypes: Map<string, string>;
   mutability: Map<string, boolean>;
+  isBoundary: boolean;
 
-  constructor(parent: Scope | null = null) {
+  constructor(parent: Scope | null = null, isBoundary = false) {
     this.parent = parent;
     this.values = new Map();
     this.declaredTypes = new Map();
     this.mutability = new Map();
+    this.isBoundary = isBoundary;
   }
 
   set(name: string, value: unknown): void {
@@ -26,13 +28,26 @@ export class Scope {
     line: number,
     mutable = true,
   ): void {
-    // if (this.values.has(name)) {
-    //   throw new MoonChunkError(
-    //     `Variable redeclaration in the same scope: ${name}`,
-    //     line,
-    //     1,
-    //   );
-    // }
+    if (this.values.has(name)) {
+      throw new MoonChunkError(
+        `Variable redeclaration in the same scope: ${name}`,
+        line,
+        1,
+      );
+    }
+
+    let cursor: Scope | null = this.parent;
+    while (cursor) {
+      if (cursor.values.has(name)) {
+        throw new MoonChunkError(
+          `Variable redeclaration in the same scope: ${name}`,
+          line,
+          1,
+        );
+      }
+      if (cursor.isBoundary) break;
+      cursor = cursor.parent;
+    }
 
     if (declaredType) {
       const actual = inferType(value);
@@ -92,5 +107,9 @@ export class Scope {
 
   derive(): Scope {
     return new Scope(this);
+  }
+
+  deriveBoundary(): Scope {
+    return new Scope(this, true);
   }
 }

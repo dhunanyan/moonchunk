@@ -634,7 +634,7 @@ class ExprEvaluator {
       params,
       returnType,
       (args: unknown[], callLine: number) => {
-        const fnScope = closure.derive();
+        const fnScope = closure.deriveBoundary();
         this.bindParams(fnScope, params, args, callLine);
         const result = this.runFunctionBodyStatements(
           bodyStatements,
@@ -667,7 +667,7 @@ class ExprEvaluator {
       params,
       returnType,
       (args: unknown[], callLine: number) => {
-        const fnScope = closure.derive();
+        const fnScope = closure.deriveBoundary();
         this.bindParams(fnScope, params, args, callLine);
         let result: unknown = null;
         if (body.expression()) {
@@ -701,7 +701,7 @@ class ExprEvaluator {
       params,
       returnType,
       (args: unknown[], callLine: number) => {
-        const fnScope = closure.derive();
+        const fnScope = closure.deriveBoundary();
         this.bindParams(fnScope, params, args, callLine);
         let result: unknown = null;
         if (body.expression()) {
@@ -736,7 +736,7 @@ class ExprEvaluator {
       params,
       returnType,
       (args: unknown[], callLine: number) => {
-        const fnScope = closure.derive();
+        const fnScope = closure.deriveBoundary();
         this.bindParams(fnScope, params, args, callLine);
         const result = this.runFunctionBodyStatements(
           bodyStatements,

@@ -86,6 +86,11 @@ function normalizeDiagnosticMessage(message) {
   if (m)
     return `Runtime error: cannot reassign const variable '${m[1]}'. Use 'let' if mutation is required.`;
 
+  m = compact.match(/^Variable redeclaration in the same scope:\s*(.+)$/i);
+  if (m) {
+    return `Scope error: variable '${m[1]}' is already declared in this block. Use assignment for 'let', or rename the variable.`;
+  }
+
   m = compact.match(
     /^Type mismatch for\s+(.+?): declared (.+?), got (.+?)\.?$/i,
   );

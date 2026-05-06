@@ -1,0 +1,12 @@
+chunk "Main" {
+  const x: int = 3;
+
+  function demo(): int {
+    const x: int = 5; // allowed: function scope boundary
+    return x;
+  }
+
+  print("outer:", x);
+  print("inner:", demo());
+};
+moon(Main);

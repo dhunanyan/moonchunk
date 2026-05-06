@@ -1,0 +1,9 @@
+chunk "Main" {
+  let fn: int = 1;
+  function fn(): int { // error: redeclaration in the same scope
+    return 1;
+  }
+
+  print(fn);
+};
+moon(Main);

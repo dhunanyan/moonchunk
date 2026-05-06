@@ -238,7 +238,7 @@ export function runAst(
       node.params,
       node.returnType,
       (args: unknown[], line: number) => {
-        const fnScope = scope.derive();
+        const fnScope = scope.deriveBoundary();
         bindParams(fnScope, node.params, args, line);
         let result: unknown = null;
         try {
@@ -422,27 +422,27 @@ export function runAst(
     scope: Scope,
     key: string,
     value: unknown,
-    line: number,
+    _line: number,
   ): void {
     if (key === "output") {
       outputDir = path.resolve(cwd, String(value ?? ""));
       return;
     }
     metadataDefaults.set(key, value);
-    scope.declare(key, value, null, line);
+    scope.set(key, value);
   }
 
   function applyPageMetaAssignment(
     scope: Scope,
     key: string,
     value: unknown,
-    line: number,
+    _line: number,
   ): void {
     if (key === "output") {
       outputDir = path.resolve(cwd, String(value ?? ""));
       return;
     }
-    scope.declare(key, value, null, line);
+    scope.set(key, value);
   }
 
   function ensureLayoutDefaults(scope: Scope): void {
@@ -905,7 +905,7 @@ export function runAst(
       );
     }
 
-    const chunkScope = parentScope.derive();
+    const chunkScope = parentScope.deriveBoundary();
     includeStack.add(chunk);
     try {
       for (const includeNode of chunk.includes) {

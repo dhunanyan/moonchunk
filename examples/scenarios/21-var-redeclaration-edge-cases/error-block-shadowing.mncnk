@@ -1,0 +1,8 @@
+chunk "Main" {
+  const x: int = 3;
+
+  if (true) {
+    const x: int = 5; // error: redeclaration across nested block in same scope boundary
+  };
+};
+moon(Main);

@@ -1,0 +1,28 @@
+chunk "Main" {
+  output: "./dist";
+
+  let x: int = 1;
+  x = x + 1; // allowed: reassignment for let
+
+  const title: string = "Redeclaration rules";
+
+  function scopedDemo(value: int): int {
+    let x: int = value; // allowed: function-call boundary scope
+    return x + 1;
+  }
+
+  print("outer x:", x);
+  print("scopedDemo:", scopedDemo(10));
+  print("title:", title);
+
+  page "" {
+    content {
+      <h1>21 - Variable Redeclaration Edge Cases</h1>
+      <p>Check terminal output for scope/redeclaration behavior.</p>
+      <p>outer x: {x}</p>
+      <p>scopedDemo(10): {scopedDemo(10)}</p>
+    };
+  };
+};
+
+moon(Main);

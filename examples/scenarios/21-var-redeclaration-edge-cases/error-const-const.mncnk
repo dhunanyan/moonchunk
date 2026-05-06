@@ -1,0 +1,5 @@
+chunk "Main" {
+  const a: int = 1;
+  const a: int = 2; // error: redeclaration in the same scope
+};
+moon(Main);
