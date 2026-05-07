@@ -1,0 +1,5 @@
+chunk "Main" {
+  missing[0] = 1;
+};
+
+moon(Main);

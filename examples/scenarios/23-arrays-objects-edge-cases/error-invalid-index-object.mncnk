@@ -1,0 +1,7 @@
+chunk "Main" {
+  const arr = [1, 2, 3];
+  const idx = { bad: true };
+  print(arr[idx]);
+};
+
+moon(Main);

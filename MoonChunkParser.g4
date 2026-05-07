@@ -351,7 +351,11 @@ nonCallablePrimary
   | NUMBER
   | TRUE
   | FALSE
+  | TYPE_NULL
+  | TYPE_UNDEFINED
   | identifierAtom
+  | arrayLiteral
+  | objectLiteral
   | LPAREN expression RPAREN
   ;
 
@@ -378,6 +382,18 @@ argumentList
   : expression (COMMA expression)*
   ;
 
+arrayLiteral
+  : LBRACKET (expression (COMMA expression)*)? COMMA? RBRACKET
+  ;
+
+objectLiteral
+  : LBRACE (objectProperty (COMMA objectProperty)*)? COMMA? RBRACE
+  ;
+
+objectProperty
+  : (identifierAtom | STRING | NUMBER) COLON expression
+  ;
+
 identifierPath
-  : IDENTIFIER (DOT IDENTIFIER)*
+  : identifierAtom (DOT identifierAtom | LBRACKET expression RBRACKET)*
   ;

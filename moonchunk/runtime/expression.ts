@@ -19,6 +19,7 @@ import {
   ExpressionContext,
   ExpressionFragmentContext,
   ForStatementContext,
+  ArrayLiteralContext,
   WhileStatementContext,
   FunctionBodyStatementContext,
   FunctionDeclarationContext,
@@ -30,6 +31,8 @@ import {
   MoonChunkParser,
   MultiplicativeExprContext,
   NonCallablePrimaryContext,
+  ObjectLiteralContext,
+  ObjectPropertyContext,
   OrExprContext,
   ParameterContext,
   ParameterListContext,
@@ -39,7 +42,6 @@ import {
 import { MoonChunkError } from "../errors";
 import { SyntaxCollector } from "../parser/syntax-collector";
 import { RuntimeHelpers } from "../types";
-import { resolvePathValue } from "./path";
 import { Scope } from "./scope";
 import {
   coerceToNumeric,
@@ -70,6 +72,10 @@ type CastBox = {
   castType: CastBoxType;
   value: unknown;
 };
+
+type PathStep =
+  | { kind: "prop"; key: string }
+  | { kind: "index"; key: unknown };
 
 class ReturnSignal {
   constructor(public readonly value: unknown) {}
@@ -614,10 +620,40 @@ class ExprEvaluator {
     if (ctx.NUMBER()) return parseNumberLiteral(ctx.NUMBER()!.text);
     if (ctx.TRUE()) return true;
     if (ctx.FALSE()) return false;
+    if (ctx.TYPE_NULL()) return null;
+    if (ctx.TYPE_UNDEFINED()) return undefined;
     if (ctx.identifierAtom())
       return this.resolveIdentifierAtom(ctx.identifierAtom()!);
+    if (ctx.arrayLiteral()) return this.evaluateArrayLiteral(ctx.arrayLiteral()!);
+    if (ctx.objectLiteral())
+      return this.evaluateObjectLiteral(ctx.objectLiteral()!);
     if (ctx.expression()) return this.evaluateExpression(ctx.expression()!);
     throw new MoonChunkError("Unsupported expression primary.", this.line, 1);
+  }
+
+  private evaluateArrayLiteral(ctx: ArrayLiteralContext): unknown[] {
+    return ctx.expression().map((expression) =>
+      this.evaluateExpression(expression),
+    );
+  }
+
+  private evaluateObjectLiteral(ctx: ObjectLiteralContext): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const property of ctx.objectProperty()) {
+      const [key, value] = this.evaluateObjectProperty(property);
+      out[key] = value;
+    }
+    return out;
+  }
+
+  private evaluateObjectProperty(ctx: ObjectPropertyContext): [string, unknown] {
+    const rawKey = ctx.getChild(0)?.text ?? "";
+    const key =
+      rawKey.startsWith('"') && rawKey.endsWith('"')
+        ? parseQuotedString(rawKey)
+        : rawKey;
+    const value = this.evaluateExpression(ctx.expression());
+    return [String(key), value];
   }
 
   private resolveIdentifierAtom(ctx: IdentifierAtomContext): unknown {
@@ -1143,31 +1179,49 @@ class ExprEvaluator {
   }
 
   private resolveIdentifierPath(ctx: IdentifierPathContext): unknown {
-    const segments = getTerminalNodes(ctx.IDENTIFIER()).map(
-      (node) => node.text,
-    );
-    const root = this.resolveIdentifierName(segments[0]);
+    const rootName = ctx.getChild(0)?.text;
+    if (!rootName) {
+      throw new MoonChunkError("Invalid path.", this.line, 1);
+    }
+    const root = this.resolveIdentifierName(rootName);
+    const steps = this.extractPathSteps(ctx);
 
-    if (segments.length === 1) return root;
-    return resolvePathValue(root, segments.slice(1));
+    let current: unknown = root;
+    for (const step of steps) {
+      if (current === null || current === undefined) {
+        const accessor = step.kind === "prop" ? step.key : `[${String(step.key)}]`;
+        throw new MoonChunkError(
+          `Cannot read property ${accessor} of ${current === null ? "null" : "undefined"}.`,
+          this.line,
+          1,
+        );
+      }
+      if (!this.isPropertyContainer(current)) {
+        return undefined;
+      }
+      if (step.kind === "prop") {
+        current = (current as Record<string, unknown>)[step.key];
+      } else {
+        const key = this.normalizeIndexKey(step.key);
+        current = (current as Record<string | number, unknown>)[key];
+      }
+    }
+    return current;
   }
 
   private assignIdentifierPath(
     ctx: IdentifierPathContext,
     value: unknown,
   ): void {
-    const segments = getTerminalNodes(ctx.IDENTIFIER()).map(
-      (node) => node.text,
-    );
-    if (segments.length === 0)
+    const rootName = ctx.getChild(0)?.text;
+    if (!rootName)
       throw new MoonChunkError("Invalid assignment path.", this.line, 1);
-
-    if (segments.length === 1) {
-      this.scope.assign(segments[0], value, this.line);
+    const steps = this.extractPathSteps(ctx);
+    if (steps.length === 0) {
+      this.scope.assign(rootName, value, this.line);
       return;
     }
 
-    const rootName = segments[0];
     const root = this.scope.get(rootName);
     if (root === undefined) {
       throw new MoonChunkError(
@@ -1178,12 +1232,13 @@ class ExprEvaluator {
     }
 
     let current: unknown = root;
-    for (let i = 1; i < segments.length - 1; i += 1) {
-      const seg = segments[i];
+    for (let i = 0; i < steps.length - 1; i += 1) {
+      const step = steps[i];
+      const seg = step.kind === "prop" ? step.key : `[${String(step.key)}]`;
       if (
         current === null ||
         current === undefined ||
-        typeof current !== "object"
+        !this.isPropertyContainer(current)
       ) {
         throw new MoonChunkError(
           `Cannot assign path through non-object at segment ${seg}.`,
@@ -1191,22 +1246,81 @@ class ExprEvaluator {
           1,
         );
       }
-      current = (current as Record<string, unknown>)[seg];
+      if (step.kind === "prop") {
+        current = (current as Record<string, unknown>)[step.key];
+      } else {
+        const key = this.normalizeIndexKey(step.key);
+        current = (current as Record<string | number, unknown>)[key];
+      }
     }
 
     if (
       current === null ||
       current === undefined ||
-      typeof current !== "object"
+      !this.isPropertyContainer(current)
     ) {
       throw new MoonChunkError(
-        `Cannot assign to path ${segments.join(".")}.`,
+        `Cannot assign to path ${ctx.text}.`,
         this.line,
         1,
       );
     }
 
-    (current as Record<string, unknown>)[segments[segments.length - 1]] = value;
+    const last = steps[steps.length - 1];
+    if (last.kind === "prop") {
+      (current as Record<string, unknown>)[last.key] = value;
+      return;
+    }
+    const key = this.normalizeIndexKey(last.key);
+    (current as Record<string | number, unknown>)[key] = value;
+  }
+
+  private normalizeIndexKey(value: unknown): string | number {
+    if (isNumericValue(value)) return String(value.value);
+    if (typeof value === "number") return String(value);
+    if (typeof value === "string") return value;
+    if (typeof value === "boolean") return String(value);
+    if (value === null) return "null";
+    if (value === undefined) return "undefined";
+    throw new MoonChunkError(
+      `Invalid bracket index type: ${inferType(value)}.`,
+      this.line,
+      1,
+    );
+  }
+
+  private extractPathSteps(ctx: IdentifierPathContext): PathStep[] {
+    const steps: PathStep[] = [];
+    const indexExpressions = ctx.expression();
+    let indexExprCursor = 0;
+
+    for (let i = 1; i < ctx.childCount; i += 1) {
+      const token = ctx.getChild(i).text;
+      if (token === ".") {
+        const next = ctx.getChild(i + 1)?.text;
+        if (!next) break;
+        steps.push({ kind: "prop", key: next });
+        i += 1;
+        continue;
+      }
+      if (token === "[") {
+        const expr = indexExpressions[indexExprCursor];
+        if (!expr) {
+          throw new MoonChunkError("Invalid bracket access syntax.", this.line, 1);
+        }
+        steps.push({ kind: "index", key: this.evaluateExpression(expr) });
+        indexExprCursor += 1;
+      }
+    }
+    return steps;
+  }
+
+  private isPropertyContainer(
+    value: unknown,
+  ): value is Record<string | number, unknown> {
+    if (value === null || value === undefined) return false;
+    if (isNumericValue(value)) return false;
+    return typeof value === "object" || typeof value === "function";
   }
 
   private getBuiltin(name: string): unknown {

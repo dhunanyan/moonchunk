@@ -1,0 +1,6 @@
+chunk "Main" {
+  let n: int = 3;
+  n.value = 4;
+};
+
+moon(Main);

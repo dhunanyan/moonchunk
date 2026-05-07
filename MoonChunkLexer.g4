@@ -102,6 +102,8 @@ COLON   : ':' ;
 QUESTION: '?' ;
 LPAREN  : '(' ;
 RPAREN  : ')' ;
+LBRACKET: '[' ;
+RBRACKET: ']' ;
 LBRACE  : '{' ;
 RBRACE  : '}' ;
 SEMI    : ';' ;
@@ -208,6 +210,8 @@ EXPR_COLON   : ':' -> type(COLON) ;
 EXPR_QUESTION: '?' -> type(QUESTION) ;
 EXPR_LPAREN  : '(' -> type(LPAREN) ;
 EXPR_RPAREN  : ')' -> type(RPAREN) ;
+EXPR_LBRACKET: '[' -> type(LBRACKET) ;
+EXPR_RBRACKET: ']' -> type(RBRACKET) ;
 EXPR_SEMI    : ';' -> type(SEMI) ;
 
 EXPR_CONST       : 'const' -> type(CONST) ;

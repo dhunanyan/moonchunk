@@ -1,0 +1,47 @@
+chunk "Scenario23ArraysObjects" {
+  output: "./dist";
+  title: "23 - Arrays and Objects";
+
+  const cards = [
+    { title: "Parser", description: "ANTLR grammar and tokenization.", href: "#parser" },
+    { title: "Runtime", description: "Execution, scopes, and builtins.", href: "#runtime" },
+    { title: "Output", description: "Generated HTML and metadata rendering.", href: "#output" },
+  ];
+
+  const details = {
+    stats: { total: 3, labels: ["alpha", "bravo", "charlie"], },
+    "meta-key": "enabled",
+    101: "numeric-key",
+  };
+
+  let displayKey: string = "title";
+  let cardsHtml: string = "";
+
+  for(let i: int = 0; i < 3; i++) {
+    cardsHtml = cardsHtml
+      + "<article class=\"card\">"
+      + "<h3>" + cards[i][displayKey] + "</h3>"
+      + "<p>" + cards[i].description + "</p>"
+      + "<a href=\"" + cards[i].href + "\">Read more</a>"
+      + "</article>";
+  };
+
+  details.stats.total = details.stats.total + 1;
+  details.stats.labels[1] = "beta";
+
+  let numericKeyValue: string = details[101];
+  let updatedLabel: string = details.stats.labels[1];
+  let updatedTotal: int = details.stats.total;
+
+  page "" {
+    content {
+      <h1>23 - Arrays and Objects Edge Cases</h1>
+      <p>numeric key value: {numericKeyValue}</p>
+      <p>updated label[1]: {updatedLabel}</p>
+      <p>updated total: {updatedTotal}</p>
+      <section>{cardsHtml}</section>
+    };
+  };
+};
+
+moon(Scenario23ArraysObjects);

@@ -1,0 +1,6 @@
+chunk "Main" {
+  const obj = { child: null };
+  print(obj.child.name);
+};
+
+moon(Main);
