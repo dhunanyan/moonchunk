@@ -133,8 +133,7 @@ export type AstForNode = {
   initDeclaredType: string | null;
   initExpr: string;
   conditionExpr: string;
-  updateName: string;
-  updatePrefix: boolean;
+  updateExpr: string;
   body: Array<AstRuntimeNode | null>;
   line: number;
 };

@@ -45,3 +45,78 @@ odpowiednik pętli for/while
 porównania (==, !=) dla typu logicznego
 obsługę definiowania i wywoływania funkcji. Funkcja powinna pozwalać na zwracanie rezultatu (powinna istnieć też możliwość definiowania funkcji zwracającej void) i przyjmować zadeklarowaną liczbę oraz typy argumentów.
 ```
+
+## Zadania Finałowe ⚠️
+
+### Zagadnienia obowiązkowe
+
+#### Zasięgi (scope) obowiązywania zmiennych
+
+- Dodanie możliwości dostępu do zmiennych w scopie nadrzędnym (jeśli w aktualnym scopie jest zmienna o tej samej nazwie) - np. "parent::a" (albo "parent::parent::a")
+- Syntaks może być podobny do następującego:
+
+> ```cpp
+> {
+>   int a=1;
+>   {
+>     int a = 5;
+>     int x = a: // x ma wartosc 5
+>     int x = parent::a; // x ma wartość 1
+>   }
+> }
+> ```
+
+#### Promocje i konwersje typów:
+
+- Np. dopuszczalne powinno być przypisanie
+
+> ```
+> float a = 1;
+> ```
+
+- Operatory konwersji np.
+
+> ```
+> int a = (int)2.5;
+> ```
+
+#### Zaawansowana diagnostyka błędów:
+
+- Błędy semantyczne: np. użycie niezainicjalizowanej zmiennej.
+- Czytelne (dla użytkownika) komunikaty o błędach.
+- Sugestie naprawy błędów: np. „Czy chodziło Ci o x zamiast z?”.
+- Możliwość wypisywania komunikatów diagnostycznych (z tekstami + wartościami zmiennych, itp.)
+
+#### Dopracowanie poszczególnych aspektów języka
+
+#### Dokładne testy języka:
+
+- Testowanie różnych programów w opracowanym języku (o różnym poziomie złożoności)
+
+#### Dokumentacja i raport z wykonania projektu
+
+- Dokumentacja dla użytkownika końcowego (sposób instalacji, użycia, opis języka, przykłady użycia, itp).
+- Raport z opisem implementacji interpretera, użycie ANTLR (gramatyka dla ANTLR), itd.
+
+### Zagadnienia opcjonalne
+
+#### Obsługa typów złożonych:
+
+- Listy / tablice: z operacjami indeksowania, długości, dodawania/uzupełniania.
+- Krotki / rekordy: np. point = (x: 1, y: 2).
+
+#### Struktury danych
+
+- Możliwość definiowania własnych struktur (np. struct) bez dziedziczenia – rekord danych.
+
+#### Modularność / importy:
+
+- Możliwość rozdzielenia programu na pliki, np. import mojplik i dostęp do funkcji z innego pliku.
+
+#### REPL (Read-Eval-Print Loop):
+
+- Interaktywny tryb działania interpretera – użytkownik wpisuje linijki kodu i otrzymuje natychmiastowy wynik.
+
+#### Biblioteka standardowa dla języka:
+
+- Dodanie funkcji bibliotecznych do języka.

@@ -408,9 +408,7 @@ export class AstBuilder
       initDeclaredType = (typeCtxRaw as { text: string }).text;
     }
 
-    const update = ctx.forUpdate();
-    const updateName = update.identifierAtom().text;
-    const updateRaw = this.toSource(update);
+    const updateExpr = this.toExpr(ctx.forUpdate().expression());
     const body = this.mapRuntimeBlock(ctx.runtimeBlock());
     return {
       type: "For",
@@ -418,8 +416,7 @@ export class AstBuilder
       initDeclaredType,
       initExpr: this.toExpr(init.expression()),
       conditionExpr: this.toExpr(ctx.expression()),
-      updateName,
-      updatePrefix: updateRaw.startsWith("++"),
+      updateExpr,
       body,
       line: ctx.start.line,
     };

@@ -1,0 +1,8 @@
+chunk "Main" {
+  output: "./dist";
+  title: "24 - Content In Loops";
+
+  print(0.2 + 0.1);
+};
+
+moon(Main);

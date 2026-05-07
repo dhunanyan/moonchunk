@@ -2,3 +2,12 @@
 - wszystko ma być w postaci object (nawet funkcje: mogę być wołane, ale możemy też odczytać różne rzeczy z nich, tak samo później na arrayach można będzie robić .map(), .forEach(), etc...)
 - redeklaracja
 - i++ (nie działa poza petla)
+
+NOWE ZADANKA (niektóre są już zrobione):
+- możliwość redeklaracji zmiennej
+- wewnętrzny scope czyli ta sama nazwa zmiennej ale w innym wewnętrznym scope-u można deklarować drugi raz taką samą nazwę zmiennej. Trzeba móc sięgać do parent scope-a poprzez pisanie `parent.myVar`
+- promocje i konwersje typów, czyli cast (czyli do float-a można przypisać inta oraz floata można castować do inta). `TEGO NIE MAM`!
+- zaawansowana diagnostyka błędów
+- czytelne komunikaty błędów
+- sugestie naprawy błędów: np: czy chodziło ci o `x` zamiast `z`? wszystkich błędów nie możemy tak ograć ale te najbardziej typowych błedów trzeba dodać sugerowanego fixa
+- 

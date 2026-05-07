@@ -1049,14 +1049,9 @@ class ExprEvaluator {
         }
       }
 
-      const updateName = stmt.forUpdate().identifierAtom().text;
-      const current = coerceToNumeric(
-        loopScope.get(updateName),
-        stmt.start.line,
-      );
-      loopScope.assign(
-        updateName,
-        makeNumeric(current.value + 1, current.numType),
+      this.evaluateExpressionInScope(
+        stmt.forUpdate().expression(),
+        loopScope,
         stmt.start.line,
       );
     }

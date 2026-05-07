@@ -263,8 +263,7 @@ forInit
   ;
 
 forUpdate
-  : identifierAtom PLUSPLUS
-  | PLUSPLUS identifierAtom
+  : expression
   ;
 
 ifStatement

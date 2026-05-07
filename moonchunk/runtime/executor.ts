@@ -30,10 +30,8 @@ import {
   renderStringWithInterpolations,
 } from "./template";
 import {
-  coerceToNumeric,
   inferType,
   isAssignable,
-  makeNumeric,
 } from "./values";
 import { formatHtmlDocument } from "./format-html";
 
@@ -421,15 +419,7 @@ export function runAst(
         }
       }
 
-      const current = coerceToNumeric(
-        loopScope.get(node.updateName),
-        node.line,
-      );
-      loopScope.assign(
-        node.updateName,
-        makeNumeric(current.value + 1, current.numType),
-        node.line,
-      );
+      evalExpr(node.updateExpr, loopScope, currentDir, node.line, { getGlobal });
     }
   }
 
