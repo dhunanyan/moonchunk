@@ -21,6 +21,33 @@ export default [
     },
   },
   {
+    files: ["playground/server.js"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: {
+        require: "readonly",
+        process: "readonly",
+        console: "readonly",
+        __dirname: "readonly",
+        module: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+      },
+    },
+  },
+  {
+    files: ["playground/public/**/*.js"],
+    languageOptions: {
+      sourceType: "script",
+      globals: {
+        window: "readonly",
+        document: "readonly",
+        fetch: "readonly",
+        setInterval: "readonly",
+      },
+    },
+  },
+  {
     files: ["**/*.ts"],
     languageOptions: {
       parser: tsParser,

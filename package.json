@@ -32,6 +32,7 @@
     "check": "sh scripts/check.sh",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "dev": "node playground/server.js",
     "prepare": "husky",
     "start": "bash ./scripts/start.sh",
     "start:debug": "bash ./scripts/start-debug.sh",
