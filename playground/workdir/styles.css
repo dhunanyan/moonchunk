@@ -72,6 +72,20 @@ html, body {
   line-height: 1.45;
 }
 
+.pg-link {
+  display: inline-flex;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.pg-link:hover {
+  color: var(--accent-2);
+  text-decoration: underline;
+}
+
 .pg-badge {
   display: inline-block;
   margin-top: 12px;

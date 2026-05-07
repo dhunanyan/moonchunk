@@ -1,0 +1,7 @@
+chunk "Main" {
+  content {
+    <p>bad</p>
+  };
+};
+
+moon(Main);

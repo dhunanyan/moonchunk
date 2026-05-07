@@ -41,31 +41,7 @@ if (!fs.existsSync(DIST_ENTRY)) {
 
 const { executeMoonChunkFile } = require(DIST_ENTRY);
 
-const DEFAULT_CODE = `chunk "Playground" {
-  output: "./dist";
-  title: "MoonChunk Playground";
-  styles: "<link rel="stylesheet" href="/preview?file=styles.css" />";
-
-  let message: string = "Hello from MoonChunk";
-
-  page "" {
-    content {
-      <section class="pg-hero">
-        <h1 class="pg-title">{message}</h1>
-        <p class="pg-subtitle">Edit this file and styles.css, save, and watch live preview updates.</p>
-        <span class="pg-badge">Live Preview</span>
-      </section>
-
-      <section class="pg-grid">
-        <article class="pg-card"><h3>Parser</h3><p>ANTLR grammar and tokenization.</p></article>
-        <article class="pg-card"><h3>Runtime</h3><p>Execution, typing, and builtins.</p></article>
-        <article class="pg-card"><h3>Output</h3><p>Generated HTML rendered in-browser.</p></article>
-      </section>
-    };
-  };
-};
-
-moon(Playground);`;
+const DEFAULT_CODE = "";
 
 const runtimeState = {
   version: 0,

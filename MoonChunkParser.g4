@@ -47,6 +47,7 @@ runtimeChunkStatement
   | metaStatement
   | constStatement
   | letStatement
+  | contentStatement
   | pageStatement
   | forStatement
   | whileStatement
@@ -149,10 +150,22 @@ pageStatement
   ;
 
 pageInnerStatement
-  : letStatement
-  | constStatement
+  : pageRuntimeStatement
+  ;
+
+pageRuntimeStatement
+  : functionDeclaration
+  | arrowFunctionDeclaration
   | metaStatement
+  | constStatement
+  | letStatement
   | contentStatement
+  | forStatement
+  | whileStatement
+  | ifStatement
+  | breakStatement
+  | continueStatement
+  | expressionStatement
   ;
 
 metaStatement

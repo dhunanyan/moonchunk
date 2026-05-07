@@ -1,0 +1,26 @@
+chunk "Main" {
+  output: "./dist";
+  title: "24 - Content In Loops";
+
+  const cards = [
+    { title: "A", description: "one", button: "Read more" },
+    { title: "B", description: "two", button: "Read more" },
+    { title: "C", description: "three", button: "Read more" }
+  ];
+
+  page "" {
+    for(let i: int = 0; i < 3; i++) {
+      if(i >= 1) {
+        content {
+          <article class="card">
+            <h3>{cards[i].title}</h3>
+            <p>{cards[i].description}</p>
+            <button>{cards[i].button}</button>
+          </article>
+        };
+      };
+    };
+  };
+};
+
+moon(Main);

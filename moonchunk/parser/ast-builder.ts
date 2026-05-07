@@ -29,6 +29,7 @@ import {
   NamespaceImportClauseContext,
   OutputStatementContext,
   PageInnerStatementContext,
+  PageRuntimeStatementContext,
   PageStatementContext,
   ParameterContext,
   ParameterListContext,
@@ -144,6 +145,7 @@ export class AstBuilder
     if (ctx.metaStatement()) return this.visit(ctx.metaStatement()!);
     if (ctx.constStatement()) return this.visit(ctx.constStatement()!);
     if (ctx.letStatement()) return this.visit(ctx.letStatement()!);
+    if (ctx.contentStatement()) return this.visit(ctx.contentStatement()!);
     if (ctx.pageStatement()) return this.visit(ctx.pageStatement()!);
     if (ctx.forStatement()) return this.visit(ctx.forStatement()!);
     if (ctx.whileStatement()) return this.visit(ctx.whileStatement()!);
@@ -345,10 +347,26 @@ export class AstBuilder
   }
 
   visitPageInnerStatement(ctx: PageInnerStatementContext): unknown {
-    if (ctx.letStatement()) return this.visit(ctx.letStatement()!);
-    if (ctx.constStatement()) return this.visit(ctx.constStatement()!);
+    if (ctx.pageRuntimeStatement()) return this.visit(ctx.pageRuntimeStatement()!);
+    return null;
+  }
+
+  visitPageRuntimeStatement(ctx: PageRuntimeStatementContext): unknown {
+    if (ctx.functionDeclaration())
+      return this.visit(ctx.functionDeclaration()!);
+    if (ctx.arrowFunctionDeclaration())
+      return this.visit(ctx.arrowFunctionDeclaration()!);
     if (ctx.metaStatement()) return this.visit(ctx.metaStatement()!);
+    if (ctx.constStatement()) return this.visit(ctx.constStatement()!);
+    if (ctx.letStatement()) return this.visit(ctx.letStatement()!);
     if (ctx.contentStatement()) return this.visit(ctx.contentStatement()!);
+    if (ctx.forStatement()) return this.visit(ctx.forStatement()!);
+    if (ctx.whileStatement()) return this.visit(ctx.whileStatement()!);
+    if (ctx.ifStatement()) return this.visit(ctx.ifStatement()!);
+    if (ctx.breakStatement()) return this.visit(ctx.breakStatement()!);
+    if (ctx.continueStatement()) return this.visit(ctx.continueStatement()!);
+    if (ctx.expressionStatement())
+      return this.visit(ctx.expressionStatement()!);
     return null;
   }
 

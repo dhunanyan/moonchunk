@@ -340,6 +340,8 @@ export function runAst(
     currentDir: string,
     inLoop: boolean,
     inFunction = false,
+    inPage = false,
+    onContent: ((rendered: string) => void) | null = null,
   ): void {
     const cond = evalExpr(node.condition, scope, currentDir, node.line, {
       getGlobal,
@@ -352,7 +354,15 @@ export function runAst(
     const child = scope.derive();
     for (const nested of selectedBody) {
       if (!nested) continue;
-      execRuntimeStatement(nested, child, currentDir, inLoop, inFunction);
+      execRuntimeStatement(
+        nested,
+        child,
+        currentDir,
+        inLoop,
+        inFunction,
+        inPage,
+        onContent,
+      );
     }
   }
 
@@ -361,6 +371,8 @@ export function runAst(
     scope: Scope,
     currentDir: string,
     inFunction = false,
+    inPage = false,
+    onContent: ((rendered: string) => void) | null = null,
   ): void {
     const loopScope = scope.derive();
     const initValue = evalExpr(
@@ -393,7 +405,15 @@ export function runAst(
       for (const nested of node.body) {
         if (!nested) continue;
         try {
-          execRuntimeStatement(nested, child, currentDir, true, inFunction);
+          execRuntimeStatement(
+            nested,
+            child,
+            currentDir,
+            true,
+            inFunction,
+            inPage,
+            onContent,
+          );
         } catch (error) {
           if (error instanceof ContinueSignal) break;
           if (error instanceof BreakSignal) return;
@@ -418,6 +438,8 @@ export function runAst(
     scope: Scope,
     currentDir: string,
     inFunction = false,
+    inPage = false,
+    onContent: ((rendered: string) => void) | null = null,
   ): void {
     const loopScope = scope.derive();
     while (true) {
@@ -432,7 +454,15 @@ export function runAst(
       for (const nested of node.body) {
         if (!nested) continue;
         try {
-          execRuntimeStatement(nested, child, currentDir, true, inFunction);
+          execRuntimeStatement(
+            nested,
+            child,
+            currentDir,
+            true,
+            inFunction,
+            inPage,
+            onContent,
+          );
         } catch (error) {
           if (error instanceof ContinueSignal) break;
           if (error instanceof BreakSignal) return;
@@ -534,6 +564,8 @@ export function runAst(
     currentDir: string,
     inLoop = false,
     inFunction = false,
+    inPage = false,
+    onContent: ((rendered: string) => void) | null = null,
   ): void {
     switch (node.type) {
       case "Let":
@@ -557,7 +589,25 @@ export function runAst(
         const value = evalExpr(node.expr, scope, currentDir, node.line, {
           getGlobal,
         });
-        applyChunkMetaAssignment(scope, node.name, value, node.line);
+        if (inPage) {
+          applyPageMetaAssignment(scope, node.name, value, node.line);
+        } else {
+          applyChunkMetaAssignment(scope, node.name, value, node.line);
+        }
+        return;
+      }
+      case "Content": {
+        if (!inPage || !onContent) {
+          throw new MoonChunkError(
+            "content can only be used inside a page block.",
+            node.line,
+            1,
+          );
+        }
+        const rendered = renderContentTemplate(node.template, scope, currentDir, {
+          getGlobal,
+        });
+        onContent(rendered);
         return;
       }
       case "FunctionDeclaration": {
@@ -589,13 +639,21 @@ export function runAst(
         return;
       }
       case "If":
-        execIfRuntime(node, scope, currentDir, inLoop, inFunction);
+        execIfRuntime(
+          node,
+          scope,
+          currentDir,
+          inLoop,
+          inFunction,
+          inPage,
+          onContent,
+        );
         return;
       case "For":
-        execForRuntime(node, scope, currentDir, inFunction);
+        execForRuntime(node, scope, currentDir, inFunction, inPage, onContent);
         return;
       case "While":
-        execWhileRuntime(node, scope, currentDir, inFunction);
+        execWhileRuntime(node, scope, currentDir, inFunction, inPage, onContent);
         return;
       case "Break":
         if (!inLoop) {
@@ -616,6 +674,13 @@ export function runAst(
         }
         throw new ContinueSignal();
       case "Page":
+        if (inPage) {
+          throw new MoonChunkError(
+            "Nested page blocks are not allowed.",
+            node.line,
+            1,
+          );
+        }
         execPage(node, scope, currentDir);
         return;
       case "Return":
@@ -638,51 +703,22 @@ export function runAst(
   function execPage(node: AstPageNode, scope: Scope, currentDir: string): void {
     const pageScope = scope.derive();
     applyMetadataDefaults(pageScope);
-    let contentHtml = "";
+    const contentParts: string[] = [];
 
     for (const statement of node.body) {
       if (!statement) continue;
-
-      if (statement.type === "Let" || statement.type === "Const") {
-        const value = evalExpr(
-          statement.expr,
-          pageScope,
-          currentDir,
-          statement.line,
-          { getGlobal },
-        );
-        pageScope.declare(
-          statement.name,
-          value,
-          statement.declaredType ?? null,
-          statement.line,
-          statement.type === "Let",
-        );
-      } else if (statement.type === "Meta") {
-        const value = evalExpr(
-          statement.expr,
-          pageScope,
-          currentDir,
-          statement.line,
-          { getGlobal },
-        );
-        applyPageMetaAssignment(
-          pageScope,
-          statement.name,
-          value,
-          statement.line,
-        );
-      } else if (statement.type === "Content") {
-        contentHtml = renderContentTemplate(
-          statement.template,
-          pageScope,
-          currentDir,
-          { getGlobal },
-        );
-      }
+      execRuntimeStatement(
+        statement as AstRuntimeNode,
+        pageScope,
+        currentDir,
+        false,
+        false,
+        true,
+        (rendered) => contentParts.push(rendered),
+      );
     }
 
-    pageScope.set("content", contentHtml);
+    pageScope.set("content", contentParts.join(""));
     ensureLayoutDefaults(pageScope);
 
     const route = renderStringWithInterpolations(

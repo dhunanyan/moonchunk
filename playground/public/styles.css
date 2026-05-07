@@ -25,11 +25,19 @@ body {
 
 body {
   margin: 0;
-  font-family: "IBM Plex Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, monospace;
+  font-family: "IBM Plex Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas,
+    monospace;
   color: var(--text);
-  background:
-    radial-gradient(1100px 700px at 10% -10%, rgba(34, 211, 238, 0.18), transparent 58%),
-    radial-gradient(900px 620px at 110% 20%, rgba(52, 211, 153, 0.14), transparent 55%),
+  background: radial-gradient(
+      1100px 700px at 10% -10%,
+      rgba(34, 211, 238, 0.18),
+      transparent 58%
+    ),
+    radial-gradient(
+      900px 620px at 110% 20%,
+      rgba(52, 211, 153, 0.14),
+      transparent 55%
+    ),
     linear-gradient(140deg, var(--bg-0), var(--bg-1) 43%, var(--bg-2));
   overflow-x: hidden;
   overflow-y: hidden;
@@ -41,8 +49,10 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+  background-image: linear-gradient(
+      rgba(255, 255, 255, 0.025) 1px,
+      transparent 1px
+    ),
     linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
   background-size: 26px 26px;
   mask-image: radial-gradient(circle at center, black, transparent 78%);
@@ -57,10 +67,14 @@ body::before {
   align-items: center;
   padding: 12px 16px;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(8, 17, 25, 0.95), rgba(8, 17, 25, 0.75));
+  background: linear-gradient(
+    180deg,
+    rgba(8, 17, 25, 0.95),
+    rgba(8, 17, 25, 0.75)
+  );
   backdrop-filter: blur(8px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
-  animation: slideDown 420ms cubic-bezier(.22,.67,.22,1);
+  animation: slideDown 420ms cubic-bezier(0.22, 0.67, 0.22, 1);
 }
 
 .topbar h1 {
@@ -125,7 +139,7 @@ button:disabled {
 }
 
 .panel {
-  animation: riseIn 420ms cubic-bezier(.22,.67,.22,1);
+  animation: riseIn 420ms cubic-bezier(0.22, 0.67, 0.22, 1);
 }
 
 .panel:nth-child(2) {
@@ -141,7 +155,11 @@ button:disabled {
   text-transform: uppercase;
   color: var(--muted);
   border-bottom: 1px solid rgba(115, 171, 205, 0.2);
-  background: linear-gradient(180deg, rgba(13, 32, 45, 0.86), rgba(13, 32, 45, 0.6));
+  background: linear-gradient(
+    180deg,
+    rgba(13, 32, 45, 0.86),
+    rgba(13, 32, 45, 0.6)
+  );
 }
 
 #editor {
@@ -181,7 +199,7 @@ button:disabled {
 }
 
 .box {
-  animation: riseIn 420ms cubic-bezier(.22,.67,.22,1);
+  animation: riseIn 420ms cubic-bezier(0.22, 0.67, 0.22, 1);
 }
 
 .box:nth-child(1) {
@@ -205,7 +223,17 @@ button:disabled {
   word-break: break-word;
   font-size: 12px;
   color: #d7edff;
-  background: linear-gradient(180deg, rgba(8, 20, 30, 0.7), rgba(8, 20, 30, 0.4));
+  background: linear-gradient(
+    180deg,
+    rgba(8, 20, 30, 0.7),
+    rgba(8, 20, 30, 0.4)
+  );
+}
+
+#diagnostics,
+#logs,
+#generated {
+  overflow-y: auto;
 }
 
 #diagnostics:not(:empty) {
@@ -213,8 +241,12 @@ button:disabled {
 }
 
 @keyframes bodyFade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideDown {

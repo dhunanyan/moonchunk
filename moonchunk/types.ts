@@ -123,7 +123,7 @@ export type AstContentNode = {
 export type AstPageNode = {
   type: "Page";
   route: string;
-  body: Array<AstLetNode | AstConstNode | AstMetaNode | AstContentNode | null>;
+  body: Array<AstRuntimeNode | null>;
   line: number;
 };
 
@@ -216,6 +216,7 @@ export type AstRuntimeNode =
   | AstMetaNode
   | AstLetNode
   | AstConstNode
+  | AstContentNode
   | AstExpressionStatementNode
   | AstReturnNode
   | AstPageNode
