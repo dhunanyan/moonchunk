@@ -18,6 +18,8 @@
 
 ## Overview
 
+Complete Documentation (in Polish): [MoonChunk_Complete_Docs_Polish.pdf](MoonChunk_Complete_Docs_Polish.pdf)
+
 MoonChunk is an open-source language runtime focused on:
 
 - describing page generation in a concise DSL (`*.mncnk`)
