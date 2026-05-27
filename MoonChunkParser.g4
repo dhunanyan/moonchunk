@@ -344,7 +344,13 @@ multiplicativeExpr
 
 unaryExpr
   : (NOT | MINUS | PLUS) unaryExpr
+  | incExpr
   | callExpr
+  ;
+
+incExpr
+  : PLUSPLUS identifierPath
+  | identifierPath PLUSPLUS
   ;
 
 castExpr

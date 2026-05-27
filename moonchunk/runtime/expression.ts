@@ -27,6 +27,7 @@ import {
   IdentifierAtomContext,
   IdentifierPathContext,
   IfStatementContext,
+  IncExprContext,
   LetStatementContext,
   MoonChunkParser,
   MultiplicativeExprContext,
@@ -447,7 +448,23 @@ class ExprEvaluator {
       );
       return makeNumeric(numeric.value, numeric.numType);
     }
+    if (ctx.incExpr()) {
+      return this.evaluateIncExpr(ctx.incExpr()!);
+    }
     return this.evaluateCallExpr(ctx.callExpr()!);
+  }
+
+  private evaluateIncExpr(ctx: IncExprContext): unknown {
+    const path = ctx.identifierPath();
+    const before = this.resolveIdentifierPath(path);
+    const numeric = coerceToNumeric(before, this.line);
+    const after = makeNumeric(numeric.value + 1, numeric.numType);
+    this.assignIdentifierPath(path, after);
+    const isPrefix = ctx.getChild(0)?.text === "++";
+    if (isPrefix) {
+      return after;
+    }
+    return before;
   }
 
   private castToType(value: unknown, typeName: string): unknown {

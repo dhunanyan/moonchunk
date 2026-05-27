@@ -1,6 +1,8 @@
 import * as Fragments from "./fragments.mncnk";
 
 chunk "Error" {
+  @include Fragments.SharedFragment;
+  let a: int = 1;
   print(a + 2 == 3);
   page "" {
     content {

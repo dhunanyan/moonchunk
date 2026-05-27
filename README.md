@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/logo.png" alt="MoonChunk logo" width="180" />
+  <img src="https://raw.githubusercontent.com/dhunanyan/moonchunk/master/assets/logo.png" alt="MoonChunk logo" width="180" />
 </p>
 
 <h1 align="center">MoonChunk</h1>
@@ -30,9 +30,12 @@ MoonChunk is an open-source language runtime focused on:
 - Modular chunks with `import` / `@include`
 - Explicit entrypoint execution via `moon(...)`
 - Local and global variable model (`let`, `const`, `env { global ... }`)
-- Type-aware expressions (`int`, `float`, `double`, `bool`, `string`)
+- Type-aware expressions (`int`, `float`, `double`, `bool`, `string`, `number`, `array`, `object`, `unknown`, `any`)
 - Control flow: `if`, `for`, `while`, `break`, `continue`
 - Functions (including recursive calls)
+- Arrays and objects with path/index access (`obj.a`, `arr[0]`)
+- Scope-aware access to parent scopes via `parent::name`
+- Casts with both styles: `value as int` and `(int)value`
 - Builtins like `data(...)` and `print(...)`
 - Internal base layout + metadata defined directly in `.mncnk`
 - Friendly error diagnostics with line/column information
@@ -68,7 +71,7 @@ yarn start <path/to/file.mncnk>
 yarn start:debug <path/to/file.mncnk>
 
 # Type checks / validation script
-yarn check
+yarn run check
 
 # Lint checks
 yarn lint
@@ -81,7 +84,7 @@ yarn lint:fix
 
 Husky is configured for local quality gates:
 
-- `pre-commit` -> `yarn lint` + `yarn check`
+- `pre-commit` -> `yarn lint` + `yarn run check`
 - `pre-push` -> `yarn build`
 
 After pulling changes, run:
@@ -98,14 +101,14 @@ Recommended local verification before opening a PR:
 
 ```bash
 yarn lint
-yarn check
+yarn run check
 yarn build
 ```
 
 Checks overview:
 
 - `yarn lint` -> ESLint for TypeScript and scripts
-- `yarn check` -> Yarn dependency/package consistency checks
+- `yarn run check` -> MoonChunk self-check (build + runtime sanity check)
 - `yarn build` -> grammar generation + TypeScript compilation
 
 ## Programmatic API
@@ -113,10 +116,14 @@ Checks overview:
 ```ts
 import { executeMoonChunk, executeMoonChunkFile } from "moonchunk";
 
-const fromFile = executeMoonChunkFile("examples/scenarios/17-print-builtin/site.mncnk");
+const fromFile = executeMoonChunkFile(
+  "examples/scenarios/17-print-builtin/site.mncnk",
+);
 console.log(fromFile.ok, fromFile.generatedFiles);
 
-const fromSource = executeMoonChunk('chunk "Main" { output: "./dist"; }; moon(Main);');
+const fromSource = executeMoonChunk(
+  'chunk "Main" { output: "./dist"; }; moon(Main);',
+);
 console.log(fromSource.ok, fromSource.diagnostics);
 ```
 
@@ -140,6 +147,8 @@ moonchunk/
 - `examples/scenarios/16-metadata-common`
 - `examples/scenarios/17-print-builtin`
 - `examples/scenarios/18-recursive-function`
+- `examples/scenarios/26-final-mandatory`
+- `examples/scenarios/27-inc-and-parent-depth`
 
 Run any example:
 
@@ -165,7 +174,7 @@ Suggested flow:
 1. Fork the repository.
 2. Create a feature branch.
 3. Add/update scenario examples when adding language behavior.
-4. Run `yarn build` and `yarn check`.
+4. Run `yarn build` and `yarn run check`.
 5. Open a pull request with a short change summary.
 
 ## License

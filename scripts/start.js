@@ -101,6 +101,11 @@ function normalizeDiagnosticMessage(message) {
     return `Scope error: variable '${m[1]}' is already declared in this block. Use assignment for 'let', or rename the variable.`;
   }
 
+  m = compact.match(/^Variable redeclaration in parent scope:\s*(.+)$/i);
+  if (m) {
+    return `Scope error: variable '${m[1]}' already exists in the parent scope. Use a different name or explicit block scope rules.`;
+  }
+
   m = compact.match(
     /^Type mismatch for\s+(.+?): declared (.+?), got (.+?)\.?$/i,
   );

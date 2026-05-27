@@ -1,0 +1,12 @@
+chunk "Main" {
+  output: "./dist";
+  {
+    let a: int = 1;
+    {
+      let x: int = parent::parent::missing;
+      print(x);
+    };
+  };
+};
+
+moon(Main);

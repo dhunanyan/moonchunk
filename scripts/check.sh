@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 set -eu
 
-sh scripts/build.sh
+yarn build
 node ./scripts/check.js

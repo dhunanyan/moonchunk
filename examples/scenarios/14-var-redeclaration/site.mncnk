@@ -4,27 +4,33 @@ chunk "Metadata" {
   metaDescription: "This is my description Metadata for Browser SEO";
 };
 
-chunk "LetInSameScope" {
+chunk "LetInChildScope" {
   let sameVarName: string = "test1";
-  let sameVarName: string = "test2";
+  {
+    let sameVarName: string = "test2";
+    print("inner let sameVarName:", sameVarName);
+  };
   page "let" {
     title: "This is title Metadata for Browser SEO";
     content {
-      <p>sameVarName from scope2:{sameVarName}</p>
+      <p>sameVarName from outer scope:{sameVarName}</p>
     };
   };
 };
 
-chunk "ConstInSameScope" {
+chunk "ConstInFunctionScope" {
   const sameVarName: string = "test1";
-  const sameVarName: string = "test2";
+  function readLocal(): string {
+    const sameVarName: string = "test2";
+    return sameVarName;
+  }
   page "const" {
     title: "This is title Metadata for Browser SEO";
     content {
-      <p>sameVarName from scope2:{sameVarName}</p>
+      <p>sameVarName from function scope:{readLocal()}</p>
     };
   };
 };
 
-moon(LetInSameScope);
-moon(ConstInSameScope);
+moon(LetInChildScope);
+moon(ConstInFunctionScope);

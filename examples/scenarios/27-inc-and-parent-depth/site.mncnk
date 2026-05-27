@@ -1,0 +1,29 @@
+chunk "Main" {
+  output: "./dist";
+  title: "27 - Increment and Parent Depth";
+
+  let i: int = 1;
+  print("post:", i++);
+  print("after post:", i);
+  print("pre:", ++i);
+  print("after pre:", i);
+
+  {
+    let i: int = 99;
+    {
+      let fromParent1: int = parent::i;
+      let fromParent2: int = parent::parent::i;
+      print("parent::i:", fromParent1);
+      print("parent::parent::i:", fromParent2);
+    };
+  };
+
+  page "" {
+    content {
+      <h1>{title}</h1>
+      <p>Final i: {i}</p>
+    };
+  };
+};
+
+moon(Main);

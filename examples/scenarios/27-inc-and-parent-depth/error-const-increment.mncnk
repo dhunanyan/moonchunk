@@ -1,0 +1,7 @@
+chunk "Main" {
+  output: "./dist";
+  const count: int = 1;
+  count++;
+};
+
+moon(Main);

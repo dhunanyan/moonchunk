@@ -1,0 +1,7 @@
+chunk "Main" {
+  output: "./dist";
+  let text: string = "abc";
+  ++text;
+};
+
+moon(Main);
