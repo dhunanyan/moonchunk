@@ -78,9 +78,19 @@ function normalizeDiagnosticMessage(message) {
   }
 
   // Runtime errors
-  let m = compact.match(/^Unknown variable:\s*(.+)$/i);
-  if (m)
-    return `Runtime error: variable '${m[1]}' is not declared in the current scope.`;
+  let m = compact.match(/^Unknown variable:\s*([^.]+)\.?\s*(Did you mean '.+?'\?)?$/i);
+  if (m) {
+    const name = m[1].trim();
+    const suggestion = m[2] ? ` ${m[2]}` : "";
+    return `Runtime error: variable '${name}' is not declared in the current scope.${suggestion}`;
+  }
+
+  m = compact.match(
+    /^Unknown variable at parent depth\s+([0-9]+):\s*(.+?)\.?$/i,
+  );
+  if (m) {
+    return `Runtime error: variable '${m[2]}' is not declared in parent scope depth ${m[1]}.`;
+  }
 
   m = compact.match(/^Cannot reassign const variable:\s*(.+)$/i);
   if (m)

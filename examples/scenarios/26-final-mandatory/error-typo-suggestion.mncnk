@@ -1,0 +1,7 @@
+chunk "Main" {
+  output: "./dist";
+  let counter: int = 1;
+  print(countr);
+};
+
+moon(Main);

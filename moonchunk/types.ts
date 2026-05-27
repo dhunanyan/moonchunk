@@ -153,6 +153,12 @@ export type AstIfNode = {
   line: number;
 };
 
+export type AstBlockNode = {
+  type: "Block";
+  body: Array<AstRuntimeNode | null>;
+  line: number;
+};
+
 export type AstParameter = {
   name: string;
   declaredType: string | null;
@@ -184,6 +190,7 @@ export type AstFunctionBodyNode =
   | AstConstNode
   | AstFunctionDeclarationNode
   | AstLetNode
+  | AstBlockNode
   | AstIfNode
   | AstForNode
   | AstWhileNode
@@ -215,6 +222,7 @@ export type AstRuntimeNode =
   | AstMetaNode
   | AstLetNode
   | AstConstNode
+  | AstBlockNode
   | AstContentNode
   | AstExpressionStatementNode
   | AstReturnNode

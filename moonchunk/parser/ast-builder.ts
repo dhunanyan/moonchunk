@@ -2,6 +2,7 @@ import { Token } from "antlr4ts";
 import { AbstractParseTreeVisitor } from "antlr4ts/tree/AbstractParseTreeVisitor";
 import {
   ArrowFunctionDeclarationContext,
+  BlockStatementContext,
   BreakStatementContext,
   ChunkDeclContext,
   ChunkStatementContext,
@@ -145,6 +146,7 @@ export class AstBuilder
     if (ctx.metaStatement()) return this.visit(ctx.metaStatement()!);
     if (ctx.constStatement()) return this.visit(ctx.constStatement()!);
     if (ctx.letStatement()) return this.visit(ctx.letStatement()!);
+    if (ctx.blockStatement()) return this.visit(ctx.blockStatement()!);
     if (ctx.contentStatement()) return this.visit(ctx.contentStatement()!);
     if (ctx.pageStatement()) return this.visit(ctx.pageStatement()!);
     if (ctx.forStatement()) return this.visit(ctx.forStatement()!);
@@ -298,6 +300,7 @@ export class AstBuilder
     if (ctx.arrowFunctionDeclaration())
       return this.visit(ctx.arrowFunctionDeclaration()!);
     if (ctx.letStatement()) return this.visit(ctx.letStatement()!);
+    if (ctx.blockStatement()) return this.visit(ctx.blockStatement()!);
     if (ctx.ifStatement()) return this.visit(ctx.ifStatement()!);
     if (ctx.forStatement()) return this.visit(ctx.forStatement()!);
     if (ctx.whileStatement()) return this.visit(ctx.whileStatement()!);
@@ -320,6 +323,14 @@ export class AstBuilder
 
   private mapRuntimeBlock(ctx: RuntimeBlockContext): Array<unknown> {
     return ctx.runtimeChunkStatement().map((stmt) => this.visit(stmt));
+  }
+
+  visitBlockStatement(ctx: BlockStatementContext): unknown {
+    return {
+      type: "Block",
+      body: this.mapRuntimeBlock(ctx.runtimeBlock()),
+      line: ctx.start.line,
+    };
   }
 
   visitBreakStatement(ctx: BreakStatementContext): unknown {
@@ -359,6 +370,7 @@ export class AstBuilder
     if (ctx.metaStatement()) return this.visit(ctx.metaStatement()!);
     if (ctx.constStatement()) return this.visit(ctx.constStatement()!);
     if (ctx.letStatement()) return this.visit(ctx.letStatement()!);
+    if (ctx.blockStatement()) return this.visit(ctx.blockStatement()!);
     if (ctx.contentStatement()) return this.visit(ctx.contentStatement()!);
     if (ctx.forStatement()) return this.visit(ctx.forStatement()!);
     if (ctx.whileStatement()) return this.visit(ctx.whileStatement()!);

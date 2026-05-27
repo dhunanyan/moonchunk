@@ -349,7 +349,7 @@ export function runAst(
     }
     const selectedBody = cond ? node.body : node.elseBody;
     if (!selectedBody) return;
-    const child = scope.derive();
+    const child = scope.deriveStrict();
     for (const nested of selectedBody) {
       if (!nested) continue;
       execRuntimeStatement(
@@ -372,7 +372,7 @@ export function runAst(
     inPage = false,
     onContent: ((rendered: string) => void) | null = null,
   ): void {
-    const loopScope = scope.derive();
+    const loopScope = scope.deriveStrict();
     const initValue = evalExpr(
       node.initExpr,
       loopScope,
@@ -399,7 +399,7 @@ export function runAst(
         throw new MoonChunkError("for condition must be bool.", node.line, 1);
       }
       if (!cond) break;
-      const child = loopScope.derive();
+      const child = loopScope.deriveStrict();
       for (const nested of node.body) {
         if (!nested) continue;
         try {
@@ -431,7 +431,7 @@ export function runAst(
     inPage = false,
     onContent: ((rendered: string) => void) | null = null,
   ): void {
-    const loopScope = scope.derive();
+    const loopScope = scope.deriveStrict();
     while (true) {
       const cond = evalExpr(node.condition, loopScope, currentDir, node.line, {
         getGlobal,
@@ -440,7 +440,7 @@ export function runAst(
         throw new MoonChunkError("while condition must be bool.", node.line, 1);
       }
       if (!cond) break;
-      const child = loopScope.derive();
+      const child = loopScope.deriveStrict();
       for (const nested of node.body) {
         if (!nested) continue;
         try {
@@ -575,6 +575,22 @@ export function runAst(
       case "ExpressionStatement":
         evalExpr(node.expr, scope, currentDir, node.line, { getGlobal });
         return;
+      case "Block": {
+        const nestedScope = scope.derive();
+        for (const nested of node.body) {
+          if (!nested) continue;
+          execRuntimeStatement(
+            nested,
+            nestedScope,
+            currentDir,
+            inLoop,
+            inFunction,
+            inPage,
+            onContent,
+          );
+        }
+        return;
+      }
       case "Meta": {
         const value = evalExpr(node.expr, scope, currentDir, node.line, {
           getGlobal,

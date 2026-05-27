@@ -47,6 +47,7 @@ runtimeChunkStatement
   | metaStatement
   | constStatement
   | letStatement
+  | blockStatement
   | contentStatement
   | pageStatement
   | forStatement
@@ -124,6 +125,7 @@ functionBodyStatement
   | functionDeclaration
   | arrowFunctionDeclaration
   | letStatement
+  | blockStatement
   | ifStatement
   | forStatement
   | whileStatement
@@ -159,6 +161,7 @@ pageRuntimeStatement
   | metaStatement
   | constStatement
   | letStatement
+  | blockStatement
   | contentStatement
   | forStatement
   | whileStatement
@@ -290,6 +293,10 @@ returnTypeName
   | TYPE_VOID
   ;
 
+blockStatement
+  : runtimeBlock SEMI?
+  ;
+
 runtimeBlock
   : LBRACE runtimeChunkStatement* RBRACE
   ;
@@ -341,7 +348,8 @@ unaryExpr
   ;
 
 castExpr
-  : unaryExpr (AS typeName)*
+  : LPAREN typeName RPAREN castExpr
+  | unaryExpr (AS typeName)*
   ;
 
 callExpr
@@ -407,5 +415,9 @@ objectProperty
   ;
 
 identifierPath
-  : identifierAtom (DOT identifierAtom | LBRACKET expression RBRACKET)*
+  : parentPathPrefix? identifierAtom (DOT identifierAtom | LBRACKET expression RBRACKET)*
+  ;
+
+parentPathPrefix
+  : (PARENT SCOPE)+
   ;

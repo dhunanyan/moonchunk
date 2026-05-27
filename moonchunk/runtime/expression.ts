@@ -563,6 +563,11 @@ class ExprEvaluator {
   }
 
   private evaluateCastExpr(ctx: CastExprContext): unknown {
+    if (ctx.castExpr() && ctx.typeName().length > 0) {
+      const raw = this.evaluateCastExpr(ctx.castExpr()!);
+      return this.castToType(raw, ctx.typeName()[0].text);
+    }
+
     let current = this.evaluateUnary(ctx.unaryExpr());
     const castTypes = ctx.typeName();
     for (const castType of castTypes) {
@@ -841,6 +846,14 @@ class ExprEvaluator {
       fnScope.declare(decl.identifierAtom().text, callable, null, decl.start.line);
       return;
     }
+    if (statement.blockStatement()) {
+      const nestedScope = fnScope.derive();
+      const nested = statement.blockStatement()!.runtimeBlock().runtimeChunkStatement();
+      for (const item of nested) {
+        this.executeRuntimeChunkStatement(item, nestedScope, line, inLoop);
+      }
+      return;
+    }
     if (statement.ifStatement())
       return this.executeIfStatement(
         statement.ifStatement()!,
@@ -915,6 +928,14 @@ class ExprEvaluator {
       fnScope.declare(decl.identifierAtom().text, callable, null, decl.start.line);
       return;
     }
+    if (stmt.blockStatement()) {
+      const nestedScope = fnScope.derive();
+      const nested = stmt.blockStatement()!.runtimeBlock().runtimeChunkStatement();
+      for (const item of nested) {
+        this.executeRuntimeChunkStatement(item, nestedScope, line, inLoop);
+      }
+      return;
+    }
     if (stmt.ifStatement())
       return this.executeIfStatement(
         stmt.ifStatement()!,
@@ -987,7 +1008,7 @@ class ExprEvaluator {
     const blocks = stmt.runtimeBlock();
     const selected = cond ? blocks[0] : blocks[1];
     if (!selected) return;
-    const blockScope = fnScope.derive();
+    const blockScope = fnScope.deriveStrict();
     for (const nested of selected.runtimeChunkStatement()) {
       this.executeRuntimeChunkStatement(nested, blockScope, line, inLoop);
     }
@@ -998,7 +1019,7 @@ class ExprEvaluator {
     fnScope: Scope,
     line: number,
   ): void {
-    const loopScope = fnScope.derive();
+    const loopScope = fnScope.deriveStrict();
     const init = stmt.forInit();
     const initName = init.identifierAtom().text;
 
@@ -1038,7 +1059,7 @@ class ExprEvaluator {
         );
       }
       if (!cond) break;
-      const iterScope = loopScope.derive();
+      const iterScope = loopScope.deriveStrict();
       for (const nested of stmt.runtimeBlock().runtimeChunkStatement()) {
         try {
           this.executeRuntimeChunkStatement(nested, iterScope, line, true);
@@ -1062,7 +1083,7 @@ class ExprEvaluator {
     fnScope: Scope,
     line: number,
   ): void {
-    const loopScope = fnScope.derive();
+    const loopScope = fnScope.deriveStrict();
     while (true) {
       const cond = this.evaluateExpressionInScope(
         stmt.expression(),
@@ -1077,7 +1098,7 @@ class ExprEvaluator {
         );
       }
       if (!cond) break;
-      const iterScope = loopScope.derive();
+      const iterScope = loopScope.deriveStrict();
       for (const nested of stmt.runtimeBlock().runtimeChunkStatement()) {
         try {
           this.executeRuntimeChunkStatement(nested, iterScope, line, true);
@@ -1168,17 +1189,32 @@ class ExprEvaluator {
     if (value === undefined) value = this.helpers.getGlobal(name, this.line);
     if (value === undefined) value = this.getBuiltin(name);
     if (value === undefined) {
-      throw new MoonChunkError(`Unknown variable: ${name}`, this.line, 1);
+      const suggestion = this.scope.suggestClosestName(name);
+      const hint = suggestion ? ` Did you mean '${suggestion}'?` : "";
+      throw new MoonChunkError(`Unknown variable: ${name}.${hint}`, this.line, 1);
     }
     return value;
   }
 
   private resolveIdentifierPath(ctx: IdentifierPathContext): unknown {
-    const rootName = ctx.getChild(0)?.text;
+    const rootName = ctx.identifierAtom(0)?.text;
     if (!rootName) {
       throw new MoonChunkError("Invalid path.", this.line, 1);
     }
-    const root = this.resolveIdentifierName(rootName);
+    const parentDepth = this.getParentDepth(ctx);
+    let root: unknown;
+    if (parentDepth > 0) {
+      root = this.scope.getAtParentDepth(parentDepth, rootName);
+      if (root === undefined) {
+        throw new MoonChunkError(
+          `Unknown variable at parent depth ${parentDepth}: ${rootName}.`,
+          this.line,
+          1,
+        );
+      }
+    } else {
+      root = this.resolveIdentifierName(rootName);
+    }
     const steps = this.extractPathSteps(ctx);
 
     let current: unknown = root;
@@ -1208,16 +1244,24 @@ class ExprEvaluator {
     ctx: IdentifierPathContext,
     value: unknown,
   ): void {
-    const rootName = ctx.getChild(0)?.text;
+    const rootName = ctx.identifierAtom(0)?.text;
     if (!rootName)
       throw new MoonChunkError("Invalid assignment path.", this.line, 1);
+    const parentDepth = this.getParentDepth(ctx);
     const steps = this.extractPathSteps(ctx);
     if (steps.length === 0) {
-      this.scope.assign(rootName, value, this.line);
+      if (parentDepth > 0) {
+        this.scope.assignAtParentDepth(parentDepth, rootName, value, this.line);
+      } else {
+        this.scope.assign(rootName, value, this.line);
+      }
       return;
     }
 
-    const root = this.scope.get(rootName);
+    const root =
+      parentDepth > 0
+        ? this.scope.getAtParentDepth(parentDepth, rootName)
+        : this.scope.get(rootName);
     if (root === undefined) {
       throw new MoonChunkError(
         `Cannot assign path on unknown variable: ${rootName}`,
@@ -1288,8 +1332,18 @@ class ExprEvaluator {
     const steps: PathStep[] = [];
     const indexExpressions = ctx.expression();
     let indexExprCursor = 0;
+    const rootName = ctx.identifierAtom(0)?.text;
+    let startIndex = 1;
+    if (rootName) {
+      for (let i = 0; i < ctx.childCount; i += 1) {
+        if (ctx.getChild(i)?.text === rootName) {
+          startIndex = i + 1;
+          break;
+        }
+      }
+    }
 
-    for (let i = 1; i < ctx.childCount; i += 1) {
+    for (let i = startIndex; i < ctx.childCount; i += 1) {
       const token = ctx.getChild(i).text;
       if (token === ".") {
         const next = ctx.getChild(i + 1)?.text;
@@ -1308,6 +1362,13 @@ class ExprEvaluator {
       }
     }
     return steps;
+  }
+
+  private getParentDepth(ctx: IdentifierPathContext): number {
+    const prefix = ctx.parentPathPrefix()?.text ?? "";
+    if (!prefix) return 0;
+    const matches = prefix.match(/parent/g);
+    return matches ? matches.length : 0;
   }
 
   private isPropertyContainer(
