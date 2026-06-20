@@ -25,6 +25,7 @@ export type RuntimeType =
   | "bool"
   | "string"
   | "number"
+  | "dict"
   | "object"
   | "array"
   | "null"
@@ -81,7 +82,7 @@ export type AstGlobalNode = {
   type: "Global";
   name: string;
   declaredType: string | null;
-  expr: string;
+  expr: string | null;
   line: number;
 };
 
@@ -95,7 +96,7 @@ export type AstLetNode = {
   type: "Let";
   name: string;
   declaredType: string | null;
-  expr: string;
+  expr: string | null;
   line: number;
 };
 

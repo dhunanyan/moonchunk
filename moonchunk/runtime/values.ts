@@ -48,6 +48,7 @@ export function inferType(value: unknown): RuntimeType {
 }
 
 export function isAssignable(declaredType: string, inferredType: string): boolean {
+  if (declaredType === 'dict') return inferredType === 'object';
   if (declaredType === 'any' || declaredType === 'unknown') return true;
   if (inferredType === 'any') return true;
   if (declaredType === inferredType) return true;

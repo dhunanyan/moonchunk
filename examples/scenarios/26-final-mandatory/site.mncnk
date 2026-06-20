@@ -5,6 +5,7 @@ chunk "Main" {
   let a: int = 1;
   let promoted: float = 1;
   let casted: int = (int)2.8;
+  print(casted);
 
   {
     let a: int = 5;

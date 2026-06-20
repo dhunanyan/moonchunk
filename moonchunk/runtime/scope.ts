@@ -1,6 +1,12 @@
 import { MoonChunkError } from "../errors";
 import { inferType, isAssignable } from "./values";
 
+export const UNINITIALIZED = Symbol("moonchunk_uninitialized");
+
+export function isUninitialized(value: unknown): boolean {
+  return value === UNINITIALIZED;
+}
+
 export class Scope {
   parent: Scope | null;
   values: Map<string, unknown>;
@@ -104,6 +110,12 @@ export class Scope {
     }
 
     if (declaredType) {
+      if (isUninitialized(value)) {
+        this.declaredTypes.set(name, declaredType);
+        this.values.set(name, value);
+        this.mutability.set(name, mutable);
+        return;
+      }
       const actual = inferType(value);
       if (!isAssignable(declaredType, actual)) {
         throw new MoonChunkError(

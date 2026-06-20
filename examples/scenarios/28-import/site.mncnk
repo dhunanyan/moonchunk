@@ -1,0 +1,15 @@
+import { PointData } from "./point-record.mncnk";
+
+chunk "Main" {
+  @include PointData;
+  output: "./dist";
+
+  page "" {
+    content {
+      <h1>Record import demo</h1>
+      <p>Check terminal output for imported point values.</p>
+    };
+  };
+};
+
+moon(Main);

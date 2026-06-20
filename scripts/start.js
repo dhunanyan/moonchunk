@@ -92,6 +92,16 @@ function normalizeDiagnosticMessage(message) {
     return `Runtime error: variable '${m[2]}' is not declared in parent scope depth ${m[1]}.`;
   }
 
+  m = compact.match(/^Uninitialized variable used before assignment:\s*(.+)$/i);
+  if (m) {
+    return `Runtime error: variable '${m[1]}' was declared but not initialized before use.`;
+  }
+
+  m = compact.match(/^Global variable must be initialized:\s*(.+)$/i);
+  if (m) {
+    return `Runtime error: global variable '${m[1]}' must be initialized when declared.`;
+  }
+
   m = compact.match(/^Cannot reassign const variable:\s*(.+)$/i);
   if (m)
     return `Runtime error: cannot reassign const variable '${m[1]}'. Use 'let' if mutation is required.`;
@@ -176,8 +186,13 @@ function normalizeDiagnosticMessage(message) {
     return "Configuration error: internal base template file is missing.";
   }
 
+  m = compact.match(/^Unknown metadata key:\s*(.+)$/i);
+  if (m) {
+    return `Metadata error: '${m[1]}' is not a supported metadata key.`;
+  }
+
   if (lower.includes("direct cast to bool is not allowed")) {
-    return "Type-cast error: direct cast to 'bool' is not allowed. Use `as unknown as bool` or `as any as bool`.";
+    return "Type-cast error: direct cast to 'bool' with `as` is not allowed. Use `(bool)value` or bridge through `unknown` / `any`.";
   }
 
   if (lower.startsWith("cannot cast empty string to number")) {
@@ -194,6 +209,9 @@ function normalizeDiagnosticMessage(message) {
   }
   if (lower.includes("cast target type object expects")) {
     return "Type-cast error: cast target 'object' requires a non-array object value.";
+  }
+  if (lower.includes("cast target type dict expects")) {
+    return "Type-cast error: cast target 'dict' requires a non-array object value.";
   }
   if (lower.includes("cast target type null expects")) {
     return "Type-cast error: cast target 'null' requires a null value.";

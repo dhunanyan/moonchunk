@@ -89,11 +89,11 @@ envBlock
   ;
 
 globalStatement
-  : GLOBAL identifierAtom (COLON typeName)? ASSIGN expression SEMI
+  : GLOBAL identifierAtom (COLON typeName)? (ASSIGN expression)? SEMI
   ;
 
 letStatement
-  : LET identifierAtom (COLON typeName)? ASSIGN expression SEMI
+  : LET identifierAtom (COLON typeName)? (ASSIGN expression)? SEMI
   ;
 
 constStatement
@@ -172,51 +172,7 @@ pageRuntimeStatement
   ;
 
 metaStatement
-  : metaKey COLON expression SEMI
-  ;
-
-metaKey
-  : META_LANG
-  | META_DIR
-  | META_HTML_CLASS
-  | META_CHARSET
-  | META_VIEWPORT
-  | META_TITLE
-  | META_DESCRIPTION
-  | META_KEYWORDS
-  | META_AUTHOR
-  | META_ROBOTS
-  | META_THEME_COLOR
-  | META_CANONICAL_URL
-  | META_FAVICON_HREF
-  | META_APPLE_TOUCH_ICON
-  | META_MANIFEST_HREF
-  | META_OG_TYPE
-  | META_OG_TITLE
-  | META_OG_DESCRIPTION
-  | META_OG_IMAGE
-  | META_OG_URL
-  | META_OG_SITE_NAME
-  | META_OG_LOCALE
-  | META_TWITTER_CARD
-  | META_TWITTER_SITE
-  | META_TWITTER_CREATOR
-  | META_TWITTER_TITLE
-  | META_TWITTER_DESCRIPTION
-  | META_TWITTER_IMAGE
-  | META_PRELOAD_LINKS
-  | META_PRECONNECT_LINKS
-  | META_STYLES
-  | META_HEAD_SCRIPTS
-  | META_HEAD_EXTRA
-  | META_BODY_CLASS
-  | META_PAGE_ID
-  | META_TOP_BAR
-  | META_HEADER
-  | META_FOOTER
-  | META_MODALS
-  | META_SCRIPTS
-  | META_BODY_END_EXTRA
+  : identifierAtom COLON expression SEMI
   ;
 
 contentStatement
@@ -280,6 +236,7 @@ typeName
   | TYPE_BOOL
   | TYPE_STRING
   | TYPE_NUMBER
+  | TYPE_DICT
   | TYPE_OBJECT
   | TYPE_ARRAY
   | TYPE_NULL
@@ -387,7 +344,6 @@ nonCallablePrimary
 
 identifierAtom
   : IDENTIFIER
-  | metaKey
   ;
 
 functionExpr

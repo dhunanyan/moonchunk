@@ -1,0 +1,6 @@
+chunk "Main" {
+  output: "./dist";
+  totallyUnknownMeta: "abc";
+};
+
+moon(Main);

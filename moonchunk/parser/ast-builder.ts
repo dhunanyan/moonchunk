@@ -218,7 +218,7 @@ export class AstBuilder
       type: "Global",
       name: ctx.identifierAtom().text,
       declaredType: ctx.typeName() ? ctx.typeName()!.text : null,
-      expr: this.toExpr(ctx.expression()),
+      expr: ctx.expression() ? this.toExpr(ctx.expression()!) : null,
       line: ctx.start.line,
     };
   }
@@ -228,7 +228,7 @@ export class AstBuilder
       type: "Let",
       name: ctx.identifierAtom().text,
       declaredType: ctx.typeName() ? ctx.typeName()!.text : null,
-      expr: this.toExpr(ctx.expression()),
+      expr: ctx.expression() ? this.toExpr(ctx.expression()!) : null,
       line: ctx.start.line,
     };
   }
@@ -246,7 +246,7 @@ export class AstBuilder
   visitMetaStatement(ctx: MetaStatementContext): unknown {
     return {
       type: "Meta",
-      name: ctx.metaKey().text,
+      name: ctx.identifierAtom().text,
       expr: this.toExpr(ctx.expression()),
       line: ctx.start.line,
     };

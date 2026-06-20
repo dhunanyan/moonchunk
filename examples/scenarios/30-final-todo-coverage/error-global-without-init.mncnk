@@ -1,0 +1,7 @@
+chunk "Main" {
+  env {
+    global siteName: string;
+  };
+};
+
+moon(Main);

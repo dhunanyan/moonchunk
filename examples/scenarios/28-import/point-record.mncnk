@@ -1,0 +1,4 @@
+export chunk "PointData" {
+  const point: object = { x: 1, y: 2 };
+  print("Point loaded:", point.x, point.y);
+};

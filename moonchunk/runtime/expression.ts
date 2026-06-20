@@ -43,7 +43,7 @@ import {
 import { MoonChunkError } from "../errors";
 import { SyntaxCollector } from "../parser/syntax-collector";
 import { RuntimeHelpers } from "../types";
-import { Scope } from "./scope";
+import { isUninitialized, Scope, UNINITIALIZED } from "./scope";
 import {
   coerceToNumeric,
   inferType,
@@ -467,7 +467,11 @@ class ExprEvaluator {
     return before;
   }
 
-  private castToType(value: unknown, typeName: string): unknown {
+  private castToType(
+    value: unknown,
+    typeName: string,
+    allowDirectBoolCast = false,
+  ): unknown {
     if (typeName === "unknown" || typeName === "any") {
       return {
         __kind: "cast_box",
@@ -504,7 +508,7 @@ class ExprEvaluator {
 
     if (typeName === "bool") {
       if (typeof rawValue === "boolean") return rawValue;
-      if (!fromBridge) {
+      if (!fromBridge && !allowDirectBoolCast) {
         throw new MoonChunkError(
           "Direct cast to bool is not allowed. Use `as unknown as bool` or `as any as bool`.",
           this.line,
@@ -547,13 +551,13 @@ class ExprEvaluator {
       return rawValue;
     }
 
-    if (typeName === "object") {
+    if (typeName === "object" || typeName === "dict") {
       if (
         rawValue === null ||
         typeof rawValue !== "object" ||
         Array.isArray(rawValue)
       ) {
-        throw new MoonChunkError("Cast target type object expects a non-array object value.", this.line, 1);
+        throw new MoonChunkError(`Cast target type ${typeName} expects a non-array object value.`, this.line, 1);
       }
       return rawValue;
     }
@@ -582,7 +586,7 @@ class ExprEvaluator {
   private evaluateCastExpr(ctx: CastExprContext): unknown {
     if (ctx.castExpr() && ctx.typeName().length > 0) {
       const raw = this.evaluateCastExpr(ctx.castExpr()!);
-      return this.castToType(raw, ctx.typeName()[0].text);
+      return this.castToType(raw, ctx.typeName()[0].text, true);
     }
 
     let current = this.evaluateUnary(ctx.unaryExpr());
@@ -1152,11 +1156,13 @@ class ExprEvaluator {
     fnScope: Scope,
     line: number,
   ): void {
-    const value = this.evaluateExpressionInScope(
-      stmt.expression(),
-      fnScope,
-      line,
-    );
+    const value = stmt.expression()
+      ? this.evaluateExpressionInScope(
+          stmt.expression()!,
+          fnScope,
+          line,
+        )
+      : UNINITIALIZED;
     fnScope.declare(
       stmt.identifierAtom().text,
       value,
@@ -1203,6 +1209,13 @@ class ExprEvaluator {
 
   private resolveIdentifierName(name: string): unknown {
     let value: unknown = this.scope.get(name);
+    if (isUninitialized(value)) {
+      throw new MoonChunkError(
+        `Uninitialized variable used before assignment: ${name}`,
+        this.line,
+        1,
+      );
+    }
     if (value === undefined) value = this.helpers.getGlobal(name, this.line);
     if (value === undefined) value = this.getBuiltin(name);
     if (value === undefined) {
@@ -1225,6 +1238,13 @@ class ExprEvaluator {
       if (root === undefined) {
         throw new MoonChunkError(
           `Unknown variable at parent depth ${parentDepth}: ${rootName}.`,
+          this.line,
+          1,
+        );
+      }
+      if (isUninitialized(root)) {
+        throw new MoonChunkError(
+          `Uninitialized variable used before assignment: ${rootName}`,
           this.line,
           1,
         );

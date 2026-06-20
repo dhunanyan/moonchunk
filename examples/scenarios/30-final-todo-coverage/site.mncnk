@@ -1,0 +1,25 @@
+chunk "Main" {
+  output: "./dist";
+  title: "30 - Final Todo Coverage";
+
+  let later: int;
+  later = 7;
+
+  let point: dict = { x: 1, y: 2 };
+  let counter: bool = true;
+  let counter2: int = 7;
+
+  print(counter or (bool)counter2);
+  print("point.x:", point.x);
+  print("later:", later);
+
+  page "" {
+    content {
+      <h1>{title}</h1>
+      <p>point: {point.x}, {point.y}</p>
+      <p>later: {later}</p>
+    };
+  };
+};
+
+moon(Main);

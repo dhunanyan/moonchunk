@@ -21,7 +21,7 @@ import {
   ExecOptions,
   GlobalSymbol,
 } from "../types";
-import { Scope } from "./scope";
+import { isUninitialized, Scope, UNINITIALIZED } from "./scope";
 import { evalExpr, isCallable, makeCallable } from "./expression";
 import { routeToOutputFile } from "./route";
 import {
@@ -86,6 +86,49 @@ export function runAst(
   const globalValues = new Map<string, unknown>();
   const resolvingGlobals = new Set<string>();
   const metadataDefaults = new Map<string, unknown>();
+  const allowedMetadataKeys = new Set<string>([
+    "lang",
+    "dir",
+    "htmlClass",
+    "charset",
+    "viewport",
+    "title",
+    "metaDescription",
+    "metaKeywords",
+    "metaAuthor",
+    "metaRobots",
+    "themeColor",
+    "canonicalUrl",
+    "faviconHref",
+    "appleTouchIconHref",
+    "manifestHref",
+    "ogType",
+    "ogTitle",
+    "ogDescription",
+    "ogImage",
+    "ogUrl",
+    "ogSiteName",
+    "ogLocale",
+    "twitterCard",
+    "twitterSite",
+    "twitterCreator",
+    "twitterTitle",
+    "twitterDescription",
+    "twitterImage",
+    "preloadLinks",
+    "preconnectLinks",
+    "styles",
+    "headScripts",
+    "headExtra",
+    "bodyClass",
+    "pageId",
+    "topBar",
+    "header",
+    "footer",
+    "modals",
+    "scripts",
+    "bodyEndExtra",
+  ]);
   const loadedProgramCache = new Map<string, AstProgramNode>();
   const programBindings = new WeakMap<AstProgramNode, ProgramBindings>();
   const chunkBindings = new WeakMap<AstChunkNode, ProgramBindings>();
@@ -148,6 +191,14 @@ export function runAst(
     if (resolvingGlobals.has(name)) {
       throw new MoonChunkError(
         `Circular global dependency for variable: ${name}`,
+        symbol.line,
+        1,
+      );
+    }
+
+    if (symbol.expr === null) {
+      throw new MoonChunkError(
+        `Global variable must be initialized: ${name}`,
         symbol.line,
         1,
       );
@@ -261,13 +312,16 @@ export function runAst(
       switch (statement.type) {
         case "Let":
         case "Const": {
-          const value = evalExpr(
-            statement.expr,
-            fnScope,
-            currentDir,
-            statement.line,
-            { getGlobal },
-          );
+          const value =
+            statement.expr === null
+              ? UNINITIALIZED
+              : evalExpr(
+                  statement.expr,
+                  fnScope,
+                  currentDir,
+                  statement.line,
+                  { getGlobal },
+                );
           fnScope.declare(
             statement.name,
             value,
@@ -466,11 +520,14 @@ export function runAst(
     scope: Scope,
     key: string,
     value: unknown,
-    _line: number,
+    line: number,
   ): void {
     if (key === "output") {
       outputDir = path.resolve(cwd, String(value ?? ""));
       return;
+    }
+    if (!allowedMetadataKeys.has(key)) {
+      throw new MoonChunkError(`Unknown metadata key: ${key}`, line, 1);
     }
     metadataDefaults.set(key, value);
     scope.set(key, value);
@@ -480,11 +537,14 @@ export function runAst(
     scope: Scope,
     key: string,
     value: unknown,
-    _line: number,
+    line: number,
   ): void {
     if (key === "output") {
       outputDir = path.resolve(cwd, String(value ?? ""));
       return;
+    }
+    if (!allowedMetadataKeys.has(key)) {
+      throw new MoonChunkError(`Unknown metadata key: ${key}`, line, 1);
     }
     scope.set(key, value);
   }
@@ -536,7 +596,8 @@ export function runAst(
     };
 
     for (const [key, value] of Object.entries(defaults)) {
-      if (scope.get(key) === undefined) {
+      const existing = scope.get(key);
+      if (existing === undefined || isUninitialized(existing)) {
         scope.set(key, value);
       }
     }
@@ -560,9 +621,12 @@ export function runAst(
     switch (node.type) {
       case "Let":
       case "Const": {
-        const value = evalExpr(node.expr, scope, currentDir, node.line, {
-          getGlobal,
-        });
+        const value =
+          node.expr === null
+            ? UNINITIALIZED
+            : evalExpr(node.expr, scope, currentDir, node.line, {
+                getGlobal,
+              });
         scope.declare(
           node.name,
           value,

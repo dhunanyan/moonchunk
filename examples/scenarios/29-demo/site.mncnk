@@ -1,0 +1,9 @@
+chunk "Main" {
+  sum(a: double, b: int): int => "Als";
+  print(sum(5.5, 4));
+  const arr = [1, "ala", 3];
+  arr[4] = 7;
+  print(arr[3]);
+};
+
+moon(Main);

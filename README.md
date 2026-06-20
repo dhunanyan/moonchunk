@@ -27,17 +27,25 @@ MoonChunk is an open-source language runtime focused on:
 - executing language constructs (imports, scopes, loops, functions, recursion)
 - generating formatted HTML output
 
+Recommended use cases:
+
+- small and medium static sites with reusable page fragments
+- typed HTML generation from JSON-like data
+- educational projects around parsers, interpreters, and DSL design
+- controlled page generation where explicit execution flow matters
+
 ## Features
 
 - Modular chunks with `import` / `@include`
 - Explicit entrypoint execution via `moon(...)`
 - Local and global variable model (`let`, `const`, `env { global ... }`)
-- Type-aware expressions (`int`, `float`, `double`, `bool`, `string`, `number`, `array`, `object`, `unknown`, `any`)
+- `let` declarations may be created without an initial value and must be assigned before use
+- Type-aware expressions (`int`, `float`, `double`, `bool`, `string`, `number`, `array`, `dict` / `object`, `undefined`, `unknown`, `any`)
 - Control flow: `if`, `for`, `while`, `break`, `continue`
 - Functions (including recursive calls)
-- Arrays and objects with path/index access (`obj.a`, `arr[0]`)
+- Arrays and dictionaries with path/index access (`obj.a`, `arr[0]`)
 - Scope-aware access to parent scopes via `parent::name`
-- Casts with both styles: `value as int` and `(int)value`
+- Casts with C-style syntax `(int)value`; `as` remains supported as a compatibility alias
 - Builtins like `data(...)` and `print(...)`
 - Internal base layout + metadata defined directly in `.mncnk`
 - Friendly error diagnostics with line/column information
@@ -46,6 +54,14 @@ MoonChunk is an open-source language runtime focused on:
 
 - Node.js `>=18`
 - Yarn Classic (`1.x`) recommended
+
+For end users of the language itself, the main workflow is:
+
+- run a prepared MoonChunk runtime/package
+- execute a `.mncnk` file
+- inspect generated HTML in the output directory
+
+Repository-level commands below are mostly relevant when developing MoonChunk itself.
 
 ## Installation
 
@@ -151,6 +167,7 @@ moonchunk/
 - `examples/scenarios/18-recursive-function`
 - `examples/scenarios/26-final-mandatory`
 - `examples/scenarios/27-inc-and-parent-depth`
+- `examples/scenarios/30-final-todo-coverage`
 
 Run any example:
 
