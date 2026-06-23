@@ -1,0 +1,204 @@
+\chapter{Wyrazenia i operatory}
+
+\section{Czym jest wyrazenie}
+Wyrazenie to fragment kodu, ktory po obliczeniu daje jakas wartosc. Na przyklad:
+
+\begin{itemize}
+  \item \mc{2 + 3} daje liczbe,
+  \item \mc{title + "!"} daje tekst,
+  \item \mc{views > 100} daje wartosc logiczna,
+  \item \mc{isPublished and isFeatured} daje wartosc logiczna,
+  \item \mc{condition ? a : b} wybiera jedna z dwoch wartosci.
+\end{itemize}
+
+W MoonChunk wyrazenia pojawiaja sie praktycznie wszedzie: po prawej stronie przypisania,
+w warunkach, w petlach, w argumentach funkcji, w atrybutach HTML i we wstawieniach do
+\mc{content}.
+
+\section{Operatory arytmetyczne}
+MoonChunk obsluguje podstawowe operacje liczbowe:
+
+\begin{itemize}
+  \item \mc{+} dodawanie,
+  \item \mc{-} odejmowanie,
+  \item \mc{*} mnozenie,
+  \item \mc{/} dzielenie,
+  \item \mc{\%} reszta z dzielenia.
+\end{itemize}
+
+\begin{lstlisting}[style=moonchunk,caption={Podstawowe obliczenia}]
+let sum: int = 2 + 3;
+let diff: int = 10 - 4;
+let mul: int = 6 * 7;
+let div: int = 8 / 2;
+let mod: int = 7 % 2;
+\end{lstlisting}
+
+\section{Kolejnosc wykonywania dzialan}
+Podobnie jak w matematyce, nie wszystkie operacje sa wykonywane od lewej do prawej w
+tej samej kolejnosci. Najpierw interpreter bierze pod uwage priorytety operatorow.
+Najprostsza intuicja jest taka:
+
+\begin{itemize}
+  \item nawiasy maja najwyzszy priorytet,
+  \item potem mnozenie, dzielenie i modulo,
+  \item potem dodawanie i odejmowanie,
+  \item dalej porownania,
+  \item a na koncu bardziej zlozone konstrukcje logiczne i warunkowe.
+\end{itemize}
+
+Jesli chcesz uniknac watpliwosci, uzywaj nawiasow.
+
+\begin{lstlisting}[style=moonchunk,caption={Nawiasy zwiekszaja czytelnosc}]
+let value: int = (2 + 3) * 4;
+\end{lstlisting}
+
+\section{Dzielenie przez zero i modulo przez zero}
+MoonChunk traktuje te sytuacje jako blad. To dobre, bo wynik typu \emph{nieskonczonosc}
+bylby w praktyce niebezpieczny i moglby ukryc pomylke w logice programu.
+
+\begin{lstlisting}[style=moonchunk,caption={Przyklady niedozwolonych operacji}]
+let a: int = 10 / 0;
+let b: int = 10 % 0;
+\end{lstlisting}
+
+Takie zapisy powinny zakonczyc sie komunikatem diagnostycznym.
+
+\section{Operatory porownania}
+Porownania sa potrzebne wtedy, gdy chcemy sprawdzic relacje miedzy wartosciami.
+MoonChunk obsluguje:
+
+\begin{itemize}
+  \item \mc{==} rownosc,
+  \item \mc{!=} nierownosc,
+  \item \mc{<} mniejsze niz,
+  \item \mc{>} wieksze niz,
+  \item \mc{<=} mniejsze lub rowne,
+  \item \mc{>=} wieksze lub rowne.
+\end{itemize}
+
+\begin{lstlisting}[style=moonchunk,caption={Porownania w praktyce}]
+let isZero: bool = count == 0;
+let isBig: bool = views > 100;
+let isReady: bool = step >= 3;
+\end{lstlisting}
+
+Kazde takie porownanie daje wynik typu \mc{bool}.
+
+\section{Operatory logiczne}
+Do skladania warunkow MoonChunk uzywa operatorow tekstowych:
+
+\begin{itemize}
+  \item \mc{and},
+  \item \mc{or},
+  \item \mc{not}.
+\end{itemize}
+
+\begin{lstlisting}[style=moonchunk,caption={Logika w MoonChunk}]
+let visible: bool = isPublished and not isArchived;
+let premium: bool = hasSubscription or hasInvitation;
+\end{lstlisting}
+
+To podejscie jest czytelne i dobrze pasuje do skladni zorientowanej na czlowieka.
+
+\section{Operator warunkowy}
+MoonChunk wspiera operator trójargumentowy, znany z wielu innych jezykow.
+Pozwala on wybrac jedna z dwoch wartosci na podstawie warunku.
+
+\begin{lstlisting}[style=moonchunk,caption={Operator warunkowy}]
+let label: string = isPublished ? "Opublikowany" : "Szkic";
+\end{lstlisting}
+
+To zwięzly zapis przydatny wtedy, gdy chcesz szybko wybrac jedna z dwoch prostych wartosci.
+Jesli logika robi sie bardziej rozbudowana, zwykle lepiej przejsc do pelnego \mc{if}.
+
+\section{Laczenie tekstu}
+Operator \mc{+} sluzy nie tylko do dodawania liczb. W praktyce jest tez wygodnym sposobem
+na skladanie tekstow.
+
+\begin{lstlisting}[style=moonchunk,caption={Laczenie tekstu}]
+let fullTitle: string = "MoonChunk" + " " + "Docs";
+\end{lstlisting}
+
+Z takiego mechanizmu czesto korzysta sie przy budowaniu linkow, naglowkow, klas CSS
+czy fragmentow HTML skladanych do jednej zmiennej tekstowej.
+
+\section{Przypisanie jako wyrazenie i zwykle przypisanie}
+MoonChunk pozwala przypisywac nowa wartosc do juz istniejacej zmiennej:
+
+\begin{lstlisting}[style=moonchunk,caption={Zwykle przypisanie}]
+let counter: int = 0;
+counter = counter + 1;
+\end{lstlisting}
+
+To nie jest redeklaracja, tylko zmiana wartosci istniejacej zmiennej typu \mc{let}.
+Roznica jest fundamentalna:
+
+\begin{itemize}
+  \item \mc{let counter = 0;} tworzy nowa nazwe,
+  \item \mc{counter = counter + 1;} zmienia wartosc tej nazwy.
+\end{itemize}
+
+\section{Operator inkrementacji}
+MoonChunk wspiera dwa znane zapisy zwiekszania wartosci o jeden:
+
+\begin{itemize}
+  \item \mc{i++} -- postinkrementacja,
+  \item \mc{++i} -- preinkrementacja.
+\end{itemize}
+
+\begin{lstlisting}[style=moonchunk,caption={Preinkrementacja i postinkrementacja}]
+let i: int = 1;
+print(i++);
+print(++i);
+\end{lstlisting}
+
+W praktyce:
+
+\begin{itemize}
+  \item \mc{i++} zwraca stara wartosc, a dopiero potem zwieksza zmienna,
+  \item \mc{++i} najpierw zwieksza zmienna, a potem zwraca nowa wartosc.
+\end{itemize}
+
+To drobna roznica, ale przy bardziej zaawansowanej logice bywa istotna.
+
+\section{Wyrazenia w HTML}
+W MoonChunk wyrazenia moga trafiać bezposrednio do \mc{content}. Przykład:
+
+\begin{lstlisting}[style=moonchunk,caption={Wyrazenie wewnatrz content}]
+content {
+  <p>{views > 100 ? "Popularny wpis" : "Nowy wpis"}</p>
+};
+\end{lstlisting}
+
+To bardzo wygodne, ale warto zachowac umiar. Jesli wyrazenie staje sie dlugie,
+czesto lepiej obliczyc je najpierw w zmiennej.
+
+\section{Wyrazenia w indeksowaniu i dostepie do pol}
+Wyrazenia moga pojawiac sie rowniez przy dostepie do tablic i obiektow.
+
+\begin{lstlisting}[style=moonchunk,caption={Dostep dynamiczny do danych}]
+const cards = [
+  { title: "Parser" },
+  { title: "Runtime" }
+];
+
+let index: int = 1;
+let key: string = "title";
+print(cards[index][key]);
+\end{lstlisting}
+
+To pokazuje, ze MoonChunk nie ogranicza sie do prostych stalych sciezek typu
+\mc{obj.title}. Potrafi tez pracowac z kluczami i indeksami obliczanymi dynamicznie.
+
+\section{Kiedy wyrazenie jest zbyt zlozone}
+Jesli podczas czytania wlasnego kodu sam musisz zatrzymac sie na kilka sekund, aby
+zrozumiec jedno wyrazenie, to sygnal, ze warto je uproscic. Dobra praktyka wyglada tak:
+
+\begin{lstlisting}[style=moonchunk,caption={Uproszczenie przez zmienne pomocnicze}]
+let canShowBanner: bool = isPublished and not isArchived;
+let bannerText: string = canShowBanner ? "Gotowe" : "Ukryte";
+\end{lstlisting}
+
+Taki zapis jest zwykle czytelniejszy niz jeden bardzo dlugi warunek wpisany wprost do
+HTML-a albo do warunku petli.

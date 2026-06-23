@@ -1,0 +1,132 @@
+\chapter{Czym jest MoonChunk}
+
+\section{Idea jezyka}
+MoonChunk jest jezykiem do generowania statycznych stron HTML. Oznacza to, ze
+piszemy kod w plikach z rozszerzeniem \mc{.mncnk}, a wynikiem dzialania programu
+sa zwykle gotowe pliki \mc{.html}. Taki model jest bardzo wygodny wtedy, gdy chcemy:
+
+\begin{itemize}
+  \item zbudowac mala lub srednia strone internetowa,
+  \item tworzyc wiele podobnych podstron bez kopiowania kodu,
+  \item rozdzielic tresc, logike i metadata,
+  \item wykorzystywac petle, warunki i funkcje do skladania strony,
+  \item pracowac na danych zapisanych np. w plikach JSON.
+\end{itemize}
+
+MoonChunk nie jest klasycznym jezykiem ogolnego przeznaczenia takim jak C,
+JavaScript czy Python. Jego glowny cel jest bardziej wyspecjalizowany:
+\important{opisanie, jak maja powstac strony HTML}. W praktyce daje to dwie
+korzysci. Po pierwsze, kod jest krotszy i bardziej skupiony na strukturze strony.
+Po drugie, latwiej jest utrzymac porzadek, gdy witryna zaczyna rosnac.
+
+\section{Co to znaczy, ze MoonChunk jest jezykiem deklaratywno-imperatywnym}
+W MoonChunk spotykaja sie dwa sposoby myslenia o programie.
+
+\subsection*{Czesc deklaratywna}
+Deklarujemy, \emph{co} ma sie pojawic na stronie:
+
+\begin{itemize}
+  \item jaka jest trasa strony,
+  \item jakie ma miec metadata,
+  \item jaki HTML ma byc wygenerowany.
+\end{itemize}
+
+\subsection*{Czesc imperatywna}
+Opisujemy tez, \emph{jak} dojsc do wyniku:
+
+\begin{itemize}
+  \item obliczamy wartosci,
+  \item wykonujemy warunki \mc{if},
+  \item przechodzimy po elementach w petli,
+  \item wywoujemy funkcje,
+  \item importujemy fragmenty z innych plikow.
+\end{itemize}
+
+To polaczenie jest szczegolnie wygodne przy stronach, bo pozwala zarowno opisac
+strukture dokumentu, jak i kontrolowac logike potrzebna do jego wygenerowania.
+
+\section{Dla kogo jest MoonChunk}
+MoonChunk jest dobrym wyborem dla kilku grup odbiorcow.
+
+\subsection*{Dla osob uczacych sie jezykow i interpreterow}
+Jezyk ma niewielka powierzchnie skladniowa, a jednoczesnie zawiera klasyczne
+pojecia programistyczne: zmienne, typy, funkcje, rekurencje, petle, importy oraz
+zakresy widocznosci. To sprawia, ze dobrze nadaje sie do nauki.
+
+\subsection*{Dla osob tworzacych statyczne strony}
+Jesli chcesz wygenerowac zestaw stron produktowych, portfolio, dokumentacje,
+mini-bloga albo zestaw landing pages, MoonChunk daje Ci duzo porzadku przy malej
+ilosci kodu.
+
+\subsection*{Dla osob, ktore nie chca duzego frameworka}
+Nie kazdy projekt potrzebuje Reacta, Vite, rozbudowanego CMS-a albo serwera po
+stronie backendu. Czasem wystarczy prosty proces: wejscie w postaci danych i plikow
+\mc{.mncnk}, wyjscie w postaci gotowego HTML.
+
+\section{Jak myslec o projekcie w MoonChunk}
+Najprostszy model mentalny wyglada tak:
+
+\begin{enumerate}
+  \item tworzysz plik \mc{.mncnk},
+  \item definiujesz w nim jeden lub kilka \mc{chunk}-ow,
+  \item w wybranym miejscu uruchamiasz punkt wejscia przez \mc{moon(...)},
+  \item w trakcie wykonania MoonChunk tworzy strony \mc{page},
+  \item kazda strona sklada HTML z blokow \mc{content},
+  \item gotowe dokumenty trafiaja do katalogu wyjsciowego.
+\end{enumerate}
+
+To podejscie warto zapamietac. W MoonChunk nie piszesz programu po to, aby stale
+reagowal na klikniecia uzytkownika w przegladarce. Piszesz go po to, aby
+\important{wygenerowac finalne pliki}. Oznacza to, ze duza czesc logiki wykonuje sie
+w momencie budowania, a nie w chwili ogladania strony przez odwiedzajacego.
+
+\section{MoonChunk a HTML}
+MoonChunk nie zastępuje HTML. On go \important{wytwarza}. To duza roznica.
+Kiedy tworzysz blok \mc{content}, w praktyce opisujesz fragment przyszlego
+HTML-a. Mozesz wpisac tam zwykle znaczniki, a w miejscach dynamicznych umiescic
+wyrazenia w nawiasach klamrowych.
+
+\begin{lstlisting}[style=moonchunk,caption={Fragment dynamicznego HTML w MoonChunk}]
+content {
+  <h1>{title}</h1>
+  <p>{description}</p>
+};
+\end{lstlisting}
+
+Po wykonaniu programu \mc{title} i \mc{description} zostana zamienione na konkretne
+wartosci, a wynik trafi do pliku HTML.
+
+\section{MoonChunk a klasyczne programowanie}
+Jesli nie programowales wczesniej, kilka pojec moze brzmiec obco. Oto najwazniejsze
+z nich w uproszczonej formie:
+
+\begin{itemize}
+  \item \important{zmienna} to nazwana wartosc, np. tytul strony albo liczba odwiedzin,
+  \item \important{typ} opisuje, jakiego rodzaju jest wartosc, np. liczba, tekst albo wartosc logiczna,
+  \item \important{warunek} pozwala wybrac jedna z dwoch drog wykonania,
+  \item \important{petla} pozwala powtorzyc podobne dzialanie wiele razy,
+  \item \important{funkcja} to fragment logiki, ktory mozna wywolywac wielokrotnie,
+  \item \important{zakres} odpowiada za to, gdzie dana zmienna jest widoczna.
+\end{itemize}
+
+W kolejnych rozdzialach kazde z tych pojec zostanie omowione spokojnie i od podstaw.
+
+\section{Jakie problemy MoonChunk rozwiazuje najlepiej}
+MoonChunk szczegolnie dobrze sprawdza sie w nastepujacych scenariuszach:
+
+\begin{itemize}
+  \item generowanie wielu podobnych stron na podstawie danych,
+  \item utrzymywanie wspolnych metadata dla calego serwisu,
+  \item skladanie strony z importowanych fragmentow,
+  \item oddzielenie warstwy danych od warstwy HTML,
+  \item uczenie sie budowy jezyka i interpretera na praktycznym przykladzie.
+\end{itemize}
+
+Jesli potrzebujesz ogromnej aplikacji klienckiej z rozbudowanym stanem w przegladarce,
+MoonChunk sam w sobie nie zastapi takiego ekosystemu. Natomiast jako narzedzie do
+budowania gotowych dokumentow HTML jest bardzo wygodny i czytelny.
+
+\section{Co znajdziesz dalej}
+W nastepnym rozdziale przejdziemy od idei do praktyki. Zobaczysz, jak rozpoczac
+prace z MoonChunk jako zwykly uzytkownik, bez zaglebiania sie w szczegoly parsera
+czy procesu budowania samego jezyka.

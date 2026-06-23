@@ -1,0 +1,224 @@
+\chapter{Struktura programu}
+
+\section{Dlaczego struktura jest wazna}
+W malym pliku wszystko wydaje sie oczywiste. Problem zaczyna sie wtedy, gdy projekt
+ma kilka stron, wspolne metadata, importy, funkcje pomocnicze i powtarzalne fragmenty.
+Wlasnie wtedy porzadna struktura przestaje byc luksusem, a zaczyna byc koniecznoscia.
+
+MoonChunk daje do tego kilka prostych narzedzi:
+
+\begin{itemize}
+  \item \mc{chunk} jako glowny blok organizacyjny,
+  \item \mc{import} do ladowania rzeczy z innych plikow,
+  \item \mc{@include} do wlaczania chunkow do chunkow,
+  \item \mc{moon(...)} do wybierania punktu wejscia.
+\end{itemize}
+
+\section{Co moze znajdowac sie w pliku \mc{.mncnk}}
+Plik MoonChunk zwykle sklada sie z dwoch czesci:
+
+\begin{enumerate}
+  \item opcjonalnych \mc{import}-ow na samej gorze,
+  \item jednego lub wielu \mc{chunk}-ow oraz wywolan \mc{moon(...)}.
+\end{enumerate}
+
+Przyklad:
+
+\begin{lstlisting}[style=moonchunk,caption={Typowy szkielet pliku MoonChunk}]
+import { Shared } from "./shared.mncnk";
+import * as Pages from "./pages.mncnk";
+
+chunk "Main" {
+  @include Shared;
+  output: "./dist";
+};
+
+moon(Main);
+\end{lstlisting}
+
+Warto od razu zauwazyc dwie rzeczy:
+
+\begin{itemize}
+  \item importy stoja na samej gorze pliku,
+  \item sam import nie uruchamia jeszcze generowania strony.
+\end{itemize}
+
+\section{Czym jest \mc{chunk}}
+\mc{chunk} to podstawowa jednostka organizacyjna programu. Mozna go porownac do
+modulu, ale z naciskiem na wykonanie. Chunk moze zawierac:
+
+\begin{itemize}
+  \item metadata,
+  \item deklaracje zmiennych,
+  \item funkcje,
+  \item petle i warunki,
+  \item strony \mc{page},
+  \item wylaczenie innych chunkow przez \mc{@include}.
+\end{itemize}
+
+Przyklad:
+
+\begin{lstlisting}[style=moonchunk,caption={Chunk zawierajacy kilka rodzajow elementow}]
+chunk "Main" {
+  output: "./dist";
+  title: "Strona glowna";
+
+  function greet(name: string): string {
+    return "Czesc, " + name;
+  }
+
+  page "" {
+    let userName = "Alicja";
+    content {
+      <h1>{title}</h1>
+      <p>{greet(userName)}</p>
+    };
+  };
+};
+\end{lstlisting}
+
+\section{Jedna nazwa, jedna odpowiedzialnosc}
+Dobrze jest nadawac chunkom nazwy, ktore odpowiadaja ich roli. Przykladowo:
+
+\begin{itemize}
+  \item \mc{"Main"} -- glowny punkt wejscia,
+  \item \mc{"Metadata"} -- wspolne metadata,
+  \item \mc{"BlogPages"} -- generowanie podstron bloga,
+  \item \mc{"ProductPages"} -- generowanie kart produktowych.
+\end{itemize}
+
+Taka konwencja bardzo pomaga przy importach i przy pracy zespolowej.
+
+\section{Wywolanie \mc{moon(...)} jako punkt startowy}
+Wazna cecha MoonChunk polega na tym, ze \mc{chunk} istnieje jako opis logiki,
+ale dopiero \mc{moon(...)} powoduje jego wykonanie.
+
+\begin{lstlisting}[style=moonchunk,caption={Jawny punkt wejscia}]
+chunk "Main" {
+  output: "./dist";
+};
+
+moon(Main);
+\end{lstlisting}
+
+Mozesz tez uruchomic kilka punktow wejscia:
+
+\begin{lstlisting}[style=moonchunk,caption={Wiele wywolan moon(...)}]
+chunk "Home" {
+  output: "./dist";
+  page "" {
+    content {
+      <h1>Home</h1>
+    };
+  };
+};
+
+chunk "About" {
+  output: "./dist";
+  page "about" {
+    content {
+      <h1>About</h1>
+    };
+  };
+};
+
+moon(Home);
+moon(About);
+\end{lstlisting}
+
+Oznacza to, ze jeden plik moze wygenerowac wiele niezaleznych zestawow stron.
+
+\section{Import a wykonanie}
+To rozroznienie jest krytyczne. \important{Import nie znaczy wykonanie}. Import
+sprawia tylko, ze jakis zasob staje sie dostepny w pliku. Dopiero pozniejsze
+\mc{@include} lub \mc{moon(...)} powoduje realne uzycie danego fragmentu.
+
+To zachowanie chroni przed nieprzewidywalnym uruchamianiem kodu z plikow pomocniczych.
+Dzieki temu mozesz miec biblioteke chunkow i korzystac z niej tylko tam, gdzie chcesz.
+
+\section{Eksportowanie chunkow}
+Jesli chcesz importowac chunk z innego pliku, taki chunk powinien byc oznaczony jako
+\mc{export}. Praktycznie wyglada to tak:
+
+\begin{lstlisting}[style=moonchunk,caption={Chunk eksportowany do innych plikow}]
+export chunk "Shared" {
+  const siteName: string = "MoonChunk Docs";
+};
+\end{lstlisting}
+
+Brak eksportu oznacza, ze dany chunk jest lokalny dla pliku i nie powinien byc
+traktowany jak element publicznego interfejsu.
+
+\section{Kolejnosc w pliku}
+W MoonChunk kolejnosc ma znaczenie organizacyjne i semantyczne. Najbardziej bezpieczny
+wzorzec wyglada tak:
+
+\begin{enumerate}
+  \item importy,
+  \item deklaracje chunkow,
+  \item wywolania \mc{moon(...)}.
+\end{enumerate}
+
+Wewnatrz samego \mc{chunk}-a dobrym zwyczajem jest trzymanie sie nastepujacego ukladu:
+
+\begin{enumerate}
+  \item \mc{@include},
+  \item \mc{output} i metadata,
+  \item \mc{env} z globalami,
+  \item funkcje i stale,
+  \item logika stron, petle, warunki, \mc{page}.
+\end{enumerate}
+
+Ten porzadek nie jest przypadkowy. Pozwala szybko rozpoznac, co jest wspolna konfiguracja,
+co jest logika pomocnicza, a co odpowiada za faktyczne generowanie stron.
+
+\section{Plik glowny i pliki pomocnicze}
+W mniejszych projektach wszystko moze miescic sie w jednym pliku. W wiekszych duzo lepiej
+sprawdza sie podzial na role, np.:
+
+\begin{lstlisting}[style=basecode,caption={Przykladowy podzial projektu na pliki}]
+content/
+  site.mncnk
+  shared.mncnk
+  blog.mncnk
+  pages/
+    home.mncnk
+    docs.mncnk
+  data/
+    posts.json
+\end{lstlisting}
+
+Wtedy:
+
+\begin{itemize}
+  \item \mc{site.mncnk} moze byc glownym plikiem startowym,
+  \item \mc{shared.mncnk} moze przechowywac wspolne metadata i funkcje,
+  \item pliki w \mc{pages/} moga zawierac chunki dla poszczegolnych obszarow witryny,
+  \item katalog \mc{data/} moze trzymac zewnetrzne dane do ladowania przez \mc{data(...)}.
+\end{itemize}
+
+\section{Myslenie warstwowe}
+Dobra struktura MoonChunk zwykle rozdziela projekt na trzy warstwy:
+
+\begin{itemize}
+  \item \important{warstwa konfiguracji} -- output, metadata, globalne wartosci,
+  \item \important{warstwa logiki} -- funkcje, petle, warunki, obliczenia,
+  \item \important{warstwa prezentacji} -- bloki \mc{content} i HTML.
+\end{itemize}
+
+Im wyrazniej rozdzielisz te warstwy, tym przyjemniej bedzie utrzymywac kod.
+
+\section{Jak rozpoznac, ze struktura robi sie zla}
+Oto kilka sygnalow ostrzegawczych:
+
+\begin{itemize}
+  \item jeden plik ma kilkaset linii i robi wszystko naraz,
+  \item nie wiadomo, ktory \mc{chunk} jest punktem wejscia,
+  \item metadata sa kopiowane do wielu miejsc,
+  \item te same funkcje pojawiaja sie w kilku plikach,
+  \item importy sa przypadkowe i trudno sledzic zaleznosci,
+  \item chunki maja ogolne nazwy typu \mc{"Test"}, \mc{"Temp"}, \mc{"X"}.
+\end{itemize}
+
+Jesli widzisz takie objawy, warto zatrzymac sie na chwile i przebudowac uklad programu.
+MoonChunk duzo zyskuje na czytelnej strukturze.

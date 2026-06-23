@@ -1,0 +1,63 @@
+\chapter{FAQ: najczestsze pytania uzytkownikow}
+
+\section{Czy jeden plik \mc{.mncnk} moze generowac wiele stron}
+Tak. Wystarczy, ze w odpowiednich chunkach zdefiniujesz wiecej niz jedna instrukcje
+\mc{page}, albo uruchomisz wiele punktow wejscia przez \mc{moon(...)}.
+
+\section{Czy import od razu generuje HTML}
+Nie. Import tylko udostepnia chunki z innego pliku. Realne użycie następuje dopiero po
+\mc{@include} albo \mc{moon(...)}.
+
+\section{Czy musze podawac \mc{.html} w trasie strony}
+Nie. MoonChunk potrafi sam dopisac rozszerzenie \mc{.html} tam, gdzie ma to sens.
+Dlatego zwykle zapisujesz po prostu \mc{page "about"}.
+
+\section{Czy moge pominac wiodacy ukośnik w trasie}
+Tak. MoonChunk normalizuje takie sciezki. Dla uzytkownika oznacza to, ze zapis logiczny
+jest wazniejszy niz reczne dbanie o format nazwy pliku wyjsciowego.
+
+\section{Czy moge użyć \mc{content} poza \mc{page}}
+Nie w zwyklym sensie generowania strony. \mc{content} jest przeznaczony do skladania
+tresci dokumentu strony. W praktyce pracujesz z nim w kontekscie \mc{page}.
+
+\section{Czy \mc{let} bez wartosci jest bezpieczne}
+Tak, o ile pamietasz, ze musisz nadać wartosc przed odczytem. To narzedzie wygodne,
+ale wymaga dyscypliny.
+
+\section{Czy moge zmieniac \mc{const}}
+Nie. Jesli wiesz, ze wartosc ma sie zmieniac, uzyj \mc{let}.
+
+\section{Czy moge miec te sama nazwe w wielu miejscach}
+Tak, ale nie wszedzie. Ta sama nazwa jest bezpieczna np. w osobnym chunku, funkcji albo
+jawnie wydzielonym bloku \mc{\{ ... \}}. Nie nalezy zakladac, ze takie samo cieniowanie
+bedzie dozwolone w ciele \mc{if}, \mc{for} czy \mc{while}.
+
+\section{Czy MoonChunk ma osobny typ rekordu albo krotki}
+Nie ma osobnej skladni rekordu w sensie odrebnego typu jezykowego. W praktyce rolę
+rekordu pelni \mc{object} albo \mc{dict}. Jesli potrzebujesz nazwanych pol, to zazwyczaj
+jest wlasnie najlepszy wybor.
+
+\section{Czy dane z JSON sa tylko do odczytu}
+MoonChunk pozwala pracowac na danych i w wielu przypadkach je modyfikowac w czasie
+wykonania programu, np. zmieniac pola obiektow i elementy tablic przed wygenerowaniem
+finalnego HTML-a.
+
+\section{Czy moge wypisac funkcje albo chunk przez \mc{print}}
+Tak. \mc{print(...)} potrafi wypisywac nie tylko podstawowe wartosci, ale tez bardziej
+zlozone byty, w tym funkcje i chunki.
+
+\section{Czy petle musza miec licznik typu \mc{int}}
+W praktyce przy klasycznej petli \mc{for} jest to najwygodniejsze i najbardziej naturalne.
+MoonChunk przewiduje właśnie taki czytelny, kontrolowany model iteracji.
+
+\section{Czy \mc{break} i \mc{continue} dzialaja wszedzie}
+Nie. Dzialaja tylko wewnatrz petli. Poza \mc{for} i \mc{while} sa traktowane jako blad.
+
+\section{Czy musze wszedzie podawac typy}
+Nie zawsze. W wielu przypadkach typ mozna pominac, jesli wynika on jasno z przypisanej
+wartosci. Jednak jawne typy bardzo pomagaja w czytelnosci i sa polecane w wazniejszych
+miejscach projektu.
+
+\section{Czy musze znac parser i ANTLR, zeby korzystac z MoonChunk}
+Nie. To wiedza potrzebna autorowi implementacji jezyka, a nie zwyklemu uzytkownikowi,
+ktory chce pisac strony i logike projektu.

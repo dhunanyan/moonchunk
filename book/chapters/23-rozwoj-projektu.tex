@@ -1,0 +1,65 @@
+\chapter{Jak rozwijac projekt od malego do sredniego serwisu}
+
+\section{Etap 1: jedna strona i jeden chunk}
+Kazdy projekt warto zaczac od minimalnego pionowego przekroju. Jedna strona, jeden chunk,
+jeden punkt \mc{moon(...)}. Celem nie jest od razu architektura idealna, tylko pierwszy
+poprawny wynik HTML.
+
+\section{Etap 2: wspolne metadata}
+Gdy pojawia sie druga strona, zwykle od razu warto wydzielic chunk z metadata wspolnymi.
+To pierwszy realny krok w kierunku reuzywalnosci.
+
+\section{Etap 3: funkcje pomocnicze}
+Gdy te same obliczenia zaczynaja powtarzac sie w kilku miejscach, wydziel funkcje.
+Na tym etapie MoonChunk zaczyna przynosic realny zysk: projekt nie tylko generuje HTML,
+ale robi to w sposób uporzadkowany.
+
+\section{Etap 4: dane z JSON}
+Kiedy tresc strony przestaje byc recznie wpisywana, przychodzi pora na \mc{data(...)}.
+To moment, w ktorym projekt przestaje byc tylko zestawem statycznych napisow, a zaczyna
+stac sie malym systemem generowania dokumentow na podstawie danych.
+
+\section{Etap 5: podzial na pliki}
+Jesli plik glowny zaczyna byc zbyt duzy, rozdziel odpowiedzialnosci:
+
+\begin{itemize}
+  \item metadata,
+  \item strony glowne,
+  \item logika bloga,
+  \item sekcje wspolne,
+  \item dane.
+\end{itemize}
+
+W tym momencie importy staja sie naturalna częscią codziennej pracy.
+
+\section{Etap 6: wzorce projektowe}
+Kiedy projekt ma juz kilka stron i kilka rodzajow danych, warto swiadomie wprowadzic
+powtarzalne wzorce:
+
+\begin{itemize}
+  \item sekcje budowane z tablic obiektow,
+  \item funkcje etykietujace,
+  \item wspolne metadata z lokalnym nadpisaniem,
+  \item jawne punkty wejscia \mc{moon(...)} dla wybranych przebiegow generacji.
+\end{itemize}
+
+\section{Etap 7: czyszczenie i stabilizacja}
+Na tym etapie warto przejrzec projekt i zadac kilka pytań kontrolnych:
+
+\begin{itemize}
+  \item czy nazwy sa nadal czytelne,
+  \item czy logika nie rozlala sie do HTML-a,
+  \item czy globali nie jest za duzo,
+  \item czy importy oddaja prawdziwy podzial odpowiedzialnosci,
+  \item czy debugowe \mc{print(...)} nadal sa potrzebne.
+\end{itemize}
+
+\section{Etap 8: swiadome skalowanie}
+MoonChunk nie musi rosnac przez doklejanie kolejnych przypadkowych plikow. Dobrze prowadzony
+projekt rozwija sie warstwowo. Każda nowa strona albo sekcja znajduje swoje miejsce w
+istniejacej strukturze.
+
+\section{Zasada, ktora ratuje projekt}
+Najwazniejsza rada na etapie wzrostu jest prosta: \important{najpierw nazywaj i porzadkuj,
+potem dopiero rozbudowuj}. W wielu projektach to wlasnie brak porzadku, a nie brak funkcji,
+staje sie prawdziwym problemem.

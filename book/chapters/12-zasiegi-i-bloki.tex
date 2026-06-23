@@ -1,0 +1,207 @@
+\chapter{Zasiegi, bloki i widocznosc nazw}
+
+\section{Dlaczego zasieg jest tak wazny}
+Zasieg odpowiada na pytanie: \emph{z jakiego miejsca programu dana nazwa jest widoczna
+i do jakiej wartosci sie odnosi}. Bez tego bardzo szybko powstalby chaos. Dwie rozne
+czesci programu moglyby przypadkiem walczyc o te sama nazwe i nadpisywac sobie dane.
+
+W MoonChunk temat zasiegow jest szczegolnie istotny, bo laczy:
+
+\begin{itemize}
+  \item zwykle zmienne,
+  \item funkcje,
+  \item ciała warunkow i petli,
+  \item odrebne chunki,
+  \item jawne bloki \mc{\{ ... \}},
+  \item specjalny zapis \mc{parent::name}.
+\end{itemize}
+
+\section{Najprostsza intuicja}
+Jesli deklarujesz nazwe w pewnym miejscu, to najpierw nalezy zakladac, ze jest ona
+widoczna lokalnie w tym miejscu i w tym, co z niego wynika. Jednak nie kazdy blok w
+MoonChunk daje identyczna swobode cieniowania nazw.
+
+To celowy projekt: jezyk stawia na przewidywalnosc i chce ograniczac przypadkowe
+kolizje nazw.
+
+\section{Redeclaracja a zwykle przypisanie}
+Na poczatek trzeba odroznic dwie rzeczy:
+
+\begin{itemize}
+  \item \important{redeklaracja} tworzy nowa nazwe o tej samej nazwie,
+  \item \important{przypisanie} zmienia wartosc juz istniejacej nazwy typu \mc{let}.
+\end{itemize}
+
+Przyklad poprawnego przypisania:
+
+\begin{lstlisting}[style=moonchunk,caption={Zmiana wartosci przez przypisanie}]
+let x: int = 1;
+x = x + 1;
+\end{lstlisting}
+
+Przyklad błednej redeklaracji w tym samym zakresie:
+
+\begin{lstlisting}[style=moonchunk,caption={Bledna redeklaracja w tym samym miejscu}]
+let x: int = 1;
+let x: int = 2;
+\end{lstlisting}
+
+\section{Granice, przy ktorych ta sama nazwa jest dozwolona}
+MoonChunk dopuszcza powtorzenie tej samej nazwy tylko w wybranych, swiadomych granicach.
+Najwazniejsze z nich to:
+
+\begin{itemize}
+  \item osobny \mc{chunk},
+  \item osobne wywolanie funkcji,
+  \item jawny blok \mc{\{ ... \}}.
+\end{itemize}
+
+Oznacza to, ze ten sam identyfikator moze oznaczac co innego w innym chunku albo wewnatrz
+funkcji, bez konfliktu z nazwa z zewnatrz.
+
+\section{Osobne chunki jako osobne granice}
+Dwa rozne chunki moga korzystac z tej samej nazwy i nie wchodza sobie w droge.
+
+\begin{lstlisting}[style=moonchunk,caption={Ta sama nazwa w dwoch chunkach}]
+chunk "First" {
+  const x: int = 1;
+  print("First.x:", x);
+};
+
+chunk "Second" {
+  const x: int = 2;
+  print("Second.x:", x);
+};
+\end{lstlisting}
+
+To naturalne: kazdy chunk jest osobna jednostka wykonania.
+
+\section{Funkcja jako granica zasiegu}
+Funkcje rowniez tworza istotna granice. Przyklad:
+
+\begin{lstlisting}[style=moonchunk,caption={Ta sama nazwa na zewnatrz i wewnatrz funkcji}]
+chunk "Main" {
+  const x: int = 3;
+
+  function demo(): int {
+    const x: int = 5;
+    return x;
+  }
+
+  print("outer:", x);
+  print("inner:", demo());
+};
+\end{lstlisting}
+
+Tutaj wewnetrzne \mc{x} funkcji nie niszczy zewnetrznego \mc{x}. To oddzielna przestrzen.
+Dodatkowo przy rekurencji kazde kolejne wywolanie funkcji ma swoj wlasny zestaw lokalnych
+zmiennych.
+
+\section{Jawny blok \mc{\{ ... \}}}
+MoonChunk wspiera tez samodzielny, jawny blok, ktory pozwala swiadomie utworzyc nowy
+zagniezdzony zakres.
+
+\begin{lstlisting}[style=moonchunk,caption={Jawny blok jako osobny zakres}]
+let i: int = 1;
+
+{
+  let i: int = 99;
+  print(i);
+};
+
+print(i);
+\end{lstlisting}
+
+W takim przypadku wewnetrzne \mc{i} jest osobna nazwa dla wnetrza bloku, a zewnetrzne
+\mc{i} pozostaje bez zmian.
+
+\section{Dlaczego to rozwiazanie jest przydatne}
+Jawny blok pozwala:
+
+\begin{itemize}
+  \item ograniczyc zycie zmiennych do małego fragmentu logiki,
+  \item eksperymentowac z nazwami pomocniczymi bez zanieczyszczania otoczenia,
+  \item budowac czytelniejsze etapy obliczen,
+  \item tworzyc bezpieczne, lokalne konteksty pracy.
+\end{itemize}
+
+To bardzo przyjemny mechanizm wszedzie tam, gdzie funkcja bylaby zbyt duza konstrukcja,
+a zwykly ciag instrukcji -- zbyt splaszczony.
+
+\section{Ciala \mc{if}, \mc{for} i \mc{while} sa bardziej rygorystyczne}
+To wazna cecha MoonChunk. Chociaz instrukcje warunkowe i petle korzystaja z blokow,
+nie nalezy traktowac ich jak pelnej, swobodnej przestrzeni do ponownego deklarowania
+tej samej nazwy z najblizszego otoczenia.
+
+Przyklad problematyczny:
+
+\begin{lstlisting}[style=moonchunk,caption={Redeclaracja w ciele if}]
+const x: int = 3;
+
+if (true) {
+  const x: int = 5;
+};
+\end{lstlisting}
+
+Ten wzorzec powinien byc traktowany jako blad redeklaracji. Jesli celem jest swiadome
+wydzielenie osobnego zasiegu z ta sama nazwa, lepiej uzyc jawnego bloku \mc{\{ ... \}}
+albo funkcji.
+
+\section{Odczyt wartosci z nadrzednego zakresu przez \mc{parent::}}
+MoonChunk daje tez specjalny zapis pozwalajacy siegnac do wyzszej warstwy zasiegu.
+Przyklad:
+
+\begin{lstlisting}[style=moonchunk,caption={Odczyt z parent::}]
+let i: int = 1;
+
+{
+  let i: int = 99;
+  {
+    let fromParent1: int = parent::i;
+    let fromParent2: int = parent::parent::i;
+    print(fromParent1);
+    print(fromParent2);
+  };
+};
+\end{lstlisting}
+
+Tutaj:
+
+\begin{itemize}
+  \item \mc{parent::i} oznacza \mc{i} z bezposrednio wyzszego poziomu,
+  \item \mc{parent::parent::i} oznacza \mc{i} dwa poziomy wyzej.
+\end{itemize}
+
+To narzedzie zaawansowane, ale bardzo przydatne, gdy swiadomie pracujesz na zagniezdzonych
+blokach.
+
+\section{Kiedy nie uzywac \mc{parent::}}
+Jesli mozna przekazac wartosc wprost do funkcji albo zbudowac kod czytelniej przez
+zmienne pomocnicze, zwykle warto wybrac prostsze rozwiazanie. \mc{parent::} jest
+przydatny, ale naduzywany szybko utrudnia sledzenie przeplywu danych.
+
+\section{Globalne wartosci a zasiegi lokalne}
+Zmienne globalne z bloku \mc{env} sa osobnym mechanizmem. Sluza do wspolnych wartosci,
+ale nie powinny byc traktowane jako substytut dobrej organizacji lokalnych nazw.
+
+Praktyczna rada jest prosta:
+
+\begin{itemize}
+  \item rzeczy naprawde wspolne wrzucaj do globali,
+  \item rzeczy lokalne zostaw lokalnie,
+  \item nie buduj wszystkiego na globalach tylko dlatego, ze sa wygodne.
+\end{itemize}
+
+\section{Najczestsze bledy zwiazane z zasiegami}
+\begin{itemize}
+  \item redeklaracja tej samej nazwy w tym samym miejscu,
+  \item probowanie cieniowania nazwy w \mc{if}, \mc{for} lub \mc{while},
+  \item odczyt zmiennej przed inicjalizacja,
+  \item zbyt glebokie poleganie na \mc{parent::},
+  \item mieszanie odpowiedzialnosci globali i zwyklych zmiennych lokalnych.
+\end{itemize}
+
+\section{Zlota zasada czytelnosci}
+Jesli po kilku dniach nie jestes w stanie szybko odpowiedziec, skad bierze sie wartosc
+jakiejs nazwy, to znaczy, ze struktura zasiegow jest zbyt skomplikowana. Dobrze napisany
+kod MoonChunk ma byc czytelny nie tylko dla interpretera, ale tez dla czlowieka.

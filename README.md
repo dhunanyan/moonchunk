@@ -18,7 +18,8 @@
 
 ## Overview
 
-Complete Documentation (in Polish): [MoonChunk_Complete_Docs_Polish.pdf](MoonChunk_Complete_Docs_Polish.pdf)
+- Book (in Polish): [MoonChunk_Book.pdf](MoonChunk_Book.pdf)
+- Complete Documentation (in Polish): [MoonChunk_Complete_Docs_Polish.pdf](MoonChunk_Complete_Docs_Polish.pdf)
 
 MoonChunk is an open-source language runtime focused on:
 

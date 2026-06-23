@@ -1,0 +1,183 @@
+\chapter{Pierwszy program}
+
+\section{Po co zaczynac od najmniejszego mozliwego przykladu}
+Kiedy poznajemy nowy jezyk, bardzo latwo jest od razu zobaczyc duzy przyklad,
+przestraszyc sie liczby elementow i stracic intuicje. Dlatego zaczniemy od programu,
+ktory robi tylko jedna rzecz: generuje pojedyncza strone glowna.
+
+Oto minimalny przyklad:
+
+\begin{lstlisting}[style=moonchunk,caption={Minimalny program w MoonChunk}]
+chunk "Main" {
+  output: "./dist";
+
+  page "" {
+    content {
+      <h1>Witaj w MoonChunk</h1>
+      <p>To jest moja pierwsza strona.</p>
+    };
+  };
+};
+
+moon(Main);
+\end{lstlisting}
+
+Jest tu zaledwie kilka elementow, ale juz teraz widzimy prawie caly podstawowy model
+pracy z jezykiem.
+
+\section{Czytanie programu od gory do dolu}
+Przejdzmy przez kod linia po linii.
+
+\subsection*{\mc{chunk "Main" \{ ... \};}}
+\mc{chunk} jest podstawowym kontenerem logiki i tresci w MoonChunk. Mozna o nim
+myslec jak o module albo opakowaniu na fragment programu. Wewnatrz \mc{chunk}-a
+umieszcza sie instrukcje zwiazane z generowaniem stron, definicje funkcji, zmienne,
+metadata oraz importowane fragmenty przez \mc{@include}.
+
+Nazwa \mc{"Main"} jest nazwa logiczna. Nie jest to nazwa pliku HTML. To nazwa
+obiektu, do ktorego potem odwolujemy sie przez \mc{moon(Main)}.
+
+\subsection*{\mc{output: "./dist";}}
+Instrukcja \mc{output} mowi, gdzie maja trafic wygenerowane pliki. W tym przykladzie
+wyniki zostana zapisane w katalogu \mc{dist}. Jesli wygenerujemy strone glowna,
+prawdopodobnie zobaczymy tam plik \mc{index.html}.
+
+\subsection*{\mc{page "" \{ ... \};}}
+\mc{page} oznacza pojedyncza strone, ktora ma zostac wygenerowana. Pusty napis
+\mc{""} oznacza trase glowna. W praktyce przeklada sie to na \mc{index.html}.
+
+To bardzo wazny wzorzec:
+
+\begin{itemize}
+  \item \mc{page ""} to strona glowna,
+  \item \mc{page "about"} to zwykle \mc{about.html},
+  \item \mc{page "blog/post-1"} to zwykle \mc{blog/post-1.html}.
+\end{itemize}
+
+\subsection*{\mc{content \{ ... \};}}
+Blok \mc{content} przechowuje HTML, ktory trafi do glownej czesci dokumentu.
+To miejsce, w ktorym najczesciej wpisuje sie znaczniki takie jak \mc{<h1>}, \mc{<p>},
+\mc{<section>}, \mc{<article>} czy \mc{<ul>}.
+
+\subsection*{\mc{moon(Main);}}
+Ta linia uruchamia wykonanie wybranego \mc{chunk}-a. Bez niej program moze zostac
+poprawnie sparsowany, ale nic nie zostanie wygenerowane, poniewaz nie wskazalismy
+punktu wejscia.
+
+\section{Dlaczego \mc{moon(...)} jest takie wazne}
+W wielu jezykach program zaczyna sie automatycznie od jednej, uprzywilejowanej funkcji.
+MoonChunk dziala troche inaczej. Mozesz miec w jednym projekcie wiele \mc{chunk}-ow,
+a \mc{moon(...)} jawnie wskazuje, ktory z nich ma zostac wykonany.
+
+Dzieki temu:
+
+\begin{itemize}
+  \item latwo pracowac na roznych wariantach projektu,
+  \item mozna generowac kilka zestawow stron w jednym przebiegu,
+  \item importowane fragmenty nie uruchamiaja sie same z siebie,
+  \item kod staje sie bardziej przewidywalny.
+\end{itemize}
+
+To niepozorna konstrukcja, ale bardzo porzadkuje duze projekty.
+
+\section{Wersja rozbudowana o zmienne}
+Dodajmy teraz dwie proste zmienne i wykorzystajmy je w HTML:
+
+\begin{lstlisting}[style=moonchunk,caption={Pierwszy program z danymi dynamicznymi}]
+chunk "Main" {
+  output: "./dist";
+
+  page "" {
+    let title = "Moja pierwsza strona";
+    let intro = "Ten tekst pochodzi ze zmiennej.";
+
+    content {
+      <h1>{title}</h1>
+      <p>{intro}</p>
+    };
+  };
+};
+
+moon(Main);
+\end{lstlisting}
+
+W tym przykladzie \mc{title} i \mc{intro} nie sa wpisane na sztywno w HTML-u.
+Najpierw otrzymuja wartosc, a potem sa wstawiane do tresci strony przez zapis
+\mc{\{title\}} i \mc{\{intro\}}.
+
+\section{Co dzieje sie podczas wykonania}
+Gdy MoonChunk uruchamia taki program, mozna to opisac w nastepujacych krokach:
+
+\begin{enumerate}
+  \item odczytuje plik \mc{.mncnk},
+  \item rozpoznaje \mc{chunk}-i, strony, zmienne i pozostala logike,
+  \item wykonuje \mc{moon(Main)},
+  \item wchodzi do wnętrza \mc{chunk "Main"},
+  \item dochodzi do strony \mc{page ""},
+  \item tworzy zmienne \mc{title} i \mc{intro},
+  \item sklada HTML z bloku \mc{content},
+  \item zapisuje wynik do pliku wyjsciowego.
+\end{enumerate}
+
+Jesli rozumiesz te osiem punktow, rozumiesz juz podstawowy cykl zycia programu
+MoonChunk.
+
+\section{Najwazniejsza roznica miedzy kodem a wynikiem}
+Dobrze jest rozdzielic w glowie dwie rzeczy:
+
+\begin{itemize}
+  \item \important{kod MoonChunk} -- to instrukcje, ktore piszesz,
+  \item \important{wygenerowany HTML} -- to finalny wynik po wykonaniu instrukcji.
+\end{itemize}
+
+Na przyklad taki kod:
+
+\begin{lstlisting}[style=moonchunk,caption={Kod z interpolacja wartosci}]
+let name = "Alicja";
+content {
+  <p>Czesc, {name}!</p>
+};
+\end{lstlisting}
+
+moze zamienic sie na wynikowy HTML:
+
+\begin{lstlisting}[style=basecode,caption={Przykladowy wynik po wykonaniu}]
+<p>Czesc, Alicja!</p>
+\end{lstlisting}
+
+Ta umiejetnosc rozrozniannia etapu \emph{pisania programu} od etapu \emph{wygenerowania
+wyniku} jest kluczowa w calej dalszej pracy.
+
+\section{Typowe pomylki w pierwszym programie}
+Na poczatku najczesciej trafiaja sie cztery rodzaje bledow:
+
+\begin{itemize}
+  \item brak srednika \mc{;},
+  \item brak zamykajacego nawiasu klamrowego,
+  \item brak \mc{moon(Main);},
+  \item wpisanie wartosci dynamicznej bez nawiasow klamrowych w \mc{content}.
+\end{itemize}
+
+Przykladowo, jesli napiszesz:
+
+\begin{lstlisting}[style=moonchunk,caption={Zly zapis wartosci dynamicznej}]
+content {
+  <h1>title</h1>
+};
+\end{lstlisting}
+
+na stronie zobaczysz doslownie slowo \mc{title}, a nie wartosc zmiennej. Aby wstawic
+zawartosc zmiennej, potrzebny jest zapis \mc{\{title\}}.
+
+\section{Co warto zapamietac po tym rozdziale}
+Po pierwszym programie powinna zostac Ci w glowie bardzo prosta mapa:
+
+\begin{enumerate}
+  \item \mc{chunk} grupuje logike,
+  \item \mc{page} opisuje generowana strone,
+  \item \mc{content} zawiera HTML,
+  \item \mc{moon(...)} uruchamia wybrany punkt wejscia,
+  \item \mc{output} wskazuje katalog wynikowy.
+\end{enumerate}
+
+Na tych pieciu elementach zbudujemy wszystko, co pojawi sie dalej.

@@ -1,0 +1,175 @@
+\chapter{Rzutowanie typow}
+
+\section{Po co w ogole rzutowac typy}
+Rzutowanie jest potrzebne wtedy, gdy dana wartosc ma juz jakis typ, ale w konkretnym
+miejscu programu chcesz spojrzec na nia inaczej. Typowe przypadki to:
+
+\begin{itemize}
+  \item zamiana napisu \mc{"42"} na liczbe,
+  \item zamiana liczby na tekst,
+  \item przejscie przez typ \mc{unknown} albo \mc{any},
+  \item swiadome dopasowanie danych z zewnatrz do oczekiwanego ksztaltu.
+\end{itemize}
+
+MoonChunk wspiera dwa style rzutowania:
+
+\begin{itemize}
+  \item styl z nawiasem typu, np. \mc{(int)value},
+  \item styl z operatorem \mc{as}, np. \mc{value as int}.
+\end{itemize}
+
+\section{Rzutowanie w stylu \mc{(typ)wartosc}}
+To zapis zwarty i bezposredni.
+
+\begin{lstlisting}[style=moonchunk,caption={Rzutowanie w stylu C}]
+let count: int = (int)"42";
+let label: string = (string)15;
+\end{lstlisting}
+
+Taki styl jest szczegolnie wygodny, gdy chcesz szybko pokazac, jaki ma byc efekt
+konwersji.
+
+\section{Rzutowanie przez \mc{as}}
+Druga mozliwosc to zapis z \mc{as}:
+
+\begin{lstlisting}[style=moonchunk,caption={Rzutowanie przez as}]
+let count: int = "42" as int;
+let text: string = 15 as string;
+\end{lstlisting}
+
+Ten styl jest bardzo czytelny w dluzszych wyrazeniach, bo przypomina naturalne czytanie:
+\emph{weź wartosc i potraktuj ja jako dany typ}.
+
+\section{Rzutowanie liczb i tekstu}
+Najczestsze i najbardziej intuicyjne konwersje to:
+
+\begin{itemize}
+  \item tekst do liczby,
+  \item liczba do tekstu,
+  \item liczba jednego typu do liczby innego typu,
+  \item bool do liczby,
+  \item liczba do ogolnego typu \mc{number}.
+\end{itemize}
+
+\begin{lstlisting}[style=moonchunk,caption={Czeste rzutowania}]
+let a: int = "42" as int;
+let b: double = "3.5" as number;
+let c: string = b as string;
+let d: float = (float)10;
+\end{lstlisting}
+
+\section{Rzutowanie do \mc{bool}}
+To najbardziej specyficzny przypadek w MoonChunk i warto go dobrze zrozumiec.
+Bezposredni zapis z \mc{as} do \mc{bool} jest ograniczony.
+
+\begin{lstlisting}[style=moonchunk,caption={Niedozwolone bezposrednie rzutowanie przez as}]
+let flag: bool = 3 as bool;
+\end{lstlisting}
+
+Taki zapis nie powinien byc akceptowany. Jesli chcesz doprowadzic wartosc do \mc{bool},
+masz dwie glówne drogi.
+
+\subsection*{Droga pierwsza: rzutowanie w stylu \mc{(bool)wartosc}}
+\begin{lstlisting}[style=moonchunk,caption={Rzutowanie do bool przez zapis nawiasowy}]
+let flag: bool = (bool)3;
+\end{lstlisting}
+
+\subsection*{Droga druga: przejscie przez \mc{unknown} albo \mc{any}}
+\begin{lstlisting}[style=moonchunk,caption={Most przez unknown}]
+let flag: bool = 3 as unknown as bool;
+\end{lstlisting}
+
+Ten zapis mowi w praktyce: \emph{na chwile potraktuj wartosc jako niejawna, a potem
+rzutuj ja do bool}.
+
+\section{Jak zachowuje sie liczba rzutowana do \mc{bool}}
+W biezacej semantyce MoonChunk dodatnie wartosci liczbowe po przejsciu do \mc{bool}
+są interpretowane jako \mc{true}, a wartosci niedodatnie jako \mc{false}.
+Dlatego:
+
+\begin{lstlisting}[style=moonchunk,caption={Przykladowe wyniki rzutowania liczby do bool}]
+let a: bool = (bool)3;
+let b: bool = (bool)0;
+let c: bool = (bool)(-3);
+\end{lstlisting}
+
+odpowiednio daje intuicyjnie:
+
+\begin{itemize}
+  \item \mc{a = true},
+  \item \mc{b = false},
+  \item \mc{c = false}.
+\end{itemize}
+
+To jedna z tych zasad, ktore warto po prostu zapamietac i stosowac konsekwentnie.
+
+\section{Przechodzenie przez \mc{unknown} i \mc{any}}
+W wielu nowoczesnych systemach typow stosuje sie etap posredni, gdy bezposrednia konwersja
+jest za mocna albo zbyt ryzykowna. MoonChunk dopuszcza taki most.
+
+\begin{lstlisting}[style=moonchunk,caption={Lancuch rzutowan}]
+let visible: bool = (+3) as unknown as bool;
+let hidden: bool = (-3) as unknown as bool;
+\end{lstlisting}
+
+To nie jest zapis dla poczatkujacego na co dzien, ale warto wiedziec, co oznacza,
+poniewaz pojawia sie w bardziej zaawansowanych przypadkach.
+
+\section{Rzutowanie obiektow, slownikow i tablic}
+MoonChunk pozwala tez sprawdzac i dopasowywac typy zlozone.
+
+\begin{lstlisting}[style=moonchunk,caption={Rzutowania typow zlozonych}]
+let list: array = [1, 2, 3] as array;
+let user: object = { name: "Ala" } as object;
+let point: dict = { x: 1, y: 2 } as dict;
+\end{lstlisting}
+
+Jesli jednak sprobowalibysmy potraktowac liczbe jak tablice albo prostą wartosc jak
+obiekt, MoonChunk powinien zglosic blad.
+
+\section{Rzutowanie do \mc{null} i \mc{undefined}}
+Sa to przypadki szczegolne. Taka konwersja ma sens tylko wtedy, gdy wartosc faktycznie
+jest juz \mc{null} albo \mc{undefined}. MoonChunk nie traktuje ich jako magicznych typow,
+ktore mozna dowolnie uzyskac z kazdej wartosci.
+
+\section{Co nie jest rzutowaniem}
+Poczatkujacy czasem mieszaja dwa rozne pojecia:
+
+\begin{itemize}
+  \item \important{rzutowanie} -- swiadoma zmiana sposobu interpretacji wartosci,
+  \item \important{zwykle przypisanie} -- podstawienie wartosci do zmiennej.
+\end{itemize}
+
+To, ze zmienna ma typ \mc{bool}, nie znaczy, ze mozna do niej przypisac dowolna liczbe
+bez konwersji.
+
+\begin{lstlisting}[style=moonchunk,caption={Przypisanie bez zgodnosci typu}]
+let a: bool = 5 > 5;
+a = 3;
+\end{lstlisting}
+
+To powinno zakonczyc sie bledem typu, bo tu nie zaszlo zadne prawidlowe rzutowanie.
+
+\section{Kiedy rzutowac, a kiedy lepiej nie}
+Rzutowanie jest narzedziem bardzo przydatnym, ale naduzywane szybko zamienia kod w cos
+trudnego do zrozumienia. Dobra praktyka jest prosta:
+
+\begin{itemize}
+  \item rzutuj wtedy, gdy faktycznie przechodzisz miedzy roznymi reprezentacjami danych,
+  \item unikaj rzutowan lancuchowych, jesli zwykla deklaracja typu wystarczy,
+  \item przy danych zewnetrznych najpierw zrozum, co naprawde przychodzi,
+  \item nie traktuj \mc{unknown} i \mc{any} jako domyslnego rozwiazania na wszystko.
+\end{itemize}
+
+\section{Rzutowanie w praktyce strony}
+Bardzo realistyczny przypadek dotyczy danych z pliku JSON, gdzie niektore wartosci moga
+przyjsc jako tekst, a Ty chcesz wykonac na nich obliczenia.
+
+\begin{lstlisting}[style=moonchunk,caption={Konwersja danych zewnetrznych}]
+let rawViews: string = "120";
+let views: int = rawViews as int;
+let text: string = "Wyswietlenia: " + (views as string);
+\end{lstlisting}
+
+Dzieki temu jedna wartosc mozna w odpowiednim momencie potraktowac jako liczbe,
+a w innym jako tekst gotowy do pokazania na stronie.

@@ -1,0 +1,200 @@
+\chapter{Petle: powtarzanie pracy bez kopiowania kodu}
+
+\section{Po co istnieja petle}
+Petla pozwala wykonac podobna operacje wiele razy. To jedna z najwazniejszych idei
+programowania. Zamiast recznie pisac dziesiec podobnych sekcji HTML albo dziesiec razy
+zwiekszac licznik, mozna zapisac regule powtarzania.
+
+Na stronach internetowych petle przydaja sie np. do:
+
+\begin{itemize}
+  \item generowania list wpisow,
+  \item budowania siatki kart,
+  \item przechodzenia po elementach menu,
+  \item wykonywania operacji na wszystkich rekordach danych,
+  \item tworzenia wielu podstron wedlug jednego schematu.
+\end{itemize}
+
+MoonChunk wspiera dwa glowne rodzaje petli: \mc{for} i \mc{while}.
+
+\section{Petla \mc{for}}
+Petla \mc{for} jest bardzo dobra wtedy, gdy chcesz wyraznie kontrolowac licznik.
+W MoonChunk ma ona klasyczny, jawny zapis.
+
+\begin{lstlisting}[style=moonchunk,caption={Klasyczna petla for}]
+for (let i: int = 0; i < 5; i++) {
+  print(i);
+};
+\end{lstlisting}
+
+Ten zapis czyta sie tak:
+
+\begin{enumerate}
+  \item utworz licznik \mc{i} i ustaw go na \mc{0},
+  \item dopoki \mc{i < 5}, wykonuj ciało petli,
+  \item po kazdym obiegu zwieksz \mc{i} o jeden.
+\end{enumerate}
+
+\section{Budowa petli \mc{for} krok po kroku}
+Petla \mc{for} ma trzy glowne czesci wewnatrz nawiasow:
+
+\begin{itemize}
+  \item inicjalizacje,
+  \item warunek,
+  \item aktualizacje.
+\end{itemize}
+
+\begin{lstlisting}[style=moonchunk,caption={Trzy czesci petli for}]
+for (let i: int = 0; i < 10; i = i + 2) {
+  print(i);
+};
+\end{lstlisting}
+
+Tutaj licznik rosnie co dwa kroki, a nie co jeden.
+
+\section{Czy aktualizacja w \mc{for} musi byc \mc{i++}}
+Nie. MoonChunk pozwala wpisac zwykle wyrazenie aktualizujace. Dlatego poprawne sa oba
+style:
+
+\begin{lstlisting}[style=moonchunk,caption={Dwie formy aktualizacji licznika}]
+for (let i: int = 0; i < 10; i++) {
+  print(i);
+};
+
+for (let i: int = 0; i < 10; i = i + 2) {
+  print(i);
+};
+\end{lstlisting}
+
+To bardzo praktyczne, bo pozwala zapisac nie tylko krok o jeden, ale dowolna logike
+przesuwania licznika.
+
+\section{Petla \mc{while}}
+\mc{while} przydaje sie wtedy, gdy nie chcesz mysliec wprost o klasycznym liczniku
+albo liczba powtorzen nie jest z gory oczywista. Skladnia jest prosta:
+
+\begin{lstlisting}[style=moonchunk,caption={Podstawowa petla while}]
+let counter: int = 0;
+
+while (counter < 3) {
+  counter = counter + 1;
+};
+\end{lstlisting}
+
+Petla powtarza swoje ciało tak dlugo, jak warunek pozostaje \mc{true}.
+
+\section{Warunek petli musi byc typu \mc{bool}}
+Podobnie jak przy \mc{if}, MoonChunk wymaga, by warunek w \mc{for} i \mc{while}
+byl wartoscia logiczna. To oznacza, ze zapis taki jak:
+
+\begin{lstlisting}[style=moonchunk,caption={Niepoprawny warunek petli}]
+while (3) {
+  print("blad");
+};
+\end{lstlisting}
+
+powinien skonczyc sie bledem typu.
+
+\section{Petle a generowanie HTML}
+Petle sa szczegolnie ciekawe wtedy, gdy budujesz wiele podobnych fragmentow strony.
+MoonChunk pozwala umieszczac \mc{content} wewnatrz petli, jesli znajdujesz sie w ciele
+\mc{page}.
+
+\begin{lstlisting}[style=moonchunk,caption={Content generowany w petli}]
+page "" {
+  const cards = [
+    { title: "A", description: "one", button: "Read more" },
+    { title: "B", description: "two", button: "Read more" },
+    { title: "C", description: "three", button: "Read more" }
+  ];
+
+  for (let i: int = 0; i < 3; i++) {
+    content {
+      <article class="card">
+        <h3>{cards[i].title}</h3>
+        <p>{cards[i].description}</p>
+        <button>{cards[i].button}</button>
+      </article>
+    };
+  };
+};
+\end{lstlisting}
+
+To jeden z najbardziej naturalnych wzorcow pracy z MoonChunk.
+
+\section{\mc{break} i \mc{continue}}
+W petlach dostepne sa dwie bardzo wazne instrukcje sterujace.
+
+\subsection*{\mc{break}}
+Natychmiast konczy cala petle.
+
+\subsection*{\mc{continue}}
+Pomija reszte biezacego obiegu i przechodzi do kolejnej iteracji.
+
+\begin{lstlisting}[style=moonchunk,caption={break i continue w praktyce}]
+for (let i: int = 0; i < 10; i++) {
+  if (i % 2 != 0) {
+    continue;
+  };
+
+  if (i == 6) {
+    break;
+  };
+
+  print(i);
+};
+\end{lstlisting}
+
+W tym przykładzie:
+
+\begin{itemize}
+  \item liczby nieparzyste sa pomijane,
+  \item cala petla konczy sie przy \mc{i == 6}.
+\end{itemize}
+
+\section{Gdzie wolno uzywac \mc{break} i \mc{continue}}
+Tylko wewnatrz petli. To bardzo wazna zasada. Jesli sprobujesz uzyc tych instrukcji
+poza \mc{for} albo \mc{while}, MoonChunk zglosi blad sterowania przeplywem.
+
+\section{Petle zagniezdzone}
+MoonChunk pozwala umieszczac jedna petle w drugiej.
+
+\begin{lstlisting}[style=moonchunk,caption={Petle zagniezdzone}]
+for (let i: int = 1; i <= 3; i++) {
+  for (let j: int = 1; j <= i; j++) {
+    print(i, j);
+  };
+};
+\end{lstlisting}
+
+To przydatne przy generowaniu siatek, tabel i struktur dwuwymiarowych.
+
+\section{Petle a zakres nazw}
+Ciało petli w MoonChunk korzysta z dosc rygorystycznych zasad redeklaracji. W praktyce
+oznacza to, ze nie powinienes traktowac \mc{for} ani \mc{while} jak wolnej przestrzeni
+na ponowne deklarowanie nazw z najblizszego otoczenia.
+
+Jesli potrzebujesz celowo stworzyc osobny zakres do eksperymentalnej pracy z nazwa,
+lepiej uzyc jawnego bloku \mc{\{ ... \}} albo wydzielic funkcje.
+
+\section{Najczestsze bledy przy petlach}
+\begin{itemize}
+  \item zapomnienie o zmianie wartosci sterujacej w \mc{while},
+  \item warunek niebedacy typu \mc{bool},
+  \item uzycie \mc{break} albo \mc{continue} poza petla,
+  \item bledna aktualizacja licznika,
+  \item redeklaracja tej samej nazwy w nieodpowiednim zakresie,
+  \item nieuwazne dzielenie albo modulo przez zero przy logice sterujacej petla.
+\end{itemize}
+
+\section{Kiedy wybrac \mc{for}, a kiedy \mc{while}}
+Najprostsza zasada:
+
+\begin{itemize}
+  \item wybierz \mc{for}, gdy masz licznik lub jasny schemat iteracji,
+  \item wybierz \mc{while}, gdy petla ma dzialac dopoki zachodzi pewien stan.
+\end{itemize}
+
+Jesli generujesz kolejne karty z tablicy wedlug indeksu, \mc{for} zwykle bedzie
+bardziej naturalny. Jesli czekasz, az jakas wartosc osiagnie okreslony stan,
+\mc{while} bywa prostszy.

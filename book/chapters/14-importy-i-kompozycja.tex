@@ -1,0 +1,175 @@
+\chapter{Importy, \texttt{@include} i skladanie projektu z wielu plikow}
+
+\section{Dlaczego w ogole dzielic projekt na pliki}
+Na poczatku jeden plik wydaje sie wygodny. Jednak wraz z rozwojem projektu zaczyna byc
+za duzy: miesza metadata, logike, strony, dane pomocnicze i drobne narzedzia. Wtedy
+naturalnym krokiem jest podzial na mniejsze elementy.
+
+MoonChunk obsluguje taki podzial przez:
+
+\begin{itemize}
+  \item \mc{import},
+  \item \mc{export chunk},
+  \item \mc{@include},
+  \item jawne wywolania \mc{moon(...)}.
+\end{itemize}
+
+\section{Importy musza stac na samej gorze pliku}
+To jedna z zasad organizacyjnych MoonChunk. Importy powinny pojawic sie przed deklaracjami
+chunkow. Dzięki temu od razu widac zaleznosci danego pliku.
+
+\begin{lstlisting}[style=moonchunk,caption={Importy na samej gorze pliku}]
+import { Shared } from "./shared.mncnk";
+import * as Pages from "./pages.mncnk";
+
+chunk "Main" {
+  output: "./dist";
+};
+\end{lstlisting}
+
+To nie jest tylko kwestia estetyki. Taki uklad wspiera przewidywalne parsowanie i czytelna
+organizacje kodu.
+
+\section{Eksportowany chunk}
+Aby chunk mogl byc importowany z innego pliku, powinien byc oznaczony slowem \mc{export}.
+
+\begin{lstlisting}[style=moonchunk,caption={Chunk eksportowany do innych plikow}]
+export chunk "Metadata" {
+  title: "MoonChunk";
+};
+\end{lstlisting}
+
+Taki zapis komunikuje jasno: ten chunk jest elementem publicznym, z ktorego inne pliki
+moga korzystac.
+
+\section{Import nazwany}
+Import nazwany pozwala pobrac konkretne chunki po nazwie.
+
+\begin{lstlisting}[style=moonchunk,caption={Import nazwany}]
+import { Metadata } from "./metadata.mncnk";
+\end{lstlisting}
+
+To dobry wybor wtedy, gdy potrzebujesz jednego lub kilku konkretnych elementow.
+
+\section{Import przestrzeni nazw}
+Druga forma to import calej przestrzeni nazw pod aliasem.
+
+\begin{lstlisting}[style=moonchunk,caption={Import przestrzeni nazw}]
+import * as Fragments from "./fragments.mncnk";
+\end{lstlisting}
+
+Potem mozesz odwolywac sie do elementow przez kropke, np. \mc{Fragments.PageHeader}.
+To szczegolnie wygodne, gdy z jednego pliku chcesz udostepnic wieksza kolekcje chunkow.
+
+\section{Samo \mc{import} niczego jeszcze nie uruchamia}
+To bardzo wazna zasada: import jedynie sprawia, ze chunki staja sie dostepne. Nie oznacza
+automatycznego wykonania.
+
+Jezeli zaimportujesz plik, ale nie uzyjesz zadnego z jego chunkow przez \mc{@include}
+albo \mc{moon(...)}, to ten kod nie zostanie uruchomiony tylko dlatego, ze istnieje.
+To zachowanie celowo chroni projekt przed ukrytymi efektami ubocznymi.
+
+\section{Do czego sluzy \mc{@include}}
+\mc{@include} wlacza zawartosc jednego chunku do drugiego. To bardzo wygodne przy
+skladaniu wspolnych metadata, wspolnej logiki lub fragmentow konfiguracyjnych.
+
+\begin{lstlisting}[style=moonchunk,caption={Dolaczenie wspolnego chunku}]
+import { Metadata } from "./metadata.mncnk";
+
+chunk "Main" {
+  @include Metadata;
+  output: "./dist";
+};
+\end{lstlisting}
+
+Mozesz o tym myslec jak o swiadomym powiedzeniu: \emph{do tego chunku dolacz tez ten
+inny, wspolny zestaw instrukcji}.
+
+\section{\mc{@include} powinno pojawiac sie na poczatku chunku}
+MoonChunk narzuca uporzadkowany styl: instrukcje \mc{@include} powinny stac na samym
+poczatku ciala chunku. To sprawia, ze od razu widac, od czego dany chunk zalezy.
+
+Taki uklad jest czytelny i wart zachowania nawet wtedy, gdy projekt rośnie.
+
+\section{Import nazwany a import przez namespace}
+Roznica praktyczna jest prosta.
+
+\subsection*{Import nazwany}
+\begin{lstlisting}[style=moonchunk,caption={Uzycie importu nazwanego}]
+import { Metadata } from "./metadata.mncnk";
+
+chunk "Main" {
+  @include Metadata;
+};
+\end{lstlisting}
+
+\subsection*{Import przestrzeni nazw}
+\begin{lstlisting}[style=moonchunk,caption={Uzycie importu namespace}]
+import * as Fragments from "./fragments.mncnk";
+
+chunk "Main" {
+  @include Fragments.Metadata;
+};
+\end{lstlisting}
+
+Pierwsza forma jest krotsza. Druga jest bardziej jawna i wygodna, gdy importujesz
+wiecej rzeczy z jednego miejsca.
+
+\section{Lancuch importow}
+MoonChunk obsluguje projekty, w ktorych jeden plik importuje drugi, a ten kolejny.
+Warto jednak zachowac porzadek i unikac zbednej glebokosci. Im prostszy graf zaleznosci,
+tym latwiej zrozumiec projekt.
+
+\section{Cykliczne zaleznosci}
+Jesli dwa pliki zaczelyby importowac sie wzajemnie w niebezpieczny sposob, MoonChunk
+powinien zglosic blad zwiazany z petla importow. To dobra ochrona przed konfiguracja,
+ktora bylaby bardzo trudna do przewidzenia dla uzytkownika.
+
+\section{Punkt wejscia nadal musi byc jawny}
+Nawet jesli projekt sklada sie z wielu plikow i wielu chunkow, nadal ostatecznie ktos
+musi wybrac, co ma zostac wykonane. Robi to \mc{moon(...)}.
+
+\begin{lstlisting}[style=moonchunk,caption={Jawne wywolania punktow wejscia}]
+moon(Main);
+moon(Secondary);
+\end{lstlisting}
+
+Dzieki temu importy i \mc{@include} odpowiadaja za \emph{dostepnosc i kompozycje},
+a \mc{moon(...)} odpowiada za \emph{faktyczne uruchomienie}.
+
+\section{Typowy wzorzec modularnego projektu}
+Bardzo praktyczny uklad wyglada tak:
+
+\begin{lstlisting}[style=basecode,caption={Przykladowy projekt wieloplikowy}]
+content/
+  site.mncnk
+  metadata.mncnk
+  sections.mncnk
+  blog.mncnk
+  data/
+    posts.json
+\end{lstlisting}
+
+Możliwe role:
+
+\begin{itemize}
+  \item \mc{site.mncnk} -- glowny plik z punktami \mc{moon(...)},
+  \item \mc{metadata.mncnk} -- pola wspolne dla calej witryny,
+  \item \mc{sections.mncnk} -- dodatkowe chunki do dolaczania,
+  \item \mc{blog.mncnk} -- logika stron blogowych,
+  \item \mc{posts.json} -- dane wczytywane przez \mc{data(...)}.
+\end{itemize}
+
+\section{Najczestsze bledy przy importach}
+\begin{itemize}
+  \item import w srodku pliku zamiast na gorze,
+  \item probowanie importu chunku bez \mc{export},
+  \item literowka w nazwie importowanego chunku,
+  \item probowanie uzycia aliasu namespace, ktory nie istnieje,
+  \item oczekiwanie, ze sam import uruchomi generowanie strony.
+\end{itemize}
+
+\section{Jak myslec o \mc{@include}}
+Najprostsza intuicja jest taka: import otwiera dostep do chunku, a \mc{@include}
+mowi, zeby ten chunk realnie dolaczyc do aktualnego miejsca. To rozdzielenie jest
+bardzo zdrowe architektonicznie, bo oddziela \emph{zaleznosc} od \emph{wykonania}.

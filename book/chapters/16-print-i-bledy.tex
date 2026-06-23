@@ -1,0 +1,181 @@
+\chapter{Print, diagnostyka i czytanie bledow}
+
+\section{Po co istnieje \mc{print(...)}}
+Gdy uczysz sie nowego jezyka albo rozwijasz bardziej zlozony projekt, bardzo czesto
+chcesz po prostu zobaczyc, co dzieje sie w srodku programu. Wlasnie po to istnieje
+funkcja wbudowana \mc{print(...)}.
+
+Dziala ona jak narzedzie podgladu. Pozwala wypisac wartosci do konsoli podczas wykonania
+MoonChunk.
+
+\section{Najprostsze uzycie}
+\begin{lstlisting}[style=moonchunk,caption={Podstawowe wypisywanie wartosci}]
+print("Hello");
+print(1, 1.0, true, "text");
+\end{lstlisting}
+
+Mozesz przekazac jeden argument albo kilka argumentow jednoczesnie.
+
+\section{Wypisywanie pustej linii}
+\mc{print()} bez argumentow tez ma sens. Pozwala odseparowac grupy logow i zrobic
+czytelniejszy output w terminalu.
+
+\begin{lstlisting}[style=moonchunk,caption={Pusta linia przez print()}]
+print("Sekcja A");
+print();
+print("Sekcja B");
+\end{lstlisting}
+
+\section{Co mozna wypisac}
+MoonChunk stara sie byc tutaj elastyczny. Mozesz wypisywac:
+
+\begin{itemize}
+  \item liczby,
+  \item tekst,
+  \item wartosci logiczne,
+  \item tablice,
+  \item obiekty,
+  \item wynik wywolania funkcji,
+  \item sama funkcje,
+  \item nawet chunki jako obiekty logiczne.
+\end{itemize}
+
+\begin{lstlisting}[style=moonchunk,caption={Rozne rodzaje argumentow print}]
+function greet(name: string): string {
+  return "Hello, " + name;
+}
+
+print(greet);
+print(greet("MoonChunk"));
+print(Main);
+\end{lstlisting}
+
+To przydatne szczegolnie przy debugowaniu i poznawaniu modelu wykonania jezyka.
+
+\section{Print jako narzedzie edukacyjne}
+Na poczatku nauki \mc{print(...)} jest jednym z najlepszych sposobow zrozumienia programu.
+Dzieki niemu mozesz sprawdzac:
+
+\begin{itemize}
+  \item czy zmienna ma taka wartosc, jakiej oczekujesz,
+  \item czy warunek daje \mc{true} czy \mc{false},
+  \item jak zmienia sie licznik w petli,
+  \item czy funkcja zwraca poprawny wynik,
+  \item jakie dane zostaly wczytane z pliku JSON.
+\end{itemize}
+
+\section{Jak wyglada dobry log}
+Dobre logowanie nie polega na wypisywaniu wszystkiego bez planu. Lepiej uzyc krotszych,
+konkretnych komunikatow.
+
+\begin{lstlisting}[style=moonchunk,caption={Czytelny styl logowania}]
+print("counter:", counter);
+print("current post slug:", posts[i].slug);
+print("isPublished:", posts[i].published);
+\end{lstlisting}
+
+Taki zapis pozwala od razu zrozumiec, na co patrzysz.
+
+\section{Bledy skladniowe a bledy wykonania}
+MoonChunk moze zglaszac bledy na roznych etapach. Z perspektywy uzytkownika warto
+rozrozniac dwie duze kategorie.
+
+\subsection*{Bledy skladniowe}
+To problemy takie jak:
+
+\begin{itemize}
+  \item brak srednika,
+  \item niezamkniety nawias,
+  \item nieoczekiwany token,
+  \item literowka w konstrukcji jezyka.
+\end{itemize}
+
+\subsection*{Bledy wykonania}
+To problemy, ktore pojawiaja sie dopiero podczas realnego wykonywania kodu, np.:
+
+\begin{itemize}
+  \item nieznana zmienna,
+  \item niezgodnosc typu,
+  \item dzielenie przez zero,
+  \item odczyt z \mc{null},
+  \item uzycie \mc{break} poza petla,
+  \item brak inicjalizacji \mc{let} przed odczytem.
+\end{itemize}
+
+\section{Jak czytac komunikat diagnostyczny}
+Dobry komunikat MoonChunk zwykle zawiera:
+
+\begin{itemize}
+  \item informacje, co poszlo nie tak,
+  \item numer linii,
+  \item numer kolumny,
+  \item czasem sugestie dotyczaca literowki.
+\end{itemize}
+
+Nie czytaj takiego komunikatu jak kary. Traktuj go jak wskazowke. Najczesciej da sie
+z niego wyciagnac bardzo konkretna informację o miejscu i naturze problemu.
+
+\section{Typowe komunikaty i ich znaczenie}
+\subsection*{Nieznana zmienna}
+Jesli MoonChunk mowi, ze zmienna nie jest zadeklarowana, najczesciej oznacza to jedno
+z trzech:
+
+\begin{itemize}
+  \item literowke w nazwie,
+  \item probę uzycia zmiennej poza zasiegiem,
+  \item probę użycia zmiennej zanim została utworzona.
+\end{itemize}
+
+\subsection*{Zmienna zadeklarowana, ale nie zainicjalizowana}
+Ten komunikat pojawia sie, gdy \mc{let} zostal utworzony bez wartosci, a potem odczytany
+za wczesnie.
+
+\subsection*{Niezgodnosc typu}
+Oznacza, ze interpreter spodziewal sie jednego rodzaju wartosci, a dostal inny.
+Najczesciej trzeba poprawic deklaracje typu albo wykonac swiadome rzutowanie.
+
+\subsection*{Blad sterowania przeplywem}
+Dotyczy np. \mc{break} albo \mc{continue} poza petla.
+
+\section{Strategia debugowania krok po kroku}
+Gdy cos nie dziala, warto przyjac prosty plan:
+
+\begin{enumerate}
+  \item znajdz pierwsza linie, na ktorej pojawia sie blad,
+  \item sprawdz, jakie wartosci biora w nim udzial,
+  \item dodaj \mc{print(...)} przed problematycznym miejscem,
+  \item upewnij sie, ze typy sa takie, jak myslisz,
+  \item uprosc fragment do mniejszego przykladu i sprawdz go osobno.
+\end{enumerate}
+
+To podejscie jest nudne, ale niezwykle skuteczne.
+
+\section{Jak odroznic blad w logice od bledu w danych}
+Czasem problem nie lezy w samej skladni programu, tylko w tym, co przychodzi z danych.
+Przykladowo:
+
+\begin{itemize}
+  \item JSON moze nie miec pola, ktore zakladasz,
+  \item liczba moze przyjsc jako tekst,
+  \item element listy moze byc pusty,
+  \item flaga logiczna moze miec nieoczekiwany stan.
+\end{itemize}
+
+W takich sytuacjach \mc{print(...)} jest nieoceniony.
+
+\section{Dobra praktyka: loguj stan, nie emocje}
+Zamiast wypisywac rzeczy typu \mc{"ups"} albo \mc{"cos nie dziala"}, lepiej logowac
+konkretne stany.
+
+\begin{lstlisting}[style=moonchunk,caption={Przyklad konkretnego logu}]
+print("post index:", i);
+print("post title:", posts[i].title);
+print("published:", posts[i].published);
+\end{lstlisting}
+
+Taki log od razu pomaga znalezc przyczyne problemu.
+
+\section{Kiedy usuwac logi}
+W projekcie edukacyjnym czesc logow warto zostawic na dluzej. W projekcie produkcyjnym
+lepiej usuwac albo ograniczac logi diagnostyczne, gdy przestaja byc potrzebne. Kod jest
+wtedy cichszy i latwiejszy do czytania.

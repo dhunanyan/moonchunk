@@ -1,0 +1,241 @@
+\chapter{Metadata strony}
+
+\section{Po co w ogole sa metadata}
+Kiedy otwierasz strone w przegladarce, widzisz glownie to, co trafia do sekcji
+widocznej dla uzytkownika. Ale dokument HTML ma tez \mc{<head>}, a w nim informacje,
+ktore nie zawsze sa od razu widoczne, ale maja ogromne znaczenie praktyczne.
+Sa to m.in.:
+
+\begin{itemize}
+  \item tytul strony na karcie przegladarki,
+  \item opis dla wyszukiwarek,
+  \item wskazowki dla robotow indeksujacych,
+  \item dane dla social media,
+  \item linki do arkuszy stylow, ikon i manifestu,
+  \item skrypty dolaczane do dokumentu.
+\end{itemize}
+
+MoonChunk pozwala definiowac te informacje bezposrednio w kodzie \mc{.mncnk}, bez
+koniecznosci edytowania zewnetrznego szablonu HTML.
+
+\section{Podstawowa skladnia metadata}
+Metadata zapisuje sie jako proste instrukcje typu \mc{nazwa: wartosc;}. Przyklad:
+
+\begin{lstlisting}[style=moonchunk,caption={Najprostsze metadata strony}]
+chunk "Main" {
+  output: "./dist";
+  title: "MoonChunk Docs";
+  metaDescription: "Dokumentacja uzytkownika MoonChunk.";
+
+  page "" {
+    content {
+      <h1>MoonChunk</h1>
+    };
+  };
+};
+
+moon(Main);
+\end{lstlisting}
+
+W tym przykladzie \mc{title} ustawia tytul dokumentu, a \mc{metaDescription} opis.
+
+\section{Dlaczego to rozwiazanie jest wygodne}
+W klasycznym podejsciu trzeba byloby otwierac szablon HTML i recznie wstawiac wiele
+znacznikow do \mc{<head>}. MoonChunk robi to za Ciebie. Ty pracujesz na poziomie
+intencji: \emph{jaki ma byc tytul}, \emph{jaki ma byc opis}, \emph{jaka ma byc ikona},
+a jezyk wstawia to we wlasciwe miejsca wewnetrznego szablonu dokumentu.
+
+To sprawia, ze:
+
+\begin{itemize}
+  \item pliki \mc{.mncnk} staja sie glownym miejscem konfiguracji strony,
+  \item latwiej utrzymac spojnosc metadata,
+  \item prosciej jest nadpisac tylko pojedyncze pola na konkretnej stronie.
+\end{itemize}
+
+\section{Metadata wspolne i lokalne}
+Bardzo czesty scenariusz wyglada tak:
+
+\begin{itemize}
+  \item kilka pol metadata jest wspolnych dla calego serwisu,
+  \item wybrane pola, np. \mc{title} albo \mc{metaDescription}, roznia sie per strona.
+\end{itemize}
+
+MoonChunk obsluguje taki model bardzo naturalnie. Mozesz utworzyc osobny chunk z
+metadata wspolnymi, a potem dolaczyc go przez \mc{@include}.
+
+\begin{lstlisting}[style=moonchunk,caption={Wspolny chunk z metadata}]
+export chunk "Metadata" {
+  lang: "pl";
+  charset: "utf-8";
+  viewport: "width=device-width, initial-scale=1";
+  metaAuthor: "MoonChunk Team";
+  metaRobots: "index,follow";
+  themeColor: "#0f172a";
+};
+\end{lstlisting}
+
+A nastepnie:
+
+\begin{lstlisting}[style=moonchunk,caption={Nadpisywanie wybranych metadata w konkretnym chunku}]
+chunk "DocsHome" {
+  @include Metadata;
+  output: "./dist";
+  title: "Dokumentacja MoonChunk";
+  metaDescription: "Strona glowna dokumentacji.";
+
+  page "" {
+    content {
+      <h1>Dokumentacja</h1>
+    };
+  };
+};
+\end{lstlisting}
+
+Tutaj wspolne pola pochodza z \mc{Metadata}, a pola lokalne doprecyzowuja dana strone.
+W praktyce ostatnia ustawiona wartosc metadata wygrywa.
+
+\section{Kategorie wspieranych metadata}
+MoonChunk wspiera szeroki zestaw pol. Najwygodniej myslec o nich w grupach.
+
+\subsection*{Metadata dokumentu i jezyka}
+To pola opisujace podstawowy kontekst strony:
+
+\begin{itemize}
+  \item \mc{lang},
+  \item \mc{dir},
+  \item \mc{htmlClass},
+  \item \mc{charset},
+  \item \mc{viewport}.
+\end{itemize}
+
+\subsection*{SEO i informacje podstawowe}
+To pola najczesciej wykorzystywane przez wyszukiwarki:
+
+\begin{itemize}
+  \item \mc{title},
+  \item \mc{metaDescription},
+  \item \mc{metaKeywords},
+  \item \mc{metaAuthor},
+  \item \mc{metaRobots},
+  \item \mc{themeColor}.
+\end{itemize}
+
+\subsection*{Linki zasobow}
+To pola odpowiadajace za zewnetrzne zasoby dokumentu:
+
+\begin{itemize}
+  \item \mc{canonicalUrl},
+  \item \mc{faviconHref},
+  \item \mc{appleTouchIconHref},
+  \item \mc{manifestHref},
+  \item \mc{preloadLinks},
+  \item \mc{preconnectLinks},
+  \item \mc{styles},
+  \item \mc{headScripts}.
+\end{itemize}
+
+\subsection*{Open Graph i Twitter}
+Te pola sa przydatne przy udostepnianiu stron w social media:
+
+\begin{itemize}
+  \item \mc{ogType}, \mc{ogTitle}, \mc{ogDescription}, \mc{ogImage}, \mc{ogUrl},
+        \mc{ogSiteName}, \mc{ogLocale},
+  \item \mc{twitterCard}, \mc{twitterSite}, \mc{twitterCreator}, \mc{twitterTitle},
+        \mc{twitterDescription}, \mc{twitterImage}.
+\end{itemize}
+
+\subsection*{Elementy struktury calego dokumentu}
+MoonChunk obsluguje takze pola, ktore trafiaja do ciala strony poza samym \mc{content}:
+
+\begin{itemize}
+  \item \mc{bodyClass},
+  \item \mc{pageId},
+  \item \mc{topBar},
+  \item \mc{header},
+  \item \mc{footer},
+  \item \mc{modals},
+  \item \mc{scripts},
+  \item \mc{bodyEndExtra}.
+\end{itemize}
+
+\section{Co sie dzieje, gdy pole jest puste}
+MoonChunk ma wewnetrzny szablon bazowy dokumentu. Gdy niektore opcjonalne pola metadata
+pozostana puste, odpowiadajace im puste znaczniki nie musza zostac zachowane w finalnym
+HTML-u. To wazne, bo dzieki temu wynikowy dokument nie jest zasmiecany pustymi
+\mc{meta}, \mc{link} albo pustym \mc{title}.
+
+W praktyce warto jednak myslec tak: jesli dana informacja ma znaczenie dla strony,
+uzupelnij ja swiadomie. Jesli nie ma znaczenia, mozesz pozostawic pole puste.
+
+\section{Metadata a tresc strony}
+Czesta pomylka poczatkujacych polega na mieszaniu tych dwoch warstw. Na przyklad:
+
+\begin{itemize}
+  \item \mc{title} nie zastępuje widocznego naglowka \mc{<h1>},
+  \item \mc{metaDescription} nie zastępuje pierwszego akapitu na stronie,
+  \item \mc{styles} nie zastępuje samego pliku CSS.
+\end{itemize}
+
+Innymi slowy:
+
+\begin{itemize}
+  \item metadata opisują dokument i jego otoczenie,
+  \item \mc{content} opisuje glowna tresc widoczna dla uzytkownika.
+\end{itemize}
+
+Dobra strona zwykle potrzebuje jednego i drugiego.
+
+\section{Przyklad rozsadnego zestawu startowego}
+Dla wielu projektow sensowny zestaw bazowy moze wygladac tak:
+
+\begin{lstlisting}[style=moonchunk,caption={Rozsadny zestaw metadata startowych}]
+chunk "Main" {
+  output: "./dist";
+  lang: "pl";
+  charset: "utf-8";
+  viewport: "width=device-width, initial-scale=1";
+  title: "MoonChunk";
+  metaDescription: "Przyklad strony wygenerowanej w MoonChunk.";
+  metaAuthor: "Twoje Imie";
+  metaRobots: "index,follow";
+  themeColor: "#111827";
+  styles: "<link rel='stylesheet' href='/assets/app.css'>";
+
+  page "" {
+    content {
+      <h1>MoonChunk</h1>
+      <p>Start projektu.</p>
+    };
+  };
+};
+\end{lstlisting}
+
+To juz daje porzadny punkt wyjscia do rozwijania serwisu.
+
+\section{Kiedy wydzielic metadata do osobnego chunku}
+Jesli kopiujesz te same pola do kilku miejsc, to prawie zawsze sygnal, ze warto
+wydzielic wspolny \mc{chunk} z metadata. Najczesciej robi sie to wtedy, gdy:
+
+\begin{itemize}
+  \item masz wiecej niz jedna strone,
+  \item kazda strona ma ten sam \mc{lang}, \mc{charset}, \mc{viewport},
+  \item wspolne sa ikony, skrypty i style,
+  \item tylko tytul i opis zmieniaja sie lokalnie.
+\end{itemize}
+
+To jeden z najprostszych sposobow na zachowanie porzadku w projekcie.
+
+\section{O czym warto pamietac na koniec}
+Metadata nie sa dodatkiem kosmetycznym. Wplywaja na:
+
+\begin{itemize}
+  \item wyglad strony w przegladarce,
+  \item SEO,
+  \item udostepnianie w mediach spolecznosciowych,
+  \item odbior strony na urzadzeniach mobilnych,
+  \item dolaczanie zasobow takich jak CSS, favicon czy skrypty.
+\end{itemize}
+
+W dobrze zaprojektowanym projekcie MoonChunk metadata sa traktowane jako element
+pierwszej klasy, a nie jako cos dopisywanego na koncu.

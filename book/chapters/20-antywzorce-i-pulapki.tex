@@ -1,0 +1,62 @@
+\chapter{Antywzorce i pulapki}
+
+\section{Po co poznawac antywzorce}
+Dobre praktyki mowia, co robic. Antywzorce pokazuja, czego unikac. To równie wazne,
+bo wiele problemow nie wynika z braku wiedzy, tylko z pozornie wygodnych skrótow,
+ktore w dluzszej perspektywie psuja czytelnosc albo stabilnosc projektu.
+
+\section{Antywzorzec: wszystko w jednym pliku}
+Poczatkujacy często zaczynaja od jednego ogromnego pliku i zostaja przy nim zbyt dlugo.
+Skutek jest prosty: metadata, funkcje, dane, strony i debug printy mieszaja sie ze soba.
+
+Jesli projekt zaczyna rosnac, podziel go na chunki i pliki. Nie czekaj, az zrobi sie
+naprawde nieczytelny.
+
+\section{Antywzorzec: kopiowanie metadata}
+Kopiowanie tych samych pol \mc{title}, \mc{metaDescription}, \mc{lang} czy \mc{styles}
+do wielu chunkow predzej czy pozniej doprowadzi do rozjazdow. Jedna strona bedzie miala
+stary opis, inna nowy, trzecia w ogole bez aktualizacji.
+
+Lepiej wydzielic wspolny chunk \mc{Metadata} i uzywac \mc{@include}.
+
+\section{Antywzorzec: zbyt duzo logiki w \mc{content}}
+To jeden z najczestszych bledow. Jesli w srodku HTML-a masz kilka zagniezdzonych warunkow,
+dlugie rzutowania i budowanie tekstu na piec sposobow, to znak, ze logika powinna zostac
+przeniesiona wyzej do zmiennych albo funkcji.
+
+\section{Antywzorzec: naduzywanie \mc{unknown} i \mc{any}}
+Te typy sa potrzebne, ale nie powinny stac sie codziennym domyslnym rozwiazaniem.
+Jesli wszedzie uciekasz do \mc{unknown} albo \mc{any}, tak naprawde rezygnujesz z duzej
+części korzysci wynikajacych ze swiadomego modelu typow.
+
+\section{Antywzorzec: brak warunku stopu w rekurencji}
+To klasyczna pulapka. Rekurencja bez sensownego warunku stopu nie prowadzi do wyniku,
+tylko do spirali wywolan. Jesli piszesz funkcje wywolujaca sama siebie, pierwszym pytaniem
+powinno byc zawsze: \emph{kiedy to sie zatrzyma?}
+
+\section{Antywzorzec: nieczytelne nazwy}
+Nazwy typu \mc{tmp2}, \mc{val}, \mc{x1} i \mc{something} nie pomagaja zrozumiec kodu.
+Zwlaszcza w DSL-u do generowania stron dobra nazwa potrafi zaoszczedzic bardzo duzo czasu.
+
+\section{Antywzorzec: traktowanie \mc{if} jako miejsca do swobodnego cieniowania}
+MoonChunk celowo jest rygorystyczny w kwestii redeklaracji nazw w cialach \mc{if},
+\mc{for} i \mc{while}. Jesli sprobujesz tworzyc tam nowe zmienne o tych samych nazwach,
+które juz istnieja w poblizu, szybko trafisz na komunikat o redeklaracji.
+
+Jesli naprawde potrzebujesz osobnego zakresu z ta sama nazwa, uzyj jawnego bloku
+\mc{\{ ... \}} albo funkcji.
+
+\section{Antywzorzec: import bez realnego uzycia}
+Samo importowanie pliku niczego nie uruchamia. Jesli liczysz na to, ze zaimportowany
+chunk wykona sie sam, projekt zacznie wygladac tak, jakby ``nic nie dzialalo''.
+Musisz go swiadomie dolaczyc przez \mc{@include} albo uruchomic przez \mc{moon(...)}.
+
+\section{Antywzorzec: brak strategii debugowania}
+Chaotyczne dodawanie losowych \mc{print(...)} jest lepsze niz nic, ale nie duzo lepsze.
+Lepsza strategia to zadac sobie pytanie: jaka wartosc chce sprawdzic i w ktorym miejscu?
+Dopiero wtedy dodaj log.
+
+\section{Antywzorzec: projekt budowany od konca}
+Czesta pomylka polega na tym, ze autor zaczyna od bardzo rozbudowanej struktury, zanim
+powstanie pierwszy dzialajacy przebieg. Lepiej zrobic odwrotnie: najpierw maly projekt,
+ktory naprawdę generuje HTML, a dopiero potem dokladac warstwy i modularyzacje.

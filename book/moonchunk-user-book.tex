@@ -1,0 +1,210 @@
+\documentclass[12pt,a4paper,oneside]{book}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[polish]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{titlesec}
+\usepackage{caption}
+
+\geometry{margin=2.4cm}
+\setstretch{1.22}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.65em}
+\setlist[itemize]{leftmargin=1.8em}
+\setlist[enumerate]{leftmargin=1.8em}
+
+\definecolor{MoonBlue}{HTML}{1F3A5F}
+\definecolor{MoonGold}{HTML}{C79B42}
+\definecolor{CodeBg}{HTML}{F7F7FA}
+\definecolor{CodeBorder}{HTML}{D8DCE6}
+\definecolor{CodeComment}{HTML}{5D6B7A}
+\definecolor{CodeString}{HTML}{9A3412}
+\definecolor{CodeKeyword}{HTML}{1D4ED8}
+\definecolor{CodeNumber}{HTML}{7C3AED}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=MoonBlue,
+  urlcolor=MoonBlue,
+  pdftitle={MoonChunk. Podrecznik uzytkownika},
+  pdfauthor={MoonChunk},
+  pdfsubject={Dokumentacja koncowego uzytkownika jezyka MoonChunk}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{MoonChunk}
+\fancyhead[R]{\leftmark}
+\fancyfoot[C]{\thepage}
+\setlength{\headheight}{28pt}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\titleformat{\chapter}[display]
+  {\bfseries\Huge\color{MoonBlue}}
+  {\chaptername\ \thechapter}
+  {0.5em}
+  {}
+
+\lstdefinestyle{basecode}{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{CodeBg},
+  frame=single,
+  rulecolor=\color{CodeBorder},
+  columns=fullflexible,
+  keepspaces=true,
+  breaklines=true,
+  showstringspaces=false,
+  commentstyle=\color{CodeComment},
+  keywordstyle=\color{CodeKeyword}\bfseries,
+  stringstyle=\color{CodeString},
+  numberstyle=\tiny\color{CodeComment},
+  numbers=left,
+  numbersep=10pt,
+  xleftmargin=1em,
+  framexleftmargin=0.8em,
+  tabsize=2,
+  captionpos=b,
+  literate=
+    {ą}{{\k{a}}}1
+    {ć}{{\'c}}1
+    {ę}{{\k{e}}}1
+    {ł}{{\l{}}}1
+    {ń}{{\'n}}1
+    {ó}{{\'o}}1
+    {ś}{{\'s}}1
+    {ź}{{\'z}}1
+    {ż}{{\.z}}1
+    {Ą}{{\k{A}}}1
+    {Ć}{{\'C}}1
+    {Ę}{{\k{E}}}1
+    {Ł}{{\L{}}}1
+    {Ń}{{\'N}}1
+    {Ó}{{\'O}}1
+    {Ś}{{\'S}}1
+    {Ź}{{\'Z}}1
+    {Ż}{{\.Z}}1
+}
+
+\lstdefinelanguage{MoonChunk}{
+  morekeywords={chunk,export,moon,import,from,as,@include,output,env,global,page,content,const,let,function,return,for,while,break,continue,parent,if,else,or,and,not,true,false,int,float,double,bool,string,number,dict,object,array,null,undefined,unknown,any,void},
+  sensitive=true,
+  morecomment=[l]{//},
+  morestring=[b]",
+}
+
+\lstdefinestyle{moonchunk}{
+  style=basecode,
+  language=MoonChunk
+}
+
+\newcommand{\mc}[1]{\texttt{#1}}
+\newcommand{\important}[1]{\textbf{#1}}
+
+\begin{document}
+
+\frontmatter
+
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  \IfFileExists{../assets/logo.png}{\includegraphics[width=0.24\textwidth]{../assets/logo.png}\\[1.2cm]}{}
+  {\Huge\bfseries\color{MoonBlue}MoonChunk\\[0.4cm]}
+  {\Large Podrecznik uzytkownika\\[0.8cm]}
+  {\large Dokumentacja z perspektywy osoby tworzacej strony i treści\\[2.4cm]}
+
+  \begin{minipage}{0.82\textwidth}
+    \centering
+    Ten dokument opisuje MoonChunk jako jezyk do budowania statycznych stron HTML.
+    Nie skupia sie na wewnetrznej implementacji parsera ani na gramatyce ANTLR.
+    Zamiast tego prowadzi czytelnika od podstawowych pojec programistycznych,
+    przez skladnie jezyka, az do kompletnego projektu tworzonego krok po kroku.
+  \end{minipage}
+
+  \vfill
+
+  {\large Wersja: 1.0\\}
+  {\large Repozytorium: \url{https://github.com/dhunanyan/moonchunk}\\}
+  {\large Jezyk dokumentacji: polski}
+\end{titlepage}
+
+\chapter*{Jak czytac ten podrecznik}
+Ten podrecznik zostal napisany tak, aby mogla z niego skorzystac takze osoba,
+ktora nie miala wczesniej kontaktu z jezykami programowania. Z tego powodu kazdy
+nowy element jest przedstawiany w dwoch warstwach:
+
+\begin{itemize}
+  \item najpierw pojawia sie intuicja: po co dana konstrukcja istnieje i jaki problem rozwiazuje,
+  \item dopiero potem pokazana jest konkretna skladnia MoonChunk wraz z przykladami.
+\end{itemize}
+
+W wielu miejscach zobaczysz male fragmenty kodu. Czytaj je spokojnie, linia po linii.
+MoonChunk jest jezykiem celowo zwartym, wiec stosunkowo niewielka liczba konstrukcji
+pozwala zbudowac zaskakujaco duzo.
+
+\tableofcontents
+
+\mainmatter
+
+\include{chapters/01-czym-jest-moonchunk}
+\include{chapters/02-jak-zaczac}
+\include{chapters/03-pierwszy-program}
+\include{chapters/04-struktura-programu}
+\include{chapters/05-strony-i-html}
+\include{chapters/06-metadata}
+\include{chapters/07-zmienne-i-typy}
+\include{chapters/08-wyrazenia-i-operatory}
+\include{chapters/09-rzutowanie-typow}
+\include{chapters/10-warunki}
+\include{chapters/11-petle}
+\include{chapters/12-zasiegi-i-bloki}
+\include{chapters/13-funkcje}
+\include{chapters/14-importy-i-kompozycja}
+\include{chapters/15-tablice-obiekty-i-dane}
+\include{chapters/16-print-i-bledy}
+\include{chapters/17-dobre-praktyki}
+\include{chapters/18-projekt-od-zera}
+\include{chapters/19-wzorce-uzycia}
+\include{chapters/20-antywzorce-i-pulapki}
+\include{chapters/21-faq}
+\include{chapters/22-cwiczenia}
+\include{chapters/23-rozwoj-projektu}
+
+\appendix
+\include{chapters/a-sciaga-skladni}
+\include{chapters/b-metadata-reference}
+\include{chapters/c-slownik}
+
+\backmatter
+\chapter*{Zakonczenie}
+MoonChunk zostal zaprojektowany jako jezyk czytelny, przewidywalny i praktyczny.
+Jego sila nie wynika z ogromnej liczby funkcji, ale z tego, ze laczy kilka prostych
+pomyslow: strony, tresc HTML, zmienne, petle, funkcje, importy oraz dane. Razem
+pozwalaja one zbudowac kompletny, statyczny serwis bez potrzeby siegania po duze,
+zlozone frameworki.
+
+Najlepsza droga dalszej nauki jest prosta:
+
+\begin{enumerate}
+  \item uruchom male przyklady,
+  \item przepisz je samodzielnie,
+  \item zmieniaj pojedyncze linie i obserwuj efekt,
+  \item zbuduj swoj pierwszy mini-projekt od zera.
+\end{enumerate}
+
+Wlasnie do tego ma sluzyc ten podrecznik.
+
+\end{document}

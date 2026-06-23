@@ -1,0 +1,148 @@
+\chapter{Jak zaczac prace z MoonChunk}
+
+\section{Dwa poziomy pracy: uzytkownik jezyka i autor jezyka}
+To bardzo wazne rozroznienie. W repozytorium MoonChunk mozna zobaczyc wiele polecen
+zwiazanych z budowaniem projektu, generowaniem parsera czy uruchamianiem testow.
+Sa one potrzebne glownie wtedy, gdy rozwijasz sam \emph{MoonChunk jako projekt}.
+
+Ten podrecznik ma inny cel. Interesuje nas osoba, ktora chce \important{uzywac jezyka},
+a niekoniecznie rozwijac jego implementacje. Z punktu widzenia takiego uzytkownika
+najwazniejsze jest co innego:
+
+\begin{itemize}
+  \item jak napisac plik \mc{.mncnk},
+  \item jak uruchomic jego wykonanie,
+  \item gdzie pojawia sie wynik,
+  \item jak odczytywac bledy,
+  \item jak organizowac wiekszy projekt.
+\end{itemize}
+
+\section{Najprostszy model uzycia}
+Obecny model pracy z MoonChunk najlatwiej opisac tak:
+
+\begin{enumerate}
+  \item instalujesz pakiet \mc{moonchunk} w projekcie Node.js,
+  \item tworzysz swoje pliki \mc{.mncnk},
+  \item uruchamiasz prosty skrypt JavaScript albo TypeScript,
+  \item skrypt wywoluje funkcje \mc{executeMoonChunkFile(...)},
+  \item MoonChunk generuje pliki HTML.
+\end{enumerate}
+
+To podejscie ma jedna duza zalete: nie musisz znac wewnetrznej struktury repozytorium,
+a jednoczesnie masz pelna kontrole nad tym, kiedy i z jakiego pliku rozpoczynasz
+budowanie strony.
+
+\section{Instalacja w projekcie uzytkownika}
+W zwyklym projekcie Node.js mozesz zainstalowac MoonChunk z rejestru npm.
+Przykladowo:
+
+\begin{lstlisting}[style=basecode,caption={Instalacja pakietu MoonChunk w projekcie uzytkownika}]
+npm install moonchunk
+\end{lstlisting}
+
+Jesli korzystasz z Yarn:
+
+\begin{lstlisting}[style=basecode,caption={Instalacja pakietu przez Yarn}]
+yarn add moonchunk
+\end{lstlisting}
+
+Warto od razu przygotowac prosty katalog projektu, na przyklad taki:
+
+\begin{lstlisting}[style=basecode,caption={Przykladowy uklad plikow projektu}]
+my-site/
+  content/
+    site.mncnk
+    posts.json
+  run.js
+  package.json
+\end{lstlisting}
+
+\section{Minimalny skrypt uruchamiajacy}
+Poniewaz najwazniejszy interfejs dla uzytkownika jest obecnie programistyczny,
+najprosciej utworzyc maly plik \mc{run.js}:
+
+\begin{lstlisting}[style=basecode,caption={Najprostszy runner MoonChunk w JavaScript}]
+const { executeMoonChunkFile } = require("moonchunk");
+
+const result = executeMoonChunkFile("./content/site.mncnk");
+
+if (!result.ok) {
+  console.error("Wystapil blad:");
+  console.error(result.diagnostics);
+  process.exit(1);
+}
+
+console.log("Wygenerowane pliki:");
+console.log(result.generatedFiles || []);
+\end{lstlisting}
+
+Ten skrypt jest prosty, ale w zupelnosci wystarczy do codziennego uzycia. Nie musisz
+wiedziec nic o ANTLR, parserze ani o wewnetrznej architekturze projektu.
+
+\section{Co robi \mc{executeMoonChunkFile(...)}}
+Funkcja \mc{executeMoonChunkFile(...)} bierze sciezke do pliku \mc{.mncnk}, czyta
+jego zawartosc, uruchamia parser i interpreter, a nastepnie zwraca obiekt z wynikiem.
+Najwazniejsze pola tego obiektu to:
+
+\begin{itemize}
+  \item \mc{ok} -- informacja, czy wykonanie zakonczylo sie sukcesem,
+  \item \mc{generatedFiles} -- lista wygenerowanych plikow HTML,
+  \item \mc{diagnostics} -- lista komunikatow diagnostycznych, jesli wystapily bledy,
+  \item \mc{output} -- dodatkowy log zwiazany z wykonaniem.
+\end{itemize}
+
+Dla zwyklego uzytkownika najczesciej wystarczy sprawdzenie pola \mc{ok}, a potem
+odczytanie \mc{generatedFiles} albo \mc{diagnostics}.
+
+\section{Dlaczego warto miec prosty runner}
+Mozna zapytac: po co mi dodatkowy plik \mc{run.js}? Powod jest praktyczny.
+Dzieki niemu w jednym miejscu decydujesz:
+
+\begin{itemize}
+  \item jaki plik \mc{.mncnk} jest punktem wejscia,
+  \item co zrobic po sukcesie,
+  \item jak wyswietlac bledy,
+  \item czy chcesz generowac kilka projektow jeden po drugim.
+\end{itemize}
+
+To bardzo wygodny wzorzec, zwlaszcza gdy projekt rośnie.
+
+\section{Pierwsze uruchomienie z przygotowanym plikiem}
+Kiedy masz juz skrypt uruchamiajacy oraz plik \mc{site.mncnk}, wystarczy wywolac:
+
+\begin{lstlisting}[style=basecode,caption={Uruchomienie generatora}]
+node run.js
+\end{lstlisting}
+
+Jesli wszystko jest poprawne, MoonChunk wygeneruje gotowe pliki HTML. Gdzie trafi wynik?
+To zalezy od tego, jaka sciezke podasz w instrukcji \mc{output}. O niej powiemy szerzej
+w kolejnych rozdzialach.
+
+\section{Najczestsze pytania poczatkujacych}
+\subsection*{Czy musze znac JavaScript, zeby uzywac MoonChunk}
+Nie w pelnym zakresie. Wystarczy Ci bardzo prosty skrypt startowy, ktory mozna raz
+przygotowac i potem prawie do niego nie wracac. Sama praca nad trescia i logika stron
+odbywa sie juz w MoonChunk.
+
+\subsection*{Czy MoonChunk dziala tylko z Node.js}
+Obecny sposob uzycia jest oparty o Node.js, bo wlasnie tam wykonywany jest pakiet.
+Dla osoby korzystajacej z jezyka oznacza to po prostu tyle, ze potrzebuje srodowiska,
+ktore uruchomi skrypt startowy.
+
+\subsection*{Czy jedna strona to jeden plik}\
+Niekoniecznie. Mozesz miec jeden plik z wieloma \mc{chunk}-ami, wiele plikow z importami,
+a nawet wiele punktow wejscia przez \mc{moon(...)}. Oznacza to, ze strukture projektu
+mozesz dopasowac do swojej skali pracy.
+
+\section{Nastawienie, ktore pomaga}
+MoonChunk najlatwiej poznawac malymi krokami. Dobra kolejnosc wyglada tak:
+
+\begin{enumerate}
+  \item najpierw zbuduj jedna, bardzo prosta strone,
+  \item potem dodaj zmienne,
+  \item nastepnie dodaj warunek i petle,
+  \item dopiero potem przejdz do funkcji, importow i danych z JSON.
+\end{enumerate}
+
+W kolejnym rozdziale przejdziemy przez pierwszy kompletny program, zeby zobaczyc,
+jak te wszystkie elementy lacza sie w jedna calosc.

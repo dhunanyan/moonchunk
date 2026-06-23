@@ -1,0 +1,185 @@
+\chapter{Tablice, obiekty, dane z JSON i model rekordow}
+
+\section{Dlaczego dane zlozone sa potrzebne}
+Prosta strona moze opierac sie na kilku pojedynczych zmiennych. Jednak prawdziwe projekty
+pracuja zwykle na bogatszych strukturach: listach wpisow, produktach, autorach, kartach,
+menu czy konfiguracjach. Do takich rzeczy MoonChunk daje dwa podstawowe narzedzia:
+
+\begin{itemize}
+  \item \mc{array} dla uporzadkowanych kolekcji,
+  \item \mc{object} oraz \mc{dict} dla danych nazwanych.
+\end{itemize}
+
+\section{Tablice}
+Tablica przechowuje elementy pod indeksami. Przyklad:
+
+\begin{lstlisting}[style=moonchunk,caption={Prosta tablica}]
+const colors: array = ["red", "green", "blue"];
+print(colors[0]);
+\end{lstlisting}
+
+To naturalny wybor wtedy, gdy porzadek elementow ma znaczenie albo gdy chcesz iterowac
+po danych petla z licznikiem.
+
+\section{Czy tablica musi byc jednorodna}
+MoonChunk jest tutaj dosc elastyczny. Tablica moze zawierac wartosci roznych typow,
+choc w praktyce dla czytelnosci zwykle lepiej trzymac w niej elementy podobnego rodzaju.
+
+\begin{lstlisting}[style=moonchunk,caption={Tablica mieszana}]
+const mixed: array = [1, "ala", true];
+\end{lstlisting}
+
+Technicznie jest to mozliwe, ale projektowo warto zachowac umiar.
+
+\section{Obiekty i slowniki}
+Obiekt przechowuje pola po nazwie.
+
+\begin{lstlisting}[style=moonchunk,caption={Prosty obiekt}]
+const author: object = {
+  name: "Alicja",
+  role: "writer"
+};
+\end{lstlisting}
+
+Slownik typu \mc{dict} dziala podobnie i jest szczegolnie wygodny, gdy chcesz wyraznie
+zaakcentowac, ze pracujesz na strukturze danych klucz--wartosc.
+
+\begin{lstlisting}[style=moonchunk,caption={Slownik dict}]
+let point: dict = { x: 1, y: 2 };
+\end{lstlisting}
+
+\section{Dostep do pol przez kropke}
+Najwygodniejszy i najczytelniejszy sposob pracy z obiektem to skladnia kropkowa.
+
+\begin{lstlisting}[style=moonchunk,caption={Dostep do pola obiektu}]
+print(author.name);
+print(point.x);
+\end{lstlisting}
+
+To dobry domyslny styl, gdy nazwa pola jest znana na etapie pisania kodu.
+
+\section{Dostep przez nawiasy kwadratowe}
+Czasem klucz jest dynamiczny, np. przechowywany w innej zmiennej. Wtedy przydaje sie
+skladnia indeksowana.
+
+\begin{lstlisting}[style=moonchunk,caption={Dynamiczny dostep do pola}]
+let key: string = "name";
+print(author[key]);
+\end{lstlisting}
+
+Taki zapis jest bardzo mocny, bo pozwala programowi decydowac, po ktore pole ma siegnac.
+
+\section{Klucze numeryczne i nietypowe}
+MoonChunk pozwala tworzyc obiekty i slowniki takze z kluczami liczbowymi albo tekstowymi,
+ktore nie sa zwyklymi identyfikatorami.
+
+\begin{lstlisting}[style=moonchunk,caption={Nietypowe klucze obiektu}]
+const details = {
+  stats: { total: 3, labels: ["alpha", "bravo", "charlie"] },
+  "meta-key": "enabled",
+  101: "numeric-key"
+};
+\end{lstlisting}
+
+To przydaje sie przy pracy z danymi przychodzacymi z zewnatrz, gdzie klucze nie zawsze
+sa idealnie dopasowane do skladni zwyklych identyfikatorow.
+
+\section{Modyfikowanie pol i elementow}
+MoonChunk pozwala nie tylko odczytywac dane z obiektow i tablic, ale tez je zmieniac.
+
+\begin{lstlisting}[style=moonchunk,caption={Modyfikacja danych zlozonych}]
+details.stats.total = details.stats.total + 1;
+details.stats.labels[1] = "beta";
+\end{lstlisting}
+
+To bardzo wygodne, gdy chcesz przetworzyc dane przed wygenerowaniem finalnego HTML-a.
+
+\section{Tablice i obiekty jako model rekordow}
+MoonChunk nie wprowadza osobnej skladni typu \emph{krotka} albo \emph{rekord}. W praktyce
+rolę rekordu z nazwanymi polami pelni obiekt albo \mc{dict}.
+
+Przyklad punktu jako rekordu:
+
+\begin{lstlisting}[style=moonchunk,caption={Rekord modelowany przez obiekt}]
+const point: object = { x: 1, y: 2 };
+\end{lstlisting}
+
+Jesli potrzebujesz nazwanych pol, to zwykle jest wlasnie najlepsze rozwiazanie.
+Jesli potrzebujesz uporzadkowanej listy bez nazw pol, uzyj tablicy.
+
+\section{Wczytywanie danych z pliku JSON przez \mc{data(...)}}
+To jedna z najpraktyczniejszych funkcji w MoonChunk. Pozwala pobrac dane z pliku JSON
+i pracowac na nich jak na zwyklych strukturach danych.
+
+\begin{lstlisting}[style=moonchunk,caption={Wczytanie JSON do zmiennej}]
+const posts = data("./data/posts.json");
+\end{lstlisting}
+
+Po takim zapisie \mc{posts} staje sie wartoscia, z ktora mozna pracowac w petlach,
+warunkach i interpolacjach.
+
+\section{Przykladowy plik JSON}
+\begin{lstlisting}[style=basecode,caption={Przykladowe dane posts.json}]
+[
+  {
+    "title": "Pierwszy wpis",
+    "slug": "pierwszy-wpis",
+    "published": true,
+    "views": 120
+  },
+  {
+    "title": "Drugi wpis",
+    "slug": "drugi-wpis",
+    "published": false,
+    "views": 30
+  }
+]
+\end{lstlisting}
+
+Taki plik mozesz potem przeglądać w MoonChunk przez indeks i pola obiektu.
+
+\section{Przyklad pracy z danymi JSON}
+\begin{lstlisting}[style=moonchunk,caption={Filtrowanie i wyswietlanie wpisow}]
+const posts = data("./data/posts.json");
+
+page "" {
+  for (let i: int = 0; i < 2; i++) {
+    if (posts[i].published) {
+      content {
+        <article>
+          <h2>{posts[i].title}</h2>
+          <p>Views: {posts[i].views}</p>
+        </article>
+      };
+    };
+  };
+};
+\end{lstlisting}
+
+To prosty, ale bardzo realny scenariusz: część danych jest pokazywana tylko wtedy,
+gdy dany wpis jest opublikowany.
+
+\section{Kiedy uzywac \mc{object}, a kiedy \mc{dict}}
+Z perspektywy czystego uzytkowania oba typy sa do siebie bardzo podobne. Warto przyjac
+prostą konwencje:
+
+\begin{itemize}
+  \item \mc{object} -- gdy myslisz o konkretnej strukturze modelu,
+  \item \mc{dict} -- gdy myslisz o slowniku danych i kluczach.
+\end{itemize}
+
+Nie jest to sztywna roznica filozoficzna, ale bardzo pomaga w czytelnosci projektu.
+
+\section{Typowe bledy przy danych zlozonych}
+\begin{itemize}
+  \item probowanie odczytu pola z \mc{null} albo \mc{undefined},
+  \item niepoprawny typ indeksu w nawiasach kwadratowych,
+  \item zakladanie, ze dana struktura ma pole, ktorego nie ma,
+  \item probowanie traktowania prostej liczby jak obiektu,
+  \item wpisywanie skomplikowanej logiki danych bezposrednio do HTML-a zamiast przygotowac wartosci wczesniej.
+\end{itemize}
+
+\section{Dobra praktyka: dane najpierw, HTML potem}
+Przy pracy z tablicami i obiektami bardzo oplaca sie najpierw przygotowac czyste dane,
+a dopiero potem budowac z nich tresc strony. To redukuje balagan i sprawia, ze \mc{content}
+pozostaje glownie warstwa prezentacji, a nie mieszanina logiki i znacznikow.

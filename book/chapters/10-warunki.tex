@@ -1,0 +1,192 @@
+\chapter{Instrukcje warunkowe}
+
+\section{Po co programowi warunki}
+Strona internetowa rzadko jest absolutnie identyczna w kazdej sytuacji. Czasem chcemy:
+
+\begin{itemize}
+  \item pokazac sekcje tylko dla opublikowanych wpisow,
+  \item ukryc komunikat, jesli lista jest pusta,
+  \item wyswietlic inny tekst dla uzytkownika premium,
+  \item nadac inny styl w zaleznosci od stanu danych.
+\end{itemize}
+
+Do takich sytuacji sluzy instrukcja \mc{if}. Pozwala powiedziec:
+\emph{jesli warunek jest prawdziwy, wykonaj ten blok; w przeciwnym razie wykonaj inny
+albo nie wykonuj niczego}.
+
+\section{Najprostsza forma \mc{if}}
+\begin{lstlisting}[style=moonchunk,caption={Podstawowy warunek if}]
+if (isPublished) {
+  print("Wpis jest opublikowany");
+};
+\end{lstlisting}
+
+Jesli \mc{isPublished} ma wartosc \mc{true}, instrukcja wewnatrz bloku zostanie wykonana.
+Jesli ma wartosc \mc{false}, nic sie nie stanie.
+
+\section{Warunek musi byc typu \mc{bool}}
+To jedna z bardzo waznych zasad MoonChunk. Wyrazenie w nawiasach po \mc{if} powinno
+po obliczeniu dawac \mc{true} albo \mc{false}. Nie nalezy traktowac liczb albo tekstow
+jako niejawnych zastepnikow prawdy.
+
+Poprawnie:
+
+\begin{lstlisting}[style=moonchunk,caption={Poprawny warunek logiczny}]
+let showBanner: bool = views > 100;
+if (showBanner) {
+  print("Pokaz baner");
+};
+\end{lstlisting}
+
+Niepoprawnie:
+
+\begin{lstlisting}[style=moonchunk,caption={Niepoprawny warunek niebedacy bool}]
+if (3) {
+  print("To powinno byc bledem");
+};
+\end{lstlisting}
+
+\section{\mc{if} z \mc{else}}
+Bardzo czesto potrzebujemy dwoch alternatyw. Wtedy korzystamy z \mc{else}.
+
+\begin{lstlisting}[style=moonchunk,caption={Pelny warunek if-else}]
+if (isPublished) {
+  print("Status: opublikowany");
+} else {
+  print("Status: szkic");
+};
+\end{lstlisting}
+
+To prosty, bardzo czytelny zapis: jedna droga dla prawdy, druga dla falszu.
+
+\section{Warunki a HTML}
+Instrukcje warunkowe sa szczegolnie przydatne przy generowaniu tresci strony.
+Mozesz decydowac, ktory fragment \mc{content} ma zostac dolaczony.
+
+\begin{lstlisting}[style=moonchunk,caption={Warunkowe generowanie fragmentu strony}]
+page "" {
+  let hasPosts: bool = true;
+
+  if (hasPosts) {
+    content {
+      <p>Mamy wpisy do pokazania.</p>
+    };
+  } else {
+    content {
+      <p>Brak wpisow.</p>
+    };
+  };
+};
+\end{lstlisting}
+
+To jeden z najwazniejszych praktycznych wzorcow w MoonChunk.
+
+\section{Warunki zlozone}
+Prawdziwa sila \mc{if} pojawia sie wtedy, gdy warunek sklada sie z kilku elementow.
+Na przyklad:
+
+\begin{lstlisting}[style=moonchunk,caption={Zlozony warunek logiczny}]
+if (isPublished and not isArchived and views > 100) {
+  print("Pokaz promowany wpis");
+};
+\end{lstlisting}
+
+Takie warunki sa bardzo przydatne, ale trzeba pilnowac czytelnosci. Jesli logika staje
+sie dluga, warto podzielic ja na zmienne pomocnicze.
+
+\begin{lstlisting}[style=moonchunk,caption={Podzial zlozonego warunku na kroki}]
+let canPromote: bool = isPublished and not isArchived;
+let isPopular: bool = views > 100;
+
+if (canPromote and isPopular) {
+  print("Pokaz promowany wpis");
+};
+\end{lstlisting}
+
+\section{Zagniezdzone warunki}
+Mozna tez umieszczac jeden \mc{if} wewnatrz drugiego. Trzeba jednak robic to z umiarem.
+
+\begin{lstlisting}[style=moonchunk,caption={Zagniezdzone warunki}]
+if (isPublished) {
+  if (views > 100) {
+    print("Wpis jest opublikowany i popularny");
+  };
+};
+\end{lstlisting}
+
+Zagniezdzenia sa czasem naturalne, ale ich naduzywanie pogarsza czytelnosc. Często
+lepszym rozwiazaniem jest obliczenie kilku nazwanych warunkow pomocniczych.
+
+\section{If a zakresy nazw}
+W MoonChunk ciało instrukcji \mc{if} jest miejscem, w ktorym trzeba uwazac na redeklaracje
+nazw. Jezyk celowo nie zachowuje sie tu jak czysty, niezalezny blok do bezkarnego
+zaslaniania tych samych nazw z gory.
+
+Przyklad potencjalnie problematyczny:
+
+\begin{lstlisting}[style=moonchunk,caption={Redeclaracja w ciele if}]
+const x: int = 3;
+
+if (true) {
+  const x: int = 5;
+};
+\end{lstlisting}
+
+Taki zapis nalezy traktowac jako blad redeklaracji. Jesli chcesz utworzyc odrebny,
+celowo zagniezdzony zakres, skorzystaj z jawnego bloku \mc{\{ ... \}}, o czym bedzie
+mowa w osobnym rozdziale.
+
+\section{Kiedy uzywac \mc{if}, a kiedy operatora \mc{?:}}
+To czeste pytanie. Dobra zasada jest bardzo praktyczna:
+
+\begin{itemize}
+  \item operator \mc{?:} jest dobry dla bardzo prostego wyboru jednej z dwoch wartosci,
+  \item \mc{if} jest lepszy, gdy trzeba wykonac wiecej niz jedna instrukcje albo zbudowac HTML.
+\end{itemize}
+
+Przyklad prosty:
+
+\begin{lstlisting}[style=moonchunk,caption={Operator warunkowy do malego wyboru}]
+let label: string = isPublished ? "Tak" : "Nie";
+\end{lstlisting}
+
+Przyklad bardziej rozbudowany:
+
+\begin{lstlisting}[style=moonchunk,caption={if do wiekszej logiki}]
+if (isPublished) {
+  print("Wpis gotowy");
+  content {
+    <span>Opublikowany</span>
+  };
+} else {
+  print("Wpis jeszcze nie gotowy");
+};
+\end{lstlisting}
+
+\section{Typowe zastosowania w stronach}
+W prawdziwych projektach \mc{if} jest szczegolnie przydatne do:
+
+\begin{itemize}
+  \item pokazywania pustego stanu listy,
+  \item warunkowego renderowania banerow,
+  \item wyboru sekcji dla roznych typow tresci,
+  \item nadpisywania wybranych fragmentow na podstawie danych,
+  \item ochrony przed probą dostepu do danych, ktorych moze nie byc.
+\end{itemize}
+
+\section{Najczestsze bledy przy warunkach}
+\begin{itemize}
+  \item wpisanie \mc{=} zamiast \mc{==},
+  \item uzycie liczby lub tekstu zamiast wartosci logicznej,
+  \item zbyt rozbudowany warunek bez nazw pomocniczych,
+  \item redeklarowanie tej samej nazwy w ciele \mc{if},
+  \item zapominanie o srednikach po blokach, jesli skladnia ich wymaga.
+\end{itemize}
+
+Jesli MoonChunk zglosi blad w warunku, warto najpierw sprawdzic trzy rzeczy:
+
+\begin{enumerate}
+  \item czy porownanie jest zapisane jako \mc{==}, a nie \mc{=},
+  \item czy wynik warunku naprawde jest typu \mc{bool},
+  \item czy nawiasy i klamry zamykaja sie poprawnie.
+\end{enumerate}

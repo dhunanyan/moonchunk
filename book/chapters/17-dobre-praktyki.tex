@@ -1,0 +1,138 @@
+\chapter{Dobre praktyki pracy z MoonChunk}
+
+\section{Po co w ogole mowic o praktykach}
+Sama znajomosc skladni nie wystarcza, aby pisac dobry kod. Mozna stworzyc program, ktory
+technicznie dziala, ale jest trudny do czytania, zly do rozbudowy i nieprzyjemny w
+utrzymaniu. Dobre praktyki sprawiaja, ze projekt pozostaje czytelny po tygodniu,
+miesiacu i semestrze.
+
+\section{Oddzielaj dane od prezentacji}
+Jeden z najlepszych nawykow w MoonChunk polega na tym, aby najpierw przygotowac dane,
+a dopiero potem generowac z nich HTML.
+
+Lepszy styl:
+
+\begin{lstlisting}[style=moonchunk,caption={Najpierw dane, potem content}]
+let heading: string = "Aktualnosci";
+let intro: string = "Najnowsze wpisy z projektu";
+
+content {
+  <h1>{heading}</h1>
+  <p>{intro}</p>
+};
+\end{lstlisting}
+
+Gorszy styl to upychanie wszystkiego bezposrednio do jednego, ogromnego bloku \mc{content}.
+
+\section{Nazywaj rzeczy tak, jak je rozumiesz}
+Nazwy typu \mc{x}, \mc{tmp}, \mc{data2}, \mc{something} szybko zamieniaja projekt w
+labirynt. Dobra nazwa bardzo pomaga, nawet jesli jej wpisanie zajmie trzy sekundy dluzej.
+
+Dobre przykłady:
+
+\begin{itemize}
+  \item \mc{siteTitle},
+  \item \mc{isPublished},
+  \item \mc{cardsHtml},
+  \item \mc{featuredPosts},
+  \item \mc{buildAuthorLabel}.
+\end{itemize}
+
+\section{Trzymaj metadata razem}
+Jesli kilka stron korzysta z tych samych pol metadata, wydziel osobny chunk z konfiguracja
+wspolna i dolacz go przez \mc{@include}. To jeden z najlatwiejszych sposobow na unikniecie
+kopiowania kodu.
+
+\section{Uzywaj funkcji do logiki, nie do wszystkiego}
+Funkcje sa swietne, ale nie musza zastapic calej struktury projektu. Najlepiej sprawdzaja
+sie wtedy, gdy:
+
+\begin{itemize}
+  \item masz powtarzalne obliczenie,
+  \item chcesz nazwac fragment logiki,
+  \item ten sam schemat pojawia sie w wielu miejscach,
+  \item chcesz odchudzic blok \mc{content}.
+\end{itemize}
+
+Jesli jednak funkcja zaczyna przejmowac odpowiedzialnosc za pol projektu naraz, moze to
+byc znak, ze lepiej wydzielic osobny chunk albo osobny plik.
+
+\section{Ograniczaj magię w wyrazeniach}
+Bardzo długie warunki i skomplikowane wyrazenia wstawione bezposrednio do HTML-a wygladaja
+sprytnie tylko przez chwile. Potem staja sie meczace.
+
+Zamiast tego:
+
+\begin{lstlisting}[style=moonchunk,caption={Lepsza czytelnosc przez nazwy pomocnicze}]
+let canShowBanner: bool = isPublished and not isArchived;
+let bannerLabel: string = canShowBanner ? "Widoczny" : "Ukryty";
+\end{lstlisting}
+
+\section{Utrzymuj pliki male i sensowne}
+Jesli plik robi zbyt wiele rzeczy naraz, podziel go. Dobry podzial nie wynika z sztywnej
+liczby linii, ale z odpowiedzialnosci. Przykładowo osobny plik moze miec:
+
+\begin{itemize}
+  \item wspolne metadata,
+  \item logike bloga,
+  \item zestaw chunkow sekcyjnych,
+  \item dane zewnętrzne.
+\end{itemize}
+
+\section{Uzywaj \mc{print(...)} świadomie}
+Debugowanie jest normalna częscią pracy, ale logi tez potrafia zasmiecic projekt.
+Zostawiaj te, ktore rzeczywiscie pomagaja, i usuwaj te jednorazowe, gdy przestaja byc
+potrzebne.
+
+\section{Nie naduzywaj globali}
+Globalne wartosci sa wygodne, ale jak kazde wygodne narzedzie mogą byc naduzywane.
+Nie wszystko musi byc globalne. Trzymaj globalnie tylko to, co naprawde wspolne dla
+wielu miejsc programu.
+
+\section{Wybieraj prostszy typ, jesli wystarczy}
+Nie trzeba wszedzie wpisywac \mc{unknown}, \mc{any} czy rozbudowanych rzutowan. Jesli
+wystarcza \mc{string}, \mc{int}, \mc{array} albo \mc{object}, wybierz wlasnie je.
+Kod bedzie prostszy i bezpieczniejszy.
+
+\section{Zanim rozbudujesz, zbuduj maly pionowy przekroj}
+Praktyczna rada projektowa: zanim napiszesz cala architekture, zbuduj maly kawalek,
+ktory przechodzi przez wszystkie warstwy. Na przykład:
+
+\begin{enumerate}
+  \item jedna strona,
+  \item jeden chunk wspolny,
+  \item jedno zrodlo JSON,
+  \item jedna petla,
+  \item jeden warunek,
+  \item jedna funkcja pomocnicza.
+\end{enumerate}
+
+Taki przekroj daje pewnosc, ze fundament dziala.
+
+\section{Komentuj tam, gdzie jest decyzja, nie tam, gdzie jest oczywistosc}
+Jesli dodajesz komentarz, niech wyjasnia \emph{dlaczego}, a nie tylko \emph{co}.
+
+Dobry komentarz:
+
+\begin{lstlisting}[style=moonchunk,caption={Komentarz wyjasniajacy decyzje}]
+// Pokazujemy tylko wpisy opublikowane, bo szkice nie powinny trafiać do HTML-a.
+if (posts[i].published) {
+  ...
+};
+\end{lstlisting}
+
+Slabszy komentarz to taki, ktory tylko powtarza kod.
+
+\section{Buduj projekt tak, jakby mial urosnac}
+Nawet jesli dzis projekt ma dwie podstrony, jutro moze miec dwadziescia. Nie chodzi o
+przedwczesne komplikowanie, tylko o zdrowe podstawy:
+
+\begin{itemize}
+  \item sensowny podzial plikow,
+  \item dobre nazwy,
+  \item wspolne metadata,
+  \item funkcje dla powtarzalnej logiki,
+  \item dane ladowane z zewnatrz tam, gdzie to ma sens.
+\end{itemize}
+
+To zwykle wystarczy, aby projekt rozwijal sie spokojnie i bez chaosu.

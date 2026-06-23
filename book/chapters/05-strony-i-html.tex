@@ -1,0 +1,207 @@
+\chapter{Strony i HTML}
+
+\section{Strona jako finalny produkt}
+Najwazniejszym wynikiem pracy w MoonChunk sa strony HTML. W praktyce oznacza to,
+ze ostatecznym celem programu jest stworzenie jednego albo wielu dokumentow, ktore
+mozna otworzyc w przegladarce, opublikowac na serwerze albo dolaczyc do wiekszego
+statycznego serwisu.
+
+W MoonChunk pojedyncza strona powstaje przez instrukcje \mc{page}.
+
+\begin{lstlisting}[style=moonchunk,caption={Najprostsza strona}]
+page "" {
+  content {
+    <h1>Witaj</h1>
+  };
+};
+\end{lstlisting}
+
+\section{Jak rozumiec trase strony}
+Argument przekazywany do \mc{page} okresla trase, a w konsekwencji takze nazwe pliku
+wynikowego. Warto zapamietac cztery podstawowe przypadki:
+
+\begin{itemize}
+  \item \mc{page ""} generuje \mc{index.html},
+  \item \mc{page "/"} rowniez generuje \mc{index.html},
+  \item \mc{page "about"} generuje \mc{about.html},
+  \item \mc{page "docs/getting-started"} generuje \mc{docs/getting-started.html}.
+\end{itemize}
+
+MoonChunk pomaga tutaj uzytkownikowi. Nie musisz dopisywac rozszerzenia \mc{.html}
+a ani wiodacego ukosnika. Jezyk sam zamienia trase na odpowiednia sciezke pliku.
+
+\section{Po co to ulatwienie}
+Dzieki temu zapis tras jest czystszy i bardziej zblizony do myslenia o strukturze strony,
+a nie o niskopoziomowej strukturze plikow. Kiedy piszesz:
+
+\begin{lstlisting}[style=moonchunk,caption={Trasa w stylu logicznym}]
+page "blog/moj-pierwszy-wpis" {
+  content {
+    <h1>Moj pierwszy wpis</h1>
+  };
+};
+\end{lstlisting}
+
+bardziej myslisz o adresie logicznym strony niz o tym, czy trzeba dopisac \mc{.html}.
+To drobiazg, ale przy duzej liczbie podstron daje bardzo wygodny efekt.
+
+\section{Blok \mc{content}}
+Wewnątrz \mc{page} najwazniejszym miejscem jest \mc{content}. To tutaj piszesz wlasciwy
+HTML strony. MoonChunk traktuje ten blok jako dynamiczny fragment tresci, ktory zostanie
+wstawiony do wewnetrznego szablonu dokumentu.
+
+\begin{lstlisting}[style=moonchunk,caption={Zawartosc strony w bloku content}]
+page "" {
+  content {
+    <section>
+      <h1>Dokumentacja</h1>
+      <p>Opis projektu.</p>
+    </section>
+  };
+};
+\end{lstlisting}
+
+Wazna zasada brzmi: \important{blok \mc{content} wolno umieszczac tylko w kontekscie strony}.
+Nie jest to ogolny blok do wstawiania HTML gdziekolwiek. Jego rola jest konkretna:
+budowanie tresci finalnej strony.
+
+\section{Dynamiczne wstawianie wartosci}
+Jedna z najmocniejszych cech MoonChunk polega na tym, ze wewnatrz \mc{content} mozna
+wstawiać wartosci zmiennych i wyniki wyrazen. Sluza do tego nawiasy klamrowe:
+
+\begin{lstlisting}[style=moonchunk,caption={Interpolacja wartosci w HTML}]
+page "" {
+  let title = "MoonChunk";
+  let subtitle = "Jezyk do generowania HTML";
+
+  content {
+    <h1>{title}</h1>
+    <p>{subtitle}</p>
+  };
+};
+\end{lstlisting}
+
+MoonChunk oblicza wartosci w nawiasach i zamienia je na tekst. To bardzo wygodny sposob
+na tworzenie dynamicznych naglowkow, opisow, list czy sekcji.
+
+\section{Atrybuty HTML}
+MoonChunk pozwala takze budowac dynamiczne atrybuty. Przyklad:
+
+\begin{lstlisting}[style=moonchunk,caption={Dynamiczny atrybut HTML}]
+page "" {
+  let slug = "kontakt";
+  let label = "Przejdz do kontaktu";
+
+  content {
+    <a href={"/" + slug}>{label}</a>
+  };
+};
+\end{lstlisting}
+
+W takim zapisie wartosc atrybutu \mc{href} jest obliczana dynamicznie. To przydatne
+zwlaszcza wtedy, gdy generujesz wiele podobnych linkow albo sekcji na podstawie danych.
+
+\section{Czy w \mc{content} mozna mieszac HTML i logike}
+Tak, ale z umiarem. MoonChunk umozliwia kilka stylow pracy.
+
+\subsection*{Styl prosty}
+Przy malych stronach logika jest niewielka, a w \mc{content} od razu wstawia sie wartosci:
+
+\begin{lstlisting}[style=moonchunk,caption={Prosty styl budowy strony}]
+page "" {
+  let title = "Start";
+  content {
+    <h1>{title}</h1>
+  };
+};
+\end{lstlisting}
+
+\subsection*{Styl uporzadkowany}
+Przy wiekszej logice lepiej najpierw przygotowac dane, a dopiero potem uzyc ich w HTML-u:
+
+\begin{lstlisting}[style=moonchunk,caption={Najpierw logika, potem HTML}]
+page "" {
+  let title = "Oferta";
+  let intro = "Sprawdz nasze uslugi";
+
+  content {
+    <header>
+      <h1>{title}</h1>
+      <p>{intro}</p>
+    </header>
+  };
+};
+\end{lstlisting}
+
+Drugi styl jest zwykle czytelniejszy w rozbudowanych projektach.
+
+\section{Petle i warunki wewnatrz strony}
+W MoonChunk treść strony moze byc skladana warunkowo i iteracyjnie. Oznacza to, ze
+w ramach \mc{page} mozna uzywac \mc{if}, \mc{for} i \mc{while}, a wewnatrz nich
+umieszczac \mc{content}. To bardzo mocny mechanizm.
+
+\begin{lstlisting}[style=moonchunk,caption={Content budowany warunkowo}]
+page "" {
+  let isLogged: bool = true;
+
+  if (isLogged) {
+    content {
+      <p>Witaj ponownie.</p>
+    };
+  } else {
+    content {
+      <p>Zaloguj sie, aby zobaczyc wiecej.</p>
+    };
+  };
+};
+\end{lstlisting}
+
+To znaczy, ze HTML nie musi byc jedna, sztywna bryla. Moze byc skladany fragment po
+fragmencie w zaleznosci od danych i warunkow.
+
+\section{Wiecej niz jeden blok \mc{content}}
+Strona moze skladac sie z wielu blokow \mc{content}. Ich zawartosc zostanie polaczona
+w takiej kolejnosci, w jakiej zostaly wykonane.
+
+\begin{lstlisting}[style=moonchunk,caption={Kilka blokow content na jednej stronie}]
+page "" {
+  content {
+    <header><h1>Sklep</h1></header>
+  };
+
+  content {
+    <section><p>Promocje dnia.</p></section>
+  };
+
+  content {
+    <footer><small>Koniec strony</small></footer>
+  };
+};
+\end{lstlisting}
+
+To zachowanie bywa bardzo wygodne przy skladaniu strony z warunkowych fragmentow,
+sekcji generowanych w petli albo czesci importowanych z innych chunkow.
+
+\section{HTML jako wynik, nie jako cel sam w sobie}
+Warto pamietac, ze MoonChunk nie probuje zastapic calego ekosystemu frontendu.
+Jego zadaniem jest przygotowanie poprawnego i czytelnego HTML-a. To oznacza, ze:
+
+\begin{itemize}
+  \item style CSS mozesz dolaczyc przez metadata,
+  \item skrypty JavaScript mozesz dolaczyc przez metadata,
+  \item sama tresc strony jest najwazniejsza w \mc{content},
+  \item MoonChunk koncentruje sie na generowaniu dokumentu, a nie na runtime w przegladarce.
+\end{itemize}
+
+\section{Praktyczna rada dotyczaca czytelnosci}
+Jesli blok \mc{content} robi sie bardzo dlugi, stosuj zwykle zasady porzadku znane z HTML-a:
+
+\begin{itemize}
+  \item wciecia,
+  \item logiczne grupowanie sekcji,
+  \item sensowne nazwy klas,
+  \item nie mieszaj zbyt wielu obliczen bezposrednio w nawiasach klamrowych.
+\end{itemize}
+
+Zamiast pisac bardzo rozbudowane wyrazenie w srodku znacznika, czesto lepiej najpierw
+obliczyc wartosc w zmiennej, a potem spokojnie jej uzyc w HTML-u.

@@ -1,0 +1,66 @@
+\chapter{Cwiczenia i propozycje samodzielnej pracy}
+
+\section{Dlaczego warto robic cwiczenia}
+Sama lektura dokumentacji daje podstawy, ale prawdziwe zrozumienie przychodzi dopiero,
+gdy samodzielnie zmieniasz kod i obserwujesz efekt. Dlatego na koniec warto przejsc
+przez kilka malych zadan.
+
+\section{Cwiczenie 1: prosta strona wizytowka}
+Cel: utworz \mc{chunk} generujacy pojedyncza strone glowna z naglowkiem, opisem i linkiem.
+
+Spróbuj samodzielnie:
+
+\begin{itemize}
+  \item dodac \mc{title} i \mc{metaDescription},
+  \item zdefiniowac trzy zmienne tekstowe,
+  \item wstawic je do \mc{content}.
+\end{itemize}
+
+\section{Cwiczenie 2: lista kart}
+Cel: zbuduj tablice trzech obiektow z polami \mc{title}, \mc{description}, \mc{button}
+i wygeneruj z niej karty w petli \mc{for}.
+
+To cwiczenie utrwala:
+
+\begin{itemize}
+  \item tablice,
+  \item obiekty,
+  \item indeksowanie,
+  \item dynamiczne \mc{content} w petli.
+\end{itemize}
+
+\section{Cwiczenie 3: filtr opublikowanych wpisow}
+Cel: przygotuj tablice wpisow z polem \mc{published} i pokaz tylko te, ktore sa gotowe do
+publikacji. Dodaj tez tekst ``brak wpisow'', jesli zadny nie przejdzie filtra.
+
+\section{Cwiczenie 4: funkcja etykietujaca}
+Cel: napisz funkcje, ktora na podstawie liczby wyswietlen zwraca etykiete,
+np. \mc{"Nowy"}, \mc{"Popularny"}, \mc{"Hit"}. Uzyj tej funkcji w HTML-u.
+
+\section{Cwiczenie 5: wczytanie JSON}
+Cel: przenies dane wpisow z kodu MoonChunk do pliku JSON i wczytaj je przez \mc{data(...)}.
+Sprawdz przez \mc{print(...)}, czy dane wygladaja tak, jak oczekujesz.
+
+\section{Cwiczenie 6: wspolne metadata}
+Cel: wydziel chunk \mc{Metadata}, zaimportuj go do pliku glownego i nadpisz \mc{title}
+dla jednej konkretnej strony.
+
+\section{Cwiczenie 7: rekurencja}
+Cel: napisz funkcje rekurencyjna, ktora wypisuje liczby od \mc{0} do \mc{5}. Zadbaj o
+czytelny warunek stopu.
+
+\section{Cwiczenie 8: jawny blok zasiegu}
+Cel: zadeklaruj zmienna \mc{x} na zewnatrz, a potem utworz jawny blok \mc{\{ ... \}},
+w ktorym pojawi sie kolejne \mc{x}. Sprawdz przez \mc{print(...)}, ze obie wartosci sa
+od siebie niezalezne.
+
+\section{Jak pracowac z cwiczeniami}
+Najlepiej wykonywac je w kolejnosci. Po kazdym z nich odpowiedz sobie na trzy pytania:
+
+\begin{enumerate}
+  \item co juz rozumiem lepiej niz przed chwila,
+  \item gdzie musialem uzyc \mc{print(...)},
+  \item ktory fragment nadal budzi watpliwosci.
+\end{enumerate}
+
+To pomaga nie tylko rozwiazywac zadania, ale tez świadomie budowac intuicje jezykowa.

@@ -1,0 +1,94 @@
+\chapter{Szybka sciaga skladni}
+
+Ten dodatek nie zastepuje pelnych rozdzialow. Ma sluzyc jako szybkie przypomnienie
+najwazniejszych konstrukcji.
+
+\section{Podstawowy szkielet}
+\begin{lstlisting}[style=moonchunk]
+chunk "Main" {
+  output: "./dist";
+
+  page "" {
+    content {
+      <h1>Hello</h1>
+    };
+  };
+};
+
+moon(Main);
+\end{lstlisting}
+
+\section{Zmienne i stale}
+\begin{lstlisting}[style=moonchunk]
+let a: int = 1;
+let b: string;
+b = "hello";
+const title: string = "MoonChunk";
+\end{lstlisting}
+
+\section{Warunki}
+\begin{lstlisting}[style=moonchunk]
+if (a > 0) {
+  print("plus");
+} else {
+  print("zero lub minus");
+};
+\end{lstlisting}
+
+\section{Petle}
+\begin{lstlisting}[style=moonchunk]
+for (let i: int = 0; i < 10; i++) {
+  print(i);
+};
+
+while (a < 5) {
+  a = a + 1;
+};
+\end{lstlisting}
+
+\section{Funkcje}
+\begin{lstlisting}[style=moonchunk]
+function add(a: int, b: int): int {
+  return a + b;
+}
+
+sum(a: int, b: int): int => a + b;
+\end{lstlisting}
+
+\section{Importy}
+\begin{lstlisting}[style=moonchunk]
+import { Metadata } from "./metadata.mncnk";
+import * as Fragments from "./fragments.mncnk";
+\end{lstlisting}
+
+\section{Include}
+\begin{lstlisting}[style=moonchunk]
+chunk "Main" {
+  @include Metadata;
+  @include Fragments.Hero;
+  output: "./dist";
+};
+\end{lstlisting}
+
+\section{Tablice i obiekty}
+\begin{lstlisting}[style=moonchunk]
+const arr = [1, 2, 3];
+const obj = { title: "Hello", views: 10 };
+print(arr[0]);
+print(obj.title);
+\end{lstlisting}
+
+\section{Rzutowanie}
+\begin{lstlisting}[style=moonchunk]
+let a: int = "42" as int;
+let b: string = 10 as string;
+let c: bool = (bool)3;
+let d: bool = 3 as unknown as bool;
+\end{lstlisting}
+
+\section{Globale}
+\begin{lstlisting}[style=moonchunk]
+env {
+  global siteName: string = "MoonChunk";
+};
+\end{lstlisting}

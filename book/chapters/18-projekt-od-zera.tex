@@ -1,0 +1,239 @@
+\chapter{Projekt od zera: budujemy maly serwis krok po kroku}
+
+\section{Cel projektu}
+Na koniec przejdziemy przez caly, realistyczny mini-projekt. Zbudujemy prosty serwis
+zlozony z:
+
+\begin{itemize}
+  \item strony glownej,
+  \item listy wpisow,
+  \item wspolnych metadata,
+  \item funkcji pomocniczych,
+  \item danych w pliku JSON,
+  \item kilku importowanych chunkow.
+\end{itemize}
+
+Naszym celem nie jest stworzenie ogromnej aplikacji, tylko pokazanie, jak elementy
+MoonChunk lacza sie w sensowna calosc.
+
+\section{Struktura plikow projektu}
+Przyjmijmy taki uklad:
+
+\begin{lstlisting}[style=basecode,caption={Struktura przykladowego projektu}]
+book-demo/
+  content/
+    site.mncnk
+    metadata.mncnk
+    blog.mncnk
+    sections.mncnk
+    data/
+      posts.json
+  run.js
+\end{lstlisting}
+
+\section{Dane wpisow}
+Zacznijmy od danych. Plik \mc{posts.json} moze wygladac tak:
+
+\begin{lstlisting}[style=basecode,caption={Przykladowy plik posts.json}]
+[
+  {
+    "title": "MoonChunk od podstaw",
+    "slug": "moonchunk-od-podstaw",
+    "description": "Pierwszy kontakt z jezykiem i podstawowa skladnia.",
+    "published": true,
+    "views": 120
+  },
+  {
+    "title": "Funkcje i petle",
+    "slug": "funkcje-i-petle",
+    "description": "Jak przetwarzac wiele elementow i porzadkowac logike.",
+    "published": true,
+    "views": 90
+  },
+  {
+    "title": "Wpis roboczy",
+    "slug": "wpis-roboczy",
+    "description": "Jeszcze nie powinien byc pokazany publicznie.",
+    "published": false,
+    "views": 5
+  }
+]
+\end{lstlisting}
+
+\section{Wspolne metadata}
+Nastepnie wydzielmy wspolna konfiguracje strony do osobnego chunku.
+
+\begin{lstlisting}[style=moonchunk,caption={Plik metadata.mncnk}]
+export chunk "Metadata" {
+  lang: "pl";
+  charset: "utf-8";
+  viewport: "width=device-width, initial-scale=1";
+  metaAuthor: "MoonChunk Team";
+  metaRobots: "index,follow";
+  themeColor: "#111827";
+  styles: "<link rel='stylesheet' href='/assets/app.css'>";
+  footer: "<footer><small>MoonChunk Demo</small></footer>";
+};
+\end{lstlisting}
+
+To bardzo praktyczny krok. Dzieki temu nie musimy powtarzac tych samych pol w wielu
+chunkach.
+
+\section{Wspolna sekcja powitalna}
+Zrobmy tez dodatkowy chunk z sekcja powitalna.
+
+\begin{lstlisting}[style=moonchunk,caption={Plik sections.mncnk}]
+export chunk "HeroSection" {
+  page "" {
+    content {
+      <section class="hero">
+        <h1>MoonChunk Blog</h1>
+        <p>Statyczny serwis budowany z danych i logiki.</p>
+      </section>
+    };
+  };
+};
+\end{lstlisting}
+
+W tym miejscu warto zwrocic uwage na ciekawy aspekt: chunk moze zawierac w sobie
+\mc{page}. Oznacza to, ze logika strony moze byc skladana z mniejszych czesci.
+
+\section{Logika bloga}
+Teraz utworzmy osobny plik odpowiedzialny za generowanie strony z wpisami.
+
+\begin{lstlisting}[style=moonchunk,caption={Plik blog.mncnk}]
+export chunk "BlogPages" {
+  const posts = data("./data/posts.json");
+
+  function badge(views: int): string {
+    return views > 100 ? "Popularny" : "Nowy";
+  }
+
+  page "blog" {
+    content {
+      <section>
+        <h2>Lista wpisow</h2>
+      </section>
+    };
+
+    for (let i: int = 0; i < 3; i++) {
+      if (posts[i].published) {
+        content {
+          <article class="post-card">
+            <h3>{posts[i].title}</h3>
+            <p>{posts[i].description}</p>
+            <p>Status: {badge(posts[i].views)}</p>
+            <p>Views: {posts[i].views}</p>
+            <a href={"/posts/" + posts[i].slug}>Czytaj wiecej</a>
+          </article>
+        };
+      };
+    };
+  };
+};
+\end{lstlisting}
+
+W tym fragmencie mamy od razu kilka istotnych elementow:
+
+\begin{itemize}
+  \item wczytanie danych przez \mc{data(...)},
+  \item funkcje pomocnicza,
+  \item petle \mc{for},
+  \item warunek \mc{if},
+  \item dynamiczne atrybuty HTML,
+  \item generowanie wielu podobnych kart.
+\end{itemize}
+
+\section{Plik glowny}
+Na koniec skladamy wszystko w punkcie wejscia.
+
+\begin{lstlisting}[style=moonchunk,caption={Plik site.mncnk}]
+import { Metadata } from "./metadata.mncnk";
+import { BlogPages } from "./blog.mncnk";
+import * as Sections from "./sections.mncnk";
+
+chunk "Main" {
+  @include Metadata;
+  @include BlogPages;
+  output: "./dist";
+  title: "MoonChunk Blog";
+  metaDescription: "Przykladowy serwis statyczny zbudowany w MoonChunk.";
+
+  page "" {
+    content {
+      <section>
+        <h1>Start</h1>
+        <p>To jest strona glowna serwisu.</p>
+      </section>
+    };
+  };
+};
+
+moon(Main);
+\end{lstlisting}
+
+\section{Co zrobi ten projekt}
+Po uruchomieniu projekt wygeneruje co najmniej:
+
+\begin{itemize}
+  \item strone glowna \mc{index.html},
+  \item strone bloga \mc{blog.html},
+  \item wspolny dokument z odpowiednimi metadata,
+  \item HTML z kartami dla wpisow, ktore maja \mc{published = true}.
+\end{itemize}
+
+Dzieki temu powstaje maly, ale realistyczny serwis statyczny.
+
+\section{Minimalny runner do tego projektu}
+\begin{lstlisting}[style=basecode,caption={Plik run.js dla projektu}]
+const { executeMoonChunkFile } = require("moonchunk");
+
+const result = executeMoonChunkFile("./content/site.mncnk");
+
+if (!result.ok) {
+  console.error(result.diagnostics);
+  process.exit(1);
+}
+
+console.log(result.generatedFiles || []);
+\end{lstlisting}
+
+To wszystko. Od strony uzytkownika tyle wystarczy, aby uruchomic generator.
+
+\section{Jak rozwijac ten projekt dalej}
+To dopiero poczatek. Z tego miejsca mozna isc w wielu kierunkach:
+
+\begin{itemize}
+  \item dodac osobne strony \mc{posts/...},
+  \item rozbudowac metadata dla Open Graph i Twittera,
+  \item dodac wiecej funkcji pomocniczych,
+  \item wprowadzic wspolne chunki dla sekcji strony,
+  \item podzielic dane na kilka plikow JSON,
+  \item wzbogacic layout przez CSS i skrypty dolaczane w metadata.
+\end{itemize}
+
+\section{Czego ten projekt uczy}
+Ten projekt jest wartosciowy nie dlatego, ze jest wielki, tylko dlatego, ze przechodzi
+przez niemal wszystkie fundamenty MoonChunk:
+
+\begin{itemize}
+  \item strukture plikow,
+  \item importy,
+  \item eksportowane chunki,
+  \item \mc{@include},
+  \item \mc{moon(...)},
+  \item metadata,
+  \item funkcje,
+  \item petle i warunki,
+  \item dane JSON,
+  \item generowanie HTML.
+\end{itemize}
+
+Jesli rozumiesz ten przyklad od poczatku do konca, masz bardzo solidne podstawy do
+budowania wlasnych projektow w MoonChunk.
+
+\section{Ostatnia rada praktyczna}
+Kiedy tworzysz pierwszy prawdziwy projekt, nie probuj od razu zbudowac wszystkiego.
+Najpierw uruchom jedna strone, potem dodaj wspolne metadata, potem dane, potem petle,
+a dopiero na koncu bardziej zaawansowane elementy. To najspokojniejsza droga do
+opanowania jezyka.

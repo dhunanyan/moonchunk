@@ -1,0 +1,104 @@
+\chapter{Referencja metadata}
+
+Ten rozdzial zbiera pola metadata wspierane przez MoonChunk i podpowiada, kiedy ich
+uzywac. Nie wszystkie beda potrzebne w kazdym projekcie. Warto jednak wiedziec, ze
+jezyk wspiera szeroki zakres konfiguracji dokumentu.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.25\textwidth}>{\raggedright\arraybackslash}p{0.65\textwidth}}
+\toprule
+\textbf{Pole} & \textbf{Znaczenie i typowe zastosowanie} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Pole} & \textbf{Znaczenie i typowe zastosowanie} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+lang & Jezyk dokumentu, np. \mc{"pl"} albo \mc{"en"}. Wplywa m.in. na interpretacje tresci przez przegladarke i narzedzia wspomagajace. \\
+
+dir & Kierunek tekstu, zwykle \mc{"ltr"} dla jezykow pisanych od lewej do prawej. \\
+
+htmlClass & Klasy CSS przypisywane do znacznika \mc{<html>}. Przydatne do globalnego sterowania wygladem. \\
+
+charset & Kodowanie znakow, zwykle \mc{"utf-8"}. W praktyce wartosc niemal obowiazkowa. \\
+
+viewport & Ustawienia widoku dla urzadzen mobilnych, np. \mc{"width=device-width, initial-scale=1"}. \\
+
+title & Tytul dokumentu pokazywany na karcie przegladarki i wykorzystywany przez wyszukiwarki. \\
+
+metaDescription & Krótki opis strony dla SEO i podgladu w wynikach wyszukiwania. \\
+
+metaKeywords & Lista slow kluczowych. Wspolczesnie ma mniejsze znaczenie niz dawniej, ale nadal moze porzadkowac projekt. \\
+
+metaAuthor & Autor strony albo treści. \\
+
+metaRobots & Wskazowki dla robotow indeksujacych, np. \mc{"index,follow"}. \\
+
+themeColor & Kolor motywu wykorzystywany przez niektore przegladarki i urzadzenia mobilne. \\
+
+canonicalUrl & Kanoniczny adres URL strony. Przydatny, gdy jedna tresc wystepuje pod wieloma adresami. \\
+
+faviconHref & Sciezka do favikony strony. \\
+
+appleTouchIconHref & Ikona dla urzadzen Apple. \\
+
+manifestHref & Sciezka do manifestu aplikacji webowej. \\
+
+ogType & Typ Open Graph, np. \mc{"website"} albo \mc{"article"}. \\
+
+ogTitle & Tytul widoczny przy udostepnianiu strony w social media. \\
+
+ogDescription & Opis strony dla Open Graph. \\
+
+ogImage & Obraz do podgladu przy udostepnianiu. \\
+
+ogUrl & Kanoniczny adres strony dla Open Graph. \\
+
+ogSiteName & Nazwa serwisu. \\
+
+ogLocale & Lokalizacja Open Graph, np. \mc{"pl\_PL"}. \\
+
+twitterCard & Typ karty Twitter/X, np. \mc{"summary"} albo \mc{"summary\_large\_image"}. \\
+
+twitterSite & Konto serwisu w mediach spolecznosciowych. \\
+
+twitterCreator & Konto autora tresci. \\
+
+twitterTitle & Tytul do karty Twitter/X. \\
+
+twitterDescription & Opis do karty Twitter/X. \\
+
+twitterImage & Obraz do karty Twitter/X. \\
+
+preloadLinks & Wlasne znaczniki \mc{<link rel='preload' ...>} wstawiane do \mc{<head>}. \\
+
+preconnectLinks & Wlasne znaczniki \mc{<link rel='preconnect' ...>}. \\
+
+styles & Linki do CSS lub inne style, zwykle jako gotowy fragment HTML. \\
+
+headScripts & Skrypty umieszczane w sekcji \mc{<head>}. \\
+
+headExtra & Dodatkowy surowy HTML dla \mc{<head>}. \\
+
+bodyClass & Klasy CSS dla znacznika \mc{<body>}. \\
+
+pageId & Identyfikator strony trafiajacy do atrybutu danych w ciele dokumentu. \\
+
+topBar & Fragment HTML wstawiany nad glowna trescia. \\
+
+header & Fragment HTML naglowka strony. \\
+
+footer & Fragment HTML stopki strony. \\
+
+modals & Miejsce na kontenery modali i innych elementow nakladanych. \\
+
+scripts & Skrypty umieszczane pod koniec dokumentu, zwykle w \mc{<body>}. \\
+
+bodyEndExtra & Dodatkowy HTML wstawiany na koncu \mc{<body>}. \\
+\end{longtable}
+
+\section{Praktyczna rada}
+Nie ma potrzeby uzupelniac wszystkich pol od razu. Zacznij od kilku najwazniejszych:
+\mc{lang}, \mc{charset}, \mc{viewport}, \mc{title}, \mc{metaDescription}, \mc{styles}.
+Potem rozbudowuj dokument o kolejne informacje w miare potrzeb projektu.

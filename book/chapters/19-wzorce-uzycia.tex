@@ -1,0 +1,158 @@
+\chapter{Wzorce uzycia i gotowe przepisy}
+
+\section{Po co w ogole wzorce}
+Gdy poznasz juz skladnie jezyka, kolejnym krokiem nie jest zapamietanie kolejnych tokenow,
+lecz nauczenie sie powtarzalnych sposobow rozwiazywania realnych problemow. Wzorzec to
+po prostu sprawdzony uklad kodu, ktory warto miec z tylu glowy.
+
+\section{Wzorzec: strona glowna z sekcjami}
+Bardzo czesty przypadek to jedna strona glowna z kilkoma sekcjami. W MoonChunk warto
+podzielic ja na przygotowanie danych i kilka blokow \mc{content}.
+
+\begin{lstlisting}[style=moonchunk,caption={Strona glowna skladana z sekcji}]
+chunk "Home" {
+  output: "./dist";
+  title: "Strona glowna";
+
+  let heroTitle: string = "MoonChunk";
+  let heroText: string = "Jezyk do generowania statycznych stron.";
+
+  page "" {
+    content {
+      <section class="hero">
+        <h1>{heroTitle}</h1>
+        <p>{heroText}</p>
+      </section>
+    };
+
+    content {
+      <section class="cta">
+        <a href="/docs">Przejdz do dokumentacji</a>
+      </section>
+    };
+  };
+};
+\end{lstlisting}
+
+Ten wzorzec jest prosty, czytelny i dobrze skaluje sie do landing page'y.
+
+\section{Wzorzec: lista kart}
+Jeśli chcesz zbudowac siatke podobnych elementow, np. kart, petla jest naturalnym wyborem.
+
+\begin{lstlisting}[style=moonchunk,caption={Lista kart budowana z tablicy obiektow}]
+const cards = [
+  { title: "Parser", description: "Rozpoznawanie skladni." },
+  { title: "Runtime", description: "Wykonywanie programu." },
+  { title: "Output", description: "Generowanie HTML." }
+];
+
+page "" {
+  for (let i: int = 0; i < 3; i++) {
+    content {
+      <article class="card">
+        <h3>{cards[i].title}</h3>
+        <p>{cards[i].description}</p>
+      </article>
+    };
+  };
+};
+\end{lstlisting}
+
+Warto zauwazyc, ze najwygodniej przechowywac dane kart jako obiekty, a nie jako kilka
+osobnych tablic.
+
+\section{Wzorzec: stan pusty}
+To bardzo wazny scenariusz w praktyce. Jesli lista jest pusta, strona nie powinna byc
+po prostu biala i milczaca. Lepiej pokazac użytkownikowi jasny komunikat.
+
+\begin{lstlisting}[style=moonchunk,caption={Pusty stan listy}]
+let hasItems: bool = false;
+
+page "" {
+  if (hasItems) {
+    content {
+      <p>Mamy elementy do pokazania.</p>
+    };
+  } else {
+    content {
+      <p>Na razie brak elementow.</p>
+    };
+  };
+};
+\end{lstlisting}
+
+\section{Wzorzec: filtr publikacji}
+W projektach tresciowych bardzo czesto przechowujesz wpisy, ktore nie powinny jeszcze
+trafiac do publicznego HTML-a. Najprostszy wzorzec wygląda tak:
+
+\begin{lstlisting}[style=moonchunk,caption={Pokazuj tylko elementy opublikowane}]
+for (let i: int = 0; i < 3; i++) {
+  if (posts[i].published) {
+    content {
+      <h2>{posts[i].title}</h2>
+    };
+  };
+};
+\end{lstlisting}
+
+To nie tylko czytelne, ale i bezpieczne. Szkice nie wyplywaja przypadkiem do finalnej
+strony.
+
+\section{Wzorzec: funkcja do etykiety}
+Jesli wiele miejsc potrzebuje podobnej etykiety, nie powtarzaj warunku w kółko.
+
+\begin{lstlisting}[style=moonchunk,caption={Funkcja etykietujaca stan}]
+function statusLabel(published: bool): string {
+  return published ? "Opublikowany" : "Szkic";
+}
+\end{lstlisting}
+
+Taki wzorzec bardzo dobrze dziala dla statusow, podpisow i krotkich komunikatow.
+
+\section{Wzorzec: wspolne metadata plus lokalne nadpisanie}
+To jeden z najbardziej produktywnych wzorcow w MoonChunk.
+
+\begin{lstlisting}[style=moonchunk,caption={Wspolne metadata i lokalne doprecyzowanie}]
+export chunk "Metadata" {
+  lang: "pl";
+  charset: "utf-8";
+  metaAuthor: "MoonChunk Team";
+};
+
+chunk "About" {
+  @include Metadata;
+  output: "./dist";
+  title: "O projekcie";
+  metaDescription: "Opis strony o projekcie.";
+};
+\end{lstlisting}
+
+Dzieki temu projekt ma centrum konfiguracji, ale pojedyncze strony nadal zachowuja
+swoja tozsamosc.
+
+\section{Wzorzec: oblicz najpierw, pokaz potem}
+To wzorzec, ktory warto stosowac niemal wszedzie.
+
+\begin{lstlisting}[style=moonchunk,caption={Oddzielenie logiki od prezentacji}]
+let canShowPromo: bool = views > 100 and isPublished;
+let promoText: string = canShowPromo ? "Popularny wpis" : "Standardowy wpis";
+
+content {
+  <p>{promoText}</p>
+};
+\end{lstlisting}
+
+Dzieki temu kod HTML nie jest przeciazony zlozonymi wyrazeniami.
+
+\section{Wzorzec: rekurencyjny spacer po etapach}
+Rekurencja nie sluzy tylko do klasycznej silni. Mozna jej uzyc tez do przechodzenia po
+kolejnych krokach, np. numerowanych etapach procesu.
+
+\begin{lstlisting}[style=moonchunk,caption={Rekurencja jako przechodzenie po krokach}]
+function walk(index: int, max: int): int {
+  print("step:", index);
+  return index >= max ? index : walk(index + 1, max);
+}
+\end{lstlisting}
+
+To dobry wzorzec wszedzie tam, gdzie problem naturalnie rozklada sie na podobne kroki.

@@ -1,0 +1,287 @@
+\chapter{Zmienne, stale i typy}
+
+\section{Po co istnieja zmienne}
+Strona internetowa rzadko sklada sie wyłącznie ze stalych, niezmiennych napisow.
+Zwykle chcemy przechowywac dane takie jak:
+
+\begin{itemize}
+  \item tytul strony,
+  \item licznik wpisow,
+  \item informacja, czy element ma byc pokazany,
+  \item lista kart produktowych,
+  \item obiekt z danymi autora albo wpisu.
+\end{itemize}
+
+Do tego wlasnie sluza zmienne. Zmienna to \important{nazwa wskazujaca na wartosc}.
+W MoonChunk mozna pracowac zarowno ze zmiennymi zmienialnymi, jak i z wartosciami,
+ktore po nadaniu powinny pozostac stale.
+
+\section{\mc{let} i \mc{const}}
+MoonChunk, podobnie jak wspolczesny JavaScript, rozroznia dwa podstawowe sposoby
+deklarowania lokalnych nazw.
+
+\subsection*{\mc{let}}
+\mc{let} sluzy do tworzenia zmiennej, ktorej wartosc mozna pozniej zmienic.
+
+\begin{lstlisting}[style=moonchunk,caption={Zmienna deklarowana przez let}]
+let counter: int = 0;
+counter = counter + 1;
+\end{lstlisting}
+
+\subsection*{\mc{const}}
+\mc{const} sluzy do tworzenia stalej, czyli nazwy, ktorej nie wolno pozniej przypisac
+nowej wartosci.
+
+\begin{lstlisting}[style=moonchunk,caption={Stala deklarowana przez const}]
+const title: string = "MoonChunk";
+\end{lstlisting}
+
+Jesli potem sprobowalibysmy zrobic:
+
+\begin{lstlisting}[style=moonchunk,caption={Niedozwolona zmiana wartosci stalej}]
+title = "Nowy tytul";
+\end{lstlisting}
+
+MoonChunk zglosi blad.
+
+\section{Czy \mc{let} musi miec wartosc od razu}
+Nie zawsze. Jedna z praktycznych cech MoonChunk polega na tym, ze \mc{let} moze
+zostac zadeklarowany bez wartosci poczatkowej.
+
+\begin{lstlisting}[style=moonchunk,caption={Deklaracja let bez inicjalizacji}]
+let later: int;
+later = 7;
+\end{lstlisting}
+
+To bywa wygodne, gdy:
+
+\begin{itemize}
+  \item jeszcze nie znasz wartosci w chwili deklaracji,
+  \item wartosc zalezy od warunku,
+  \item chcesz najpierw zadeklarowac nazwe, a pozniej obliczyc wynik.
+\end{itemize}
+
+Trzeba jednak uwazac: \important{taka zmienna musi zostac zainicjalizowana przed uzyciem}.
+Jesli sprobowalibysmy odczytac ja za wczesnie, MoonChunk zglosi blad runtime.
+
+\section{Czy \mc{const} moze byc puste na starcie}
+Nie. \mc{const} musi od razu dostac konkretna wartosc.
+
+\begin{lstlisting}[style=moonchunk,caption={Poprawna deklaracja const}]
+const maxItems: int = 10;
+\end{lstlisting}
+
+Taka zasada ma sens: skoro nazwa ma byc stala, od razu trzeba wiedziec, jaka wartosc
+ma reprezentowac.
+
+\section{Typy w MoonChunk}
+Typ okresla, jakiego rodzaju jest dana wartosc. To bardzo wazne, bo interpreter
+musi wiedziec, czy pracuje z liczba, tekstem, wartoscia logiczna, tablica czy obiektem.
+
+MoonChunk obsluguje nastepujace typy podstawowe i specjalne:
+
+\begin{itemize}
+  \item \mc{int},
+  \item \mc{float},
+  \item \mc{double},
+  \item \mc{number},
+  \item \mc{bool},
+  \item \mc{string},
+  \item \mc{array},
+  \item \mc{object},
+  \item \mc{dict},
+  \item \mc{null},
+  \item \mc{undefined},
+  \item \mc{unknown},
+  \item \mc{any},
+  \item \mc{void} dla funkcji nic nie zwracajacych.
+\end{itemize}
+
+\section{Typy liczbowe}
+MoonChunk rozroznia kilka wariantow liczb, bo w praktyce nie kazda liczba ma zachowywac
+sie identycznie.
+
+\subsection*{\mc{int}}
+To liczba calkowita. Gdy pracujesz na samych \mc{int}, szczegolnie przy dzieleniu,
+warto pamietac, ze wynik powinien pozostac liczba calkowita.
+
+\begin{lstlisting}[style=moonchunk,caption={Dzielenie liczb typu int}]
+let a: int = 1 / 2;
+\end{lstlisting}
+
+Taki zapis daje wynik \mc{0}, a nie \mc{0.5}.
+
+\subsection*{\mc{float} i \mc{double}}
+To typy liczb zmiennoprzecinkowych, przydatne wtedy, gdy chcesz zachowac czesc ulamkowa.
+
+\begin{lstlisting}[style=moonchunk,caption={Dzielenie z czescia ulamkowa}]
+let b: double = 1 / 2.0;
+let c: float = 1f / 2;
+\end{lstlisting}
+
+Tutaj wynik zachowuje informacje o ulamku.
+
+\subsection*{\mc{number}}
+Mozesz traktowac \mc{number} jako bardziej ogolna kategorie liczby. Przydaje sie tam,
+gdzie nie chcesz przywiazywac sie do jednego konkretnego wariantu liczbowego,
+ale nadal pracujesz na liczbach.
+
+\section{Typ \mc{bool}}
+\mc{bool} przechowuje wartosc logiczna: \mc{true} albo \mc{false}. To typ idealny do:
+
+\begin{itemize}
+  \item warunkow \mc{if},
+  \item sterowania petlami,
+  \item flag typu \emph{czy pokazac element},
+  \item porownan i sprawdzen.
+\end{itemize}
+
+\begin{lstlisting}[style=moonchunk,caption={Przyklad zmiennej logicznej}]
+let isPublished: bool = true;
+\end{lstlisting}
+
+\section{Typ \mc{string}}
+\mc{string} oznacza tekst. W praktyce to jeden z najczesciej uzywanych typow, bo strony
+internetowe sa w duzej mierze zbudowane wlasnie z tekstu.
+
+\begin{lstlisting}[style=moonchunk,caption={Przyklad tekstu}]
+let heading: string = "Dokumentacja MoonChunk";
+\end{lstlisting}
+
+\section{Typy zlozone: \mc{array}, \mc{object}, \mc{dict}}
+\subsection*{\mc{array}}
+Tablica sluzy do przechowywania kolekcji elementow w okreslonej kolejnosci.
+
+\begin{lstlisting}[style=moonchunk,caption={Tablica}]
+const tags: array = ["dsl", "html", "static-site"];
+\end{lstlisting}
+
+\subsection*{\mc{object}}
+Obiekt sluzy do przechowywania nazwanych pol.
+
+\begin{lstlisting}[style=moonchunk,caption={Obiekt}]
+const author: object = { name: "Alicja", role: "writer" };
+\end{lstlisting}
+
+\subsection*{\mc{dict}}
+\mc{dict} to praktycznie slownikowy wariant obiektu. W MoonChunk traktowany jest jako
+obiekt o strukturze klucz--wartosc. W dokumentacji uzytkowej warto myslec o nim jako o
+obiekcie przeznaczonym szczegolnie do przechowywania danych.
+
+\begin{lstlisting}[style=moonchunk,caption={Slownik typu dict}]
+let point: dict = { x: 1, y: 2 };
+\end{lstlisting}
+
+\section{Typy specjalne: \mc{null} i \mc{undefined}}
+Te dwa typy sa podobne tylko pozornie.
+
+\subsection*{\mc{null}}
+\mc{null} oznacza zwykle swiadomie ustawiony brak konkretnej wartosci.
+
+\subsection*{\mc{undefined}}
+\mc{undefined} oznacza raczej brak przypisanej wartosci albo stan pusty wynikajacy
+z kontekstu.
+
+W praktyce jesli dopiero zaczynasz, nie musisz naduzywac tych typow. Warto jednak
+wiedziec, ze istnieja, bo pojawiaja sie w bardziej zaawansowanych scenariuszach.
+
+\section{Typy \mc{unknown} i \mc{any}}
+To typy bardziej zaawansowane. Najlatwiej myslec o nich jak o tymczasowych pudelkach,
+ktore mowia interpreterowi: \emph{na chwile odloz scisle sprawdzanie typu}.
+
+\subsection*{\mc{unknown}}
+Jest bezpieczniejszy koncepcyjnie. Mowi: \emph{mam jakas wartosc, ale jeszcze nie chce
+zakladac, czym ona jest}.
+
+\subsection*{\mc{any}}
+Jest bardziej permissive. Mowi: \emph{traktuj te wartosc bardzo elastycznie}.
+
+W praktyce te typy sa najczesciej widoczne przy bardziej zaawansowanych rzutowaniach,
+zwlaszcza kiedy chcesz przejsc przez zapis typu \mc{as unknown as ...}.
+
+\section{Typ \mc{void}}
+\mc{void} dotyczy przede wszystkim funkcji. Oznacza, ze funkcja nie ma zwracac
+uzytecznej wartosci.
+
+\begin{lstlisting}[style=moonchunk,caption={Funkcja bez wartosci zwrotnej}]
+function logTitle(title: string): void {
+  print(title);
+  return;
+}
+\end{lstlisting}
+
+\section{Deklaracja typu jawnie i niejawnie}
+W wielu miejscach MoonChunk pozwala pominac jawny typ i oprzec sie na wartosci po prawej
+stronie przypisania.
+
+\begin{lstlisting}[style=moonchunk,caption={Deklaracja z typem niejawnym}]
+let title = "MoonChunk";
+\end{lstlisting}
+
+Mozesz tez podac typ jawnie:
+
+\begin{lstlisting}[style=moonchunk,caption={Deklaracja z typem jawnym}]
+let title: string = "MoonChunk";
+\end{lstlisting}
+
+Jawne typy sa szczegolnie przydatne wtedy, gdy:
+
+\begin{itemize}
+  \item chcesz jasno opisac zamiar,
+  \item zalezy Ci na czytelnosci,
+  \item pracujesz z danymi z zewnatrz,
+  \item deklarujesz \mc{let} bez wartosci poczatkowej.
+\end{itemize}
+
+\section{Zgodnosc typu przy przypisaniu}
+Jesli deklarujesz typ, interpreter pilnuje zgodnosci. Przyklad poprawny:
+
+\begin{lstlisting}[style=moonchunk,caption={Zgodne przypisanie typu}]
+let count: int = 5;
+count = 8;
+\end{lstlisting}
+
+Przyklad niepoprawny:
+
+\begin{lstlisting}[style=moonchunk,caption={Niezgodne przypisanie typu}]
+let count: int = 5;
+count = "osiem";
+\end{lstlisting}
+
+Tutaj MoonChunk powinien zglosic blad typu.
+
+\section{Globalne zmienne w \mc{env}}
+Poza zwyklymi zmiennymi lokalnymi MoonChunk wspiera tez globalne deklaracje umieszczane
+w bloku \mc{env}. To przydatne dla wartosci wspolnych dla wielu miejsc programu.
+
+\begin{lstlisting}[style=moonchunk,caption={Globalne wartosci w bloku env}]
+env {
+  global siteName: string = "MoonChunk Portal";
+  global pageSize: int = 10;
+};
+\end{lstlisting}
+
+Wazna zasada: global deklarowany w \mc{env} powinien byc od razu zainicjalizowany.
+Dzieki temu jest przewidywalny i gotowy do uzycia wszedzie tam, gdzie ma byc widoczny.
+
+\section{Praktyczne wskazowki dotyczace typow}
+\begin{itemize}
+  \item Uzywaj \mc{int}, gdy wynik ma byc liczba calkowita.
+  \item Uzywaj \mc{double} lub \mc{float}, gdy spodziewasz sie ulamkow.
+  \item Uzywaj \mc{bool} do warunkow, a nie liczb zastępujacych prawde i falsz.
+  \item Uzywaj \mc{object} lub \mc{dict} do grupowania nazwanych danych.
+  \item Uzywaj \mc{array} do list i kolekcji.
+  \item Po \mc{unknown} i \mc{any} siegaj dopiero wtedy, gdy zwykle typy nie wystarczaja.
+\end{itemize}
+
+\section{Najczestsze bledy poczatkujacych}
+\begin{itemize}
+  \item traktowanie \mc{const} jak \mc{let},
+  \item odczytywanie \mc{let} przed inicjalizacja,
+  \item mieszanie typu liczbowego z tekstem bez swiadomego rzutowania,
+  \item wpisywanie wartosci logicznej tam, gdzie oczekiwana jest liczba,
+  \item kopiowanie tej samej zmiennej w to samo miejsce zamiast wykonania zwyklego przypisania.
+\end{itemize}
+
+W nastepnym rozdziale przejdziemy od samych typow do wyrazen, czyli do tego,
+jak MoonChunk oblicza wartosci i laczy je ze soba.

@@ -1,0 +1,204 @@
+\chapter{Funkcje i rekurencja}
+
+\section{Po co istnieja funkcje}
+Funkcja pozwala nazwac pewien fragment logiki i wywolywac go wiele razy. To jedna z
+najwazniejszych technik porzadkowania programu. Zamiast kopiowac ten sam zestaw
+instrukcji w kilku miejscach, definiujesz go raz i potem tylko wywolujesz.
+
+Na poziomie praktycznym funkcje w MoonChunk przydaja sie m.in. do:
+
+\begin{itemize}
+  \item budowania podpisow i etykiet,
+  \item obliczen pomocniczych,
+  \item przygotowywania wartosci przed wstawieniem do HTML,
+  \item enkapsulacji logiki warunkowej,
+  \item reuzycia tych samych transformacji w wielu stronach.
+\end{itemize}
+
+\section{Klasyczna deklaracja funkcji}
+Podstawowa skladnia wygląda tak:
+
+\begin{lstlisting}[style=moonchunk,caption={Klasyczna funkcja w MoonChunk}]
+function greet(name: string): string {
+  return "Czesc, " + name;
+}
+\end{lstlisting}
+
+Mamy tu kilka elementow:
+
+\begin{itemize}
+  \item slowo \mc{function},
+  \item nazwe funkcji, tutaj \mc{greet},
+  \item liste parametrow w nawiasach,
+  \item opcjonalny typ zwracany po dwukropku,
+  \item ciało funkcji w klamrach.
+\end{itemize}
+
+\section{Parametry funkcji}
+Parametry to dane przekazywane do funkcji przy wywolaniu.
+
+\begin{lstlisting}[style=moonchunk,caption={Funkcja z dwoma parametrami}]
+function fullTitle(title: string, suffix: string): string {
+  return title + " - " + suffix;
+}
+\end{lstlisting}
+
+Wywolanie moze wygladac tak:
+
+\begin{lstlisting}[style=moonchunk,caption={Wywolanie funkcji}]
+let result: string = fullTitle("MoonChunk", "Docs");
+\end{lstlisting}
+
+Funkcja dostaje argumenty przez wartosc. Dla uzytkownika jezyka oznacza to przede
+wszystkim tyle, ze przy kazdym wywolaniu pracuje na danych przekazanych do tego
+konkretnego wywolania.
+
+\section{Instrukcja \mc{return}}
+\mc{return} konczy dzialanie funkcji i oddaje wynik na zewnatrz.
+
+\begin{lstlisting}[style=moonchunk,caption={Zwracanie wyniku z funkcji}]
+function square(n: int): int {
+  return n * n;
+}
+\end{lstlisting}
+
+Jesli funkcja ma cos obliczyc, \mc{return} jest jej naturalnym finalem.
+
+\section{Funkcje bez zwracanej wartosci}
+Nie kazda funkcja musi cos oddawac. Czasem celem jest tylko efekt uboczny, np. wypisanie
+czegos do konsoli przez \mc{print}. Wtedy przydaje sie typ \mc{void}.
+
+\begin{lstlisting}[style=moonchunk,caption={Funkcja typu void}]
+function logMessage(text: string): void {
+  print(text);
+  return;
+}
+\end{lstlisting}
+
+\section{Funkcje a HTML}
+Najczestszy praktyczny wzorzec polega na tym, ze funkcja przygotowuje wartosc,
+a \mc{content} tylko ja wyswietla.
+
+\begin{lstlisting}[style=moonchunk,caption={Funkcja przygotowujaca tekst do strony}]
+function badge(isPublished: bool): string {
+  return isPublished ? "Opublikowany" : "Szkic";
+}
+
+page "" {
+  let status: bool = true;
+  content {
+    <p>Status: {badge(status)}</p>
+  };
+};
+\end{lstlisting}
+
+To bardzo czytelne rozwiazanie. Logika jest zamknieta w funkcji, a HTML pozostaje prosty.
+
+\section{Funkcje jako granica zasiegu}
+Kazde wywolanie funkcji tworzy osobna przestrzen dla jej lokalnych nazw. Dlatego ten sam
+identyfikator moze bezpiecznie istnieć i na zewnatrz, i wewnatrz funkcji.
+
+\begin{lstlisting}[style=moonchunk,caption={Ta sama nazwa poza i wewnatrz funkcji}]
+const x: int = 3;
+
+function demo(): int {
+  const x: int = 5;
+  return x;
+}
+\end{lstlisting}
+
+To bardzo przydatne, bo pozwala tworzyc funkcje samodzielne i niekolidujace z otoczeniem.
+
+\section{Rekurencja}
+Rekurencja oznacza, ze funkcja wywoluje sama siebie. Brzmi tajemniczo, ale idea jest
+prosta: problem rozwiazuje sie poprzez coraz mniejsza wersje tego samego problemu.
+
+Klasyczny przyklad:
+
+\begin{lstlisting}[style=moonchunk,caption={Rekurencyjna funkcja factorial}]
+function factorial(n: int): int {
+  if (n == 0) {
+    return 1;
+  };
+  return n * factorial(n - 1);
+}
+\end{lstlisting}
+
+Tutaj:
+
+\begin{itemize}
+  \item gdy \mc{n == 0}, funkcja zna odpowiedz od razu,
+  \item w przeciwnym razie sprowadza problem do \mc{factorial(n - 1)}.
+\end{itemize}
+
+\section{Warunek stopu w rekurencji}
+To absolutnie kluczowe. Kazda funkcja rekurencyjna musi miec \important{warunek stopu},
+który powoduje, ze w pewnym momencie przestaje wywolywac sama siebie.
+
+Bez tego program wpadlby w nieskonczona sekwencje wywolan.
+
+\section{Rekurencja do przechodzenia po kolejnych krokach}
+MoonChunk dobrze radzi sobie z funkcjami, ktore wywoluja same siebie i przy okazji
+wypisuja stan kolejnych krokow.
+
+\begin{lstlisting}[style=moonchunk,caption={Rekurencja z licznikiem lokalnym}]
+function walk(index: int, max: int): int {
+  print("recursive index:", index);
+  return (index >= max) ? index : walk(index + 1, max);
+}
+\end{lstlisting}
+
+To dobry przyklad z dwoch powodow:
+
+\begin{itemize}
+  \item pokazuje warunek stopu,
+  \item pokazuje, ze kazde wywolanie ma swoj lokalny zestaw argumentow i zmiennych.
+\end{itemize}
+
+\section{Zapis strzalkowy}
+MoonChunk wspiera tez skrocona, bardziej zwarta skladnie funkcji.
+
+\begin{lstlisting}[style=moonchunk,caption={Funkcja w skladni strzalkowej}]
+sum(a: int, b: int): int => a + b;
+\end{lstlisting}
+
+Mozesz tez zwrocic blok instrukcji:
+
+\begin{lstlisting}[style=moonchunk,caption={Strzalka z blokiem instrukcji}]
+formatTitle(title: string): string => {
+  return "[DOCS] " + title;
+};
+\end{lstlisting}
+
+W praktyce skladnia strzalkowa jest dobra dla krótkich funkcji pomocniczych.
+Jesli logika rośnie, klasyczne \mc{function} bywa czytelniejsze.
+
+\section{Funkcje jako wartosci}
+MoonChunk pozwala traktowac funkcje jak wartosci, co oznacza, ze mozna je np. wypisywac
+przez \mc{print}. To przydatne diagnostycznie i edukacyjnie.
+
+\begin{lstlisting}[style=moonchunk,caption={Wypisanie obiektu funkcji i wyniku jej wywolania}]
+function greet(name: string): string {
+  return "Hello, " + name;
+}
+
+print(greet);
+print(greet("MoonChunk"));
+\end{lstlisting}
+
+Pierwsza linia pokazuje funkcje jako obiekt/byt wykonywalny, druga -- wynik dzialania.
+
+\section{Najczestsze bledy przy funkcjach}
+\begin{itemize}
+  \item brak \mc{return} tam, gdzie funkcja ma oddac wynik,
+  \item zwracanie wartosci niezgodnej z zadeklarowanym typem,
+  \item wywolanie czegos, co nie jest funkcja,
+  \item redeklaracja nazw parametrow albo lokalnych zmiennych,
+  \item brak warunku stopu w rekurencji.
+\end{itemize}
+
+\section{Kiedy wydzielic funkcje}
+Jesli ten sam fragment logiki pojawia sie w dwoch miejscach albo jesli blok \mc{content}
+zaczyna byc zanieczyszczony obliczeniami, to bardzo dobry moment, zeby wydzielic funkcje.
+Dobrze nazwana funkcja poprawia czytelnosc bardziej, niz na pierwszy rzut oka mogloby
+sie wydawac.
